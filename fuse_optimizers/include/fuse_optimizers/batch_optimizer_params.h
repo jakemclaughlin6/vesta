@@ -34,72 +34,29 @@
 #ifndef FUSE_OPTIMIZERS_BATCH_OPTIMIZER_PARAMS_H
 #define FUSE_OPTIMIZERS_BATCH_OPTIMIZER_PARAMS_H
 
-#include <fuse_core/ceres_options.h>
-#include <fuse_core/parameter.h>
 #include <fuse_core/timestamp.h>
-#include <ros/node_handle.h>
-
 #include <ceres/solver.h>
-
-#include <algorithm>
-#include <string>
-#include <vector>
-
 
 namespace fuse_optimizers
 {
 
 /**
- * @brief Defines the set of parameters required by the fuse_optimizers::FixedLagSmoother class
+ * @brief Defines the set of parameters required by the fuse_optimizers::BatchOptimizer class
  */
 struct BatchOptimizerParams
 {
-public:
-  /**
-   * @brief The target duration for optimization cycles
-   *
-   * If an optimization takes longer than expected, an optimization cycle may be skipped. The optimization period
-   * may be specified in either the "optimization_period" parameter in seconds, or in the "optimization_frequency"
-   * parameter in Hz.
-   */
-  fuse_core::Duration optimization_period { fuse_core::Duration::fromSec(0.1) };
-
   /**
    * @brief The maximum time to wait for motion models to be generated for a received transaction.
    *
    * Transactions are processed sequentially, so no new transactions will be added to the graph while waiting for
    * motion models to be generated. Once the timeout expires, that transaction will be deleted from the queue.
    */
-  fuse_core::Duration transaction_timeout { fuse_core::Duration::fromSec(0.1) };
+  fuse_core::Duration transaction_timeout{fuse_core::Duration::fromSec(0.1)};
 
   /**
    * @brief Ceres Solver::Options object that controls various aspects of the optimizer.
    */
   ceres::Solver::Options solver_options;
-
-  /**
-   * @brief Method for loading parameter values from ROS.
-   *
-   * @param[in] nh - The ROS node handle with which to load parameters
-   */
-  void loadFromROS(const ros::NodeHandle& nh)
-  {
-    // Read settings from the parameter server
-    if (nh.hasParam("optimization_frequency"))
-    {
-      double optimization_frequency{ 1.0 / optimization_period.toSec() };
-      fuse_core::getPositiveParam(nh, "optimization_frequency", optimization_frequency);
-      optimization_period = fuse_core::Duration::fromSec(1.0 / optimization_frequency);
-    }
-    else
-    {
-      fuse_core::getPositiveParam(nh, "optimization_period", optimization_period);
-    }
-
-    fuse_core::getPositiveParam(nh, "transaction_timeout", transaction_timeout);
-
-    fuse_core::loadSolverOptionsFromROS(ros::NodeHandle(nh, "solver_options"), solver_options);
-  }
 };
 
 }  // namespace fuse_optimizers

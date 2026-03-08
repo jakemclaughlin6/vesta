@@ -34,63 +34,32 @@
 #ifndef FUSE_CORE_TRANSACTION_DESERIALIZER_H
 #define FUSE_CORE_TRANSACTION_DESERIALIZER_H
 
-#include <fuse_msgs/SerializedTransaction.h>
-#include <fuse_core/constraint.h>
 #include <fuse_core/transaction.h>
-#include <fuse_core/variable.h>
-#include <pluginlib/class_loader.hpp>
+
+#include <vector>
 
 
 namespace fuse_core
 {
 
 /**
- * @brief Serialize a transaction into a message
+ * @brief Serialize a transaction into a byte buffer
+ *
+ * @param[in]  transaction  The transaction to serialize
+ * @param[out] data         The output byte buffer
  */
-void serializeTransaction(const fuse_core::Transaction& transaction, fuse_msgs::SerializedTransaction& msg);
+void serializeTransaction(const fuse_core::Transaction& transaction, std::vector<unsigned char>& data);
 
 /**
- * @brief Deserialize a Transaction
+ * @brief Deserialize a transaction from a byte buffer
  *
- * The deserializer object loads all of the known Variable and Constraint libraries, allowing derived types contained
- * within the transaction to be properly deserialized. The libraries will be unloaded on destruction. As a consequence,
- * the deserializer object must outlive any created transaction instances.
+ * Uses Boost.Serialization with BOOST_CLASS_EXPORT for polymorphic deserialization
+ * of the contained Variable and Constraint types.
+ *
+ * @param[in] data  The serialized byte buffer
+ * @return A deserialized Transaction object
  */
-class TransactionDeserializer
-{
-public:
-  /**
-   * @brief Constructor
-   */
-  TransactionDeserializer();
-
-  /**
-   * @brief Deserialize a SerializedTransaction message into a fuse Transaction object.
-   *
-   * If no plugin is available for a contained Variable or Constraint, or an error occurs during deserialization,
-   * an exception is thrown.
-   *
-   * @param[IN]  msg  The SerializedTransaction message to be deserialized
-   * @return          A fuse Transaction object
-   */
-  fuse_core::Transaction deserialize(const fuse_msgs::SerializedTransaction::ConstPtr& msg) const;
-
-  /**
-   * @brief Deserialize a SerializedTransaction message into a fuse Transaction object.
-   *
-   * If no plugin is available for a contained Variable or Constraint, or an error occurs during deserialization,
-   * an exception is thrown.
-   *
-   * @param[IN]  msg  The SerializedTransaction message to be deserialized
-   * @return          A fuse Transaction object
-   */
-  fuse_core::Transaction deserialize(const fuse_msgs::SerializedTransaction& msg) const;
-
-private:
-  pluginlib::ClassLoader<fuse_core::Variable> variable_loader_;      //!< Pluginlib class loader for Variable types
-  pluginlib::ClassLoader<fuse_core::Constraint> constraint_loader_;  //!< Pluginlib class loader for Constraint types
-  pluginlib::ClassLoader<fuse_core::Loss> loss_loader_;              //!< Pluginlib class loader for Loss types
-};
+fuse_core::Transaction deserializeTransaction(const std::vector<unsigned char>& data);
 
 }  // namespace fuse_core
 

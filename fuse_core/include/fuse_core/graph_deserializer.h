@@ -34,66 +34,35 @@
 #ifndef FUSE_CORE_GRAPH_DESERIALIZER_H
 #define FUSE_CORE_GRAPH_DESERIALIZER_H
 
-#include <fuse_msgs/SerializedGraph.h>
-#include <fuse_core/constraint.h>
 #include <fuse_core/graph.h>
-#include <fuse_core/variable.h>
-#include <pluginlib/class_loader.hpp>
+
+#include <vector>
 
 
 namespace fuse_core
 {
 
 /**
- * @brief Serialize a graph into a message
+ * @brief Serialize a graph into a byte buffer
+ *
+ * @param[in]  graph  The graph to serialize
+ * @param[out] data   The output byte buffer
  */
-void serializeGraph(const fuse_core::Graph& graph, fuse_msgs::SerializedGraph& msg);
+void serializeGraph(const fuse_core::Graph& graph, std::vector<unsigned char>& data);
 
 /**
- * @brief Deserialize a graph
+ * @brief Deserialize a graph from a byte buffer
  *
- * The deserializer object loads all of the known Variable and Constraint libraries, allowing derived types contained
- * within the graph to be properly deserialized. The libraries will be unloaded on destruction. As a consequence, the
- * deserializer object must outlive any created graph instances.
+ * Uses Boost.Serialization with BOOST_CLASS_EXPORT for polymorphic deserialization.
+ * The appropriate derived types must have been registered via BOOST_CLASS_EXPORT in their
+ * respective compilation units.
+ *
+ * @param[in] data        The serialized byte buffer
+ * @param[in] plugin_name The fully-qualified type name of the Graph implementation
+ * @return A unique_ptr to the deserialized Graph object
  */
-class GraphDeserializer
-{
-public:
-  /**
-   * @brief Constructor
-   */
-  GraphDeserializer();
-
-  /**
-   * @brief Deserialize a SerializedGraph message into a fuse Graph object.
-   *
-   * If no plugin is available for a contained Variable or Constraint, or an error occurs during deserialization,
-   * an exception is thrown.
-   *
-   * @param[in]  msg  The SerializedGraph message to be deserialized
-   * @return          A unique_ptr to a derived Graph object
-   */
-  fuse_core::Graph::UniquePtr deserialize(const fuse_msgs::SerializedGraph::ConstPtr& msg) const;
-
-  /**
-   * @brief Deserialize a SerializedGraph message into a fuse Graph object.
-   *
-   * If no plugin is available for a contained Variable or Constraint, or an error occurs during deserialization,
-   * an exception is thrown.
-   *
-   * @param[in]  msg  The SerializedGraph message to be deserialized
-   * @return          A unique_ptr to a derived Graph object
-   */
-  fuse_core::Graph::UniquePtr deserialize(const fuse_msgs::SerializedGraph& msg) const;
-
-private:
-  pluginlib::ClassLoader<fuse_core::Variable> variable_loader_;      //!< Pluginlib class loader for Variable types
-  pluginlib::ClassLoader<fuse_core::Constraint> constraint_loader_;  //!< Pluginlib class loader for Constraint types
-  pluginlib::ClassLoader<fuse_core::Loss> loss_loader_;              //!< Pluginlib class loader for Loss types
-  // TODO(efernandez) Try to make pluginlib::ClassLoader<T>::createUnmanagedInstance() method const, so we can remove
-  // the mutable modifier here and still have the deserialize methods const
-  mutable pluginlib::ClassLoader<fuse_core::Graph> graph_loader_;    //!< Pluginlib class loader for Graph types
-};
+fuse_core::Graph::UniquePtr deserializeGraph(const std::vector<unsigned char>& data,
+                                             const std::string& plugin_name);
 
 }  // namespace fuse_core
 

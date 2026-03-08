@@ -33,210 +33,87 @@
  */
 #include <fuse_core/transaction.h>
 #include <fuse_optimizers/batch_optimizer.h>
-#include <fuse_optimizers/optimizer.h>
-#include <ros/ros.h>
+#include <glog/logging.h>
 
-#include <algorithm>
-#include <limits>
-#include <mutex>
 #include <string>
 #include <utility>
-#include <thread>
-
 
 namespace fuse_optimizers
 {
 
 BatchOptimizer::BatchOptimizer(
-  fuse_core::Graph::UniquePtr graph,
-  const ros::NodeHandle& node_handle,
-  const ros::NodeHandle& private_node_handle) :
-    fuse_optimizers::Optimizer(std::move(graph), node_handle, private_node_handle),
+  const BatchOptimizerParams& params,
+  fuse_core::Graph::UniquePtr graph) :
+    params_(params),
+    graph_(std::move(graph)),
     combined_transaction_(fuse_core::Transaction::make_shared()),
-    optimization_request_(false),
-    start_time_(fuse_core::Timestamp(std::numeric_limits<int64_t>::max())),
     started_(false)
 {
-  params_.loadFromROS(private_node_handle);
-
-  // Configure a timer to trigger optimizations
-  optimize_timer_ = node_handle_.createTimer(
-    ros::Duration(params_.optimization_period.toSec()),
-    &BatchOptimizer::optimizerTimerCallback,
-    this);
-
-  // Start the optimization thread
-  optimization_thread_ = std::thread(&BatchOptimizer::optimizationLoop, this);
 }
 
-BatchOptimizer::~BatchOptimizer()
+void BatchOptimizer::addTransaction(
+  const std::string& sensor_name,
+  fuse_core::Transaction::SharedPtr transaction)
 {
-  // Wake up any sleeping threads
-  optimization_requested_.notify_all();
-  // Wait for the threads to shutdown
-  if (optimization_thread_.joinable())
+  fuse_core::Timestamp transaction_time = transaction->stamp();
+  pending_transactions_.emplace(transaction_time, TransactionQueueElement(sensor_name, std::move(transaction)));
+  if (!started_)
   {
-    optimization_thread_.join();
+    started_ = true;
   }
 }
 
-void BatchOptimizer::applyMotionModelsToQueue()
+ceres::Solver::Summary BatchOptimizer::optimize()
 {
-  // We need get the pending transactions from the queue
-  std::lock_guard<std::mutex> pending_transactions_lock(pending_transactions_mutex_);
+  // Process pending transactions into the combined transaction
   // Use the most recent transaction time as the current time
   fuse_core::Timestamp current_time(0);
   if (!pending_transactions_.empty())
   {
     current_time = pending_transactions_.rbegin()->first;
   }
+
   // Attempt to process each pending transaction
-  while (!pending_transactions_.empty())
+  auto iter = pending_transactions_.begin();
+  while (iter != pending_transactions_.end())
   {
-    auto& element = pending_transactions_.begin()->second;
-    // Apply the motion models to the transaction
-    if (!applyMotionModels(element.sensor_name, *element.transaction))
+    auto& element = iter->second;
+    // Check if this transaction has timed out
+    if (element.transaction->stamp() + params_.transaction_timeout < current_time)
     {
-      if (element.transaction->stamp() + params_.transaction_timeout < current_time)
-      {
-        // Warn that this transaction has expired, then skip it.
-        ROS_ERROR_STREAM("The queued transaction with timestamp " << element.transaction->stamp()
-                          << " could not be processed after " << (current_time - element.transaction->stamp())
-                          << " seconds, which is greater than the 'transaction_timeout' value of "
-                          << params_.transaction_timeout << ". Ignoring this transaction.");
-        pending_transactions_.erase(pending_transactions_.begin());
-        continue;
-      }
-      else
-      {
-        // Stop processing future transactions. Try again next time.
-        break;
-      }
+      LOG(ERROR) << "The queued transaction with timestamp " << element.transaction->stamp()
+                 << " could not be processed after " << (current_time - element.transaction->stamp())
+                 << " seconds, which is greater than the 'transaction_timeout' value of "
+                 << params_.transaction_timeout << ". Ignoring this transaction.";
+      iter = pending_transactions_.erase(iter);
+      continue;
     }
-    // Merge the sensor+motion model transactions into a combined transaction that will be applied directly to the graph
-    {
-      std::lock_guard<std::mutex> combined_transaction_lock(combined_transaction_mutex_);
-      combined_transaction_->merge(*element.transaction, true);
-    }
-    // We are done with this transaction. Delete it from the queue.
-    pending_transactions_.erase(pending_transactions_.begin());
+    // Merge the transaction into the combined transaction
+    combined_transaction_->merge(*element.transaction, true);
+    iter = pending_transactions_.erase(iter);
   }
+
+  // Apply the combined transaction to the graph
+  graph_->update(*combined_transaction_);
+
+  // Reset the combined transaction for the next cycle
+  combined_transaction_ = fuse_core::Transaction::make_shared();
+
+  // Optimize the entire graph
+  return graph_->optimize(params_.solver_options);
 }
 
-void BatchOptimizer::optimizationLoop()
+void BatchOptimizer::reset()
 {
-  // Optimize constraints until told to exit
-  while (ros::ok())
-  {
-    // Wait for the next signal to start the next optimization cycle
-    {
-      std::unique_lock<std::mutex> lock(optimization_requested_mutex_);
-      optimization_requested_.wait(lock, [this]{ return optimization_request_ || !ros::ok(); });  // NOLINT
-    }
-    // If a shutdown is requested, exit now.
-    if (!ros::ok())
-    {
-      break;
-    }
-    // Copy the combined transaction so it can be shared with all the plugins
-    fuse_core::Transaction::ConstSharedPtr const_transaction;
-    {
-      std::lock_guard<std::mutex> lock(combined_transaction_mutex_);
-      const_transaction = std::move(combined_transaction_);
-      combined_transaction_ = fuse_core::Transaction::make_shared();
-    }
-    // Update the graph
-    graph_->update(*const_transaction);
-    // Optimize the entire graph
-    graph_->optimize(params_.solver_options);
-    // Make a copy of the graph to share
-    fuse_core::Graph::ConstSharedPtr const_graph = graph_->clone();
-    // Optimization is complete. Notify all the things about the graph changes.
-    notify(const_transaction, const_graph);
-    // Clear the request flag now that this optimization cycle is complete
-    optimization_request_ = false;
-  }
+  pending_transactions_.clear();
+  combined_transaction_ = fuse_core::Transaction::make_shared();
+  graph_->clear();
+  started_ = false;
 }
 
-void BatchOptimizer::optimizerTimerCallback(const ros::TimerEvent& /*event*/)
+const fuse_core::Graph& BatchOptimizer::graph() const
 {
-  // If an "ignition" transaction hasn't been received, then we can't do anything yet.
-  if (!started_)
-  {
-    return;
-  }
-  // Attempt to generate motion models for any queued transactions
-  applyMotionModelsToQueue();
-  // Check if there is any pending information to be applied to the graph.
-  {
-    std::lock_guard<std::mutex> lock(combined_transaction_mutex_);
-    optimization_request_ = !combined_transaction_->empty();
-  }
-  // If there is some pending work, trigger the next optimization cycle.
-  // If the optimizer has not completed the previous optimization cycle, then it
-  // will not be waiting on the condition variable signal, so nothing will happen.
-  if (optimization_request_)
-  {
-    optimization_requested_.notify_one();
-  }
-}
-
-void BatchOptimizer::transactionCallback(
-  const std::string& sensor_name,
-  fuse_core::Transaction::SharedPtr transaction)
-{
-  // Add the new transaction to the pending set
-  // Either we haven't "started" yet and we want to keep a short history of transactions around
-  // Or we have "started" already, and the new transaction is after the starting time.
-  fuse_core::Timestamp transaction_time = transaction->stamp();
-  fuse_core::Timestamp last_pending_time(0);
-  if (!started_ || transaction_time >= start_time_)
-  {
-    std::lock_guard<std::mutex> lock(pending_transactions_mutex_);
-    pending_transactions_.emplace(transaction_time, TransactionQueueElement(sensor_name, std::move(transaction)));
-    last_pending_time = pending_transactions_.rbegin()->first;
-  }
-  // If we haven't "started" yet...
-  if (!started_)
-  {
-    // Check if this transaction "starts" the system
-    if (sensor_models_.at(sensor_name).ignition)
-    {
-      started_ = true;
-      start_time_ = transaction_time;
-    }
-    // Purge old transactions from the pending queue
-    fuse_core::Timestamp purge_time(0);
-    if (started_)
-    {
-      purge_time = start_time_;
-    }
-    else if (fuse_core::Timestamp(0) + params_.transaction_timeout < last_pending_time)  // prevent a bad subtraction
-    {
-      purge_time = last_pending_time - params_.transaction_timeout;
-    }
-    std::lock_guard<std::mutex> lock(pending_transactions_mutex_);
-    auto purge_iter = pending_transactions_.lower_bound(purge_time);
-    pending_transactions_.erase(pending_transactions_.begin(), purge_iter);
-  }
-  // If we have "started", attempt to process any pending transactions
-  if (started_)
-  {
-    applyMotionModelsToQueue();
-  }
-}
-
-void BatchOptimizer::setDiagnostics(diagnostic_updater::DiagnosticStatusWrapper& status)
-{
-  status.summary(diagnostic_msgs::DiagnosticStatus::OK, "BatchOptimizer");
-
-  Optimizer::setDiagnostics(status);
-
-  status.add("Started", started_);
-  {
-    std::lock_guard<std::mutex> lock(pending_transactions_mutex_);
-    status.add("Pending Transactions", pending_transactions_.size());
-  }
+  return *graph_;
 }
 
 }  // namespace fuse_optimizers

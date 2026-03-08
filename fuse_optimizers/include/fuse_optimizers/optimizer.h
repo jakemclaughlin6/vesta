@@ -34,227 +34,60 @@
 #ifndef FUSE_OPTIMIZERS_OPTIMIZER_H
 #define FUSE_OPTIMIZERS_OPTIMIZER_H
 
-#include <diagnostic_updater/diagnostic_updater.h>
 #include <fuse_core/graph.h>
-#include <fuse_core/fuse_macros.h>
-#include <fuse_core/motion_model.h>
-#include <fuse_core/publisher.h>
-#include <fuse_core/sensor_model.h>
 #include <fuse_core/transaction.h>
-#include <pluginlib/class_loader.hpp>
-#include <ros/ros.h>
-
+#include <ceres/solver.h>
+#include <memory>
 #include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
 
 namespace fuse_optimizers
 {
 
 /**
- * @brief A base class that can be used to build fuse optimizer nodes
+ * @brief A simple abstract base class for fuse optimizers
  *
  * An optimizer implements the basic fuse information flow contract:
- *  - Sensors push information into the optimizer using the transaction callback
- *  - The optimizer requests motion models be created between each sensor timestamp
- *  - The optimizer computes the optimal variable values
- *  - The optimizer provides access to the optimal variable values to the publishers
+ *  - Clients push information into the optimizer using addTransaction()
+ *  - The optimizer computes the optimal variable values via optimize()
+ *  - The optimizer provides access to the optimal variable values via graph()
  *
- * Optimizer implementations are not required to use this base class; it is simply provided as a convenience
- * class that implements the mechanics of the information flow contract. Derived classes can then concentrate
- * on the details of when and what to optimize.
- *
- * This base class provides functions for:
- *  - Loading the set of motion model plugins as configured on the parameter server
- *  - Loading the set of publisher plugins as configured on the parameter server
- *  - Loading the set of sensor plugins as configured on the parameter server
- *  - Generating the correct motion model constraints for each received sensor transaction
- *  - Sending updated variable information to the sensors, motion models, and publishers
- *
- * Parameter Server format:
- * @code{.yaml}
- * motion_models:
- *  - name: string
- *    type: string
- *  - ...
- * sensor_models:
- *  - name: string
- *    type: string
- *    motion_models: [name1, name2, ...]
- *  - ...
- * publishers:
- *  - name: string
- *    type: string
- *  - ...
- * @endcode
+ * This is a pure library interface with no ROS dependencies, no internal threads,
+ * and no plugin loading. The client is responsible for calling optimize() when desired.
  */
 class Optimizer
 {
 public:
-  FUSE_SMART_PTR_ALIASES_ONLY(Optimizer);
+  virtual ~Optimizer() = default;
 
   /**
-   * @brief Constructor
-   *
-   * @param[in] graph               The derived graph object. This allows different graph implementations to be used
-   *                                with the same optimizer code.
-   * @param[in] node_handle         A node handle in the global namespace
-   * @param[in] private_node_handle A node handle in the node's private namespace
-   */
-  Optimizer(
-    fuse_core::Graph::UniquePtr graph,
-    const ros::NodeHandle& node_handle = ros::NodeHandle(),
-    const ros::NodeHandle& private_node_handle = ros::NodeHandle("~"));
-
-  /**
-   * @brief Destructor
-   */
-  virtual ~Optimizer();
-
-protected:
-  // The unique ptrs returned by pluginlib have a custom deleter. This makes specifying the type rather annoying
-  // as it is not equivalent to Class::UniquePtr
-  using MotionModelUniquePtr = class_loader::ClassLoader::UniquePtr<fuse_core::MotionModel>;
-  using MotionModels = std::unordered_map<std::string, MotionModelUniquePtr>;
-  using PublisherUniquePtr = class_loader::ClassLoader::UniquePtr<fuse_core::Publisher>;
-  using Publishers = std::unordered_map<std::string, PublisherUniquePtr>;
-  using SensorModelUniquePtr = class_loader::ClassLoader::UniquePtr<fuse_core::SensorModel>;
-
-  /**
-   * @brief A struct to hold the sensor model and whether it is an ignition one or not
-   */
-  struct SensorModelInfo
-  {
-    /**
-     * @brief Constructor
-     *
-     * @param[in] model The sensor model
-     * @param[in] ignition Whether this sensor model is an ignition one or not
-     */
-    SensorModelInfo(SensorModelUniquePtr model, const bool ignition) : model(std::move(model)), ignition(ignition)
-    {
-    }
-
-    SensorModelUniquePtr model;  //!< The sensor model
-    bool ignition;               //!< Whether this sensor model is an ignition one or not
-  };
-
-  using SensorModels = std::unordered_map<std::string, SensorModelInfo>;
-
-  // Some internal book-keeping data structures
-  using MotionModelGroup = std::vector<std::string>;  //!< A set of motion model names
-  using AssociatedMotionModels = std::unordered_map<std::string, MotionModelGroup>;  //!< sensor -> motion models group
-
-  AssociatedMotionModels associated_motion_models_;  //!< Tracks what motion models should be used for each sensor
-  fuse_core::Graph::UniquePtr graph_;  //!< The graph object that holds all variables and constraints
-
-  // Ordering ROS objects with callbacks last
-  ros::NodeHandle node_handle_;  //!< Node handle in the public namespace for subscribing and advertising
-  ros::NodeHandle private_node_handle_;  //!< Node handle in the private namespace for reading configuration settings
-  pluginlib::ClassLoader<fuse_core::MotionModel> motion_model_loader_;  //!< Pluginlib class loader for MotionModels
-  MotionModels motion_models_;  //!< The set of motion models, addressable by name
-  pluginlib::ClassLoader<fuse_core::Publisher> publisher_loader_;  //!< Pluginlib class loader for Publishers
-  Publishers publishers_;  //!< The set of publishers to execute after every graph optimization
-  pluginlib::ClassLoader<fuse_core::SensorModel> sensor_model_loader_;  //!< Pluginlib class loader for SensorModels
-  SensorModels sensor_models_;  //!< The set of sensor models, addressable by name
-
-  diagnostic_updater::Updater diagnostic_updater_;  //!< Diagnostic updater
-  ros::Timer diagnostic_updater_timer_;  //!< Diagnostic updater timer
-  double diagnostic_updater_timer_period_{ 1.0 };  //!< Diagnostic updater timer period in seconds
-
-  /**
-   * @brief Callback fired every time a SensorModel plugin creates a new transaction
+   * @brief Add a transaction to the optimizer
    *
    * @param[in] sensor_name The name of the sensor that produced the Transaction
-   * @param[in] stamps      Any timestamps associated with the added variables. These are sent to the motion models
-   *                        to generate connected constraints.
-   * @param[in] transaction The populated Transaction object created by the loaded SensorModel plugin
+   * @param[in] transaction The populated Transaction object
    */
-  virtual void transactionCallback(
-    const std::string& sensor_name,
-    fuse_core::Transaction::SharedPtr transaction) = 0;
+  virtual void addTransaction(const std::string& sensor_name,
+                              fuse_core::Transaction::SharedPtr transaction) = 0;
 
   /**
-   * @brief Configure the motion model plugins specified on the parameter server
+   * @brief Run the optimization
    *
-   * Will throw if the parameter server configuration is invalid.
-   */
-  void loadMotionModels();
-
-  /**
-   * @brief Configure the publisher plugins specified on the parameter server
+   * Processes any pending transactions, applies them to the graph, and runs the Ceres solver.
    *
-   * Will throw if the parameter server configuration is invalid.
+   * @return The Ceres solver summary
    */
-  void loadPublishers();
+  virtual ceres::Solver::Summary optimize() = 0;
 
   /**
-   * @brief Configure the sensor model plugins specified on the parameter server
+   * @brief Reset the optimizer to its initial state
+   */
+  virtual void reset() = 0;
+
+  /**
+   * @brief Read-only access to the current graph
    *
-   * Will throw if the parameter server configuration is invalid.
+   * @return A const reference to the graph
    */
-  void loadSensorModels();
-
-  /**
-   * @brief Given a transaction and some timestamps, augment the transaction with constraints from all associated
-   * motion models.
-   *
-   * If no timestamps are provided, or no motion models are associated with this sensor, the transaction is left
-   * unmodified. If an associated motion model is unavailable, this will throw an exception.
-   *
-   * @param[in]  name        The name of the sensor that produced the Transaction
-   * @param[in]  timestamps  Any timestamps associated with the added variables. These are sent to the motion models
-   *                         to generate connected constraints.
-   * @param[out] transaction The Transaction object will be augmented with constraints and variables from the motion
-   *                         models
-   * @return                 Flag indicating if all motion model constraints were successfully generated
-   */
-  bool applyMotionModels(
-    const std::string& sensor_name,
-    fuse_core::Transaction& transaction) const;
-
-  /**
-   * @brief Send the sensors, motion models, and publishers updated graph information
-   *
-   * @param[in] transaction A read-only pointer to a transaction containing all recent additions and removals
-   * @param[in] graph       A read-only pointer to the graph object
-   */
-  void notify(
-    fuse_core::Transaction::ConstSharedPtr transaction,
-    fuse_core::Graph::ConstSharedPtr graph);
-
-   /**
-   * @brief Inject a transaction callback function into the global callback queue
-   *
-   * @param[in] sensor_name The name of the sensor that produced the Transaction
-   * @param[in] transaction The populated Transaction object created by the loaded SensorModel plugin
-   */
-  void injectCallback(
-    const std::string& sensor_name,
-    fuse_core::Transaction::SharedPtr transaction);
-
-  /**
-   * @brief Clear all of the callbacks inserted into the callback queue by the injectCallback() method
-   */
-  void clearCallbacks();
-
-  /**
-   * @brief Start all configured plugins (motion models, publishers, and sensor models)
-   */
-  void startPlugins();
-
-  /**
-   * @brief Stop all configured plugins (motion models, publishers, and sensor models)
-   */
-  void stopPlugins();
-
-  /**
-   * @brief Update and publish diagnotics
-   * @param[in] status The diagnostic status
-   */
-  virtual void setDiagnostics(diagnostic_updater::DiagnosticStatusWrapper& status);
+  virtual const fuse_core::Graph& graph() const = 0;
 };
 
 }  // namespace fuse_optimizers
