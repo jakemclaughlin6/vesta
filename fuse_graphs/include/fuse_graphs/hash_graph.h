@@ -37,6 +37,7 @@
 #include <fuse_core/constraint.h>
 #include <fuse_core/graph.h>
 #include <fuse_core/fuse_macros.h>
+#include <fuse_core/timestamp.h>
 #include <fuse_core/serialization.h>
 #include <fuse_core/uuid.h>
 #include <fuse_core/variable.h>
@@ -329,7 +330,7 @@ public:
    * @return            A Ceres Solver Summary structure containing information about the optimization process
    */
   ceres::Solver::Summary optimizeFor(
-    const ros::Duration& max_optimization_time,
+    const fuse_core::Duration& max_optimization_time,
     const ceres::Solver::Options& options = ceres::Solver::Options()) override;
 
   /**

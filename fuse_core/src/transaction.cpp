@@ -36,7 +36,7 @@
 #include <fuse_core/constraint.h>
 #include <fuse_core/uuid.h>
 #include <fuse_core/variable.h>
-#include <ros/time.h>
+#include <fuse_core/timestamp.h>
 
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/range/empty.hpp>
@@ -49,7 +49,7 @@
 namespace fuse_core
 {
 
-const ros::Time& Transaction::minStamp() const
+const fuse_core::Timestamp& Transaction::minStamp() const
 {
   if (involved_stamps_.empty())
   {
@@ -61,7 +61,7 @@ const ros::Time& Transaction::minStamp() const
   }
 }
 
-const ros::Time& Transaction::maxStamp() const
+const fuse_core::Timestamp& Transaction::maxStamp() const
 {
   if (involved_stamps_.empty())
   {
@@ -73,7 +73,7 @@ const ros::Time& Transaction::maxStamp() const
   }
 }
 
-void Transaction::addInvolvedStamp(const ros::Time& stamp)
+void Transaction::addInvolvedStamp(const fuse_core::Timestamp& stamp)
 {
   involved_stamps_.insert(stamp);
 }

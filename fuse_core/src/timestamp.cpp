@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2020, Clearpath Robotics
+ *  Copyright (c) 2024, Locus Robotics
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -31,48 +31,9 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#include <fuse_core/util.h>
+#include <fuse_core/timestamp.h>
 
-#include <gtest/gtest.h>
+#include <cstdint>
+#include <limits>
 
-#include <numeric>
-#include <string>
-
-TEST(Util, wrapAngle2D)
-{
-  // Wrap angle already in [-Pi, +Pi) range
-  {
-    const double angle = 0.5;
-    EXPECT_EQ(angle, fuse_core::wrapAngle2D(angle));
-  }
-
-  // Wrap angle equal to +Pi
-  {
-    const double angle = M_PI;
-    EXPECT_EQ(-angle, fuse_core::wrapAngle2D(angle));
-  }
-
-  // Wrap angle equal to -Pi
-  {
-    const double angle = -M_PI;
-    EXPECT_EQ(angle, fuse_core::wrapAngle2D(angle));
-  }
-
-  // Wrap angle greater than +Pi
-  {
-    const double angle = 0.5;
-    EXPECT_EQ(angle, fuse_core::wrapAngle2D(angle + 3.0 * 2.0 * M_PI));
-  }
-
-  // Wrap angle smaller than -Pi
-  {
-    const double angle = 0.5;
-    EXPECT_EQ(angle, fuse_core::wrapAngle2D(angle - 3.0 * 2.0 * M_PI));
-  }
-}
-
-int main(int argc, char** argv)
-{
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
+const fuse_core::Duration fuse_core::Duration::MAX{std::numeric_limits<int64_t>::max()};

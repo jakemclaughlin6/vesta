@@ -36,6 +36,7 @@
 
 #include <fuse_core/eigen.h>
 #include <fuse_core/loss_loader.h>
+#include <fuse_core/timestamp.h>
 
 #include <ros/node_handle.h>
 
@@ -107,6 +108,17 @@ inline void getPositiveParam(const ros::NodeHandle& node_handle, const std::stri
   double default_value_sec = default_value.toSec();
   getPositiveParam(node_handle, parameter_name, default_value_sec, strict);
   default_value.fromSec(default_value_sec);
+}
+
+/**
+ * @brief Helper function that loads positive fuse_core::Duration values from the parameter server
+ */
+inline void getPositiveParam(const ros::NodeHandle& node_handle, const std::string& parameter_name,
+                             fuse_core::Duration& default_value, const bool strict = true)
+{
+  double default_value_sec = default_value.toSec();
+  getPositiveParam(node_handle, parameter_name, default_value_sec, strict);
+  default_value = fuse_core::Duration::fromSec(default_value_sec);
 }
 
 /**

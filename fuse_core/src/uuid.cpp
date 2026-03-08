@@ -33,7 +33,7 @@
  */
 #include <fuse_core/uuid.h>
 
-#include <ros/time.h>
+#include <fuse_core/timestamp.h>
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -65,30 +65,24 @@ UUID generate()
   return uuid;
 }
 
-UUID generate(const std::string& namespace_string, const ros::Time& stamp)
+UUID generate(const std::string& namespace_string, const fuse_core::Timestamp& stamp)
 {
-  constexpr size_t buffer_size = sizeof(stamp.sec) + sizeof(stamp.nsec);
+  constexpr size_t buffer_size = sizeof(stamp.nanoseconds);
   std::array<unsigned char, buffer_size> buffer;
   auto iter = buffer.begin();
-  iter = std::copy(reinterpret_cast<const unsigned char*>(&stamp.sec),
-                   reinterpret_cast<const unsigned char*>(&stamp.sec) + sizeof(stamp.sec),
-                   iter);
-  iter = std::copy(reinterpret_cast<const unsigned char*>(&stamp.nsec),
-                   reinterpret_cast<const unsigned char*>(&stamp.nsec) + sizeof(stamp.nsec),
+  iter = std::copy(reinterpret_cast<const unsigned char*>(&stamp.nanoseconds),
+                   reinterpret_cast<const unsigned char*>(&stamp.nanoseconds) + sizeof(stamp.nanoseconds),
                    iter);
   return generate(namespace_string, buffer.data(), buffer.size());
 }
 
-UUID generate(const std::string& namespace_string, const ros::Time& stamp, const UUID& id)
+UUID generate(const std::string& namespace_string, const fuse_core::Timestamp& stamp, const UUID& id)
 {
-  constexpr size_t buffer_size = sizeof(stamp.sec) + sizeof(stamp.nsec) + UUID::static_size();
+  constexpr size_t buffer_size = sizeof(stamp.nanoseconds) + UUID::static_size();
   std::array<unsigned char, buffer_size> buffer;
   auto iter = buffer.begin();
-  iter = std::copy(reinterpret_cast<const unsigned char*>(&stamp.sec),
-                   reinterpret_cast<const unsigned char*>(&stamp.sec) + sizeof(stamp.sec),
-                   iter);
-  iter = std::copy(reinterpret_cast<const unsigned char*>(&stamp.nsec),
-                   reinterpret_cast<const unsigned char*>(&stamp.nsec) + sizeof(stamp.nsec),
+  iter = std::copy(reinterpret_cast<const unsigned char*>(&stamp.nanoseconds),
+                   reinterpret_cast<const unsigned char*>(&stamp.nanoseconds) + sizeof(stamp.nanoseconds),
                    iter);
   iter = std::copy(id.begin(),
                    id.end(),

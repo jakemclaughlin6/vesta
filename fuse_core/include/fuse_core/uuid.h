@@ -34,7 +34,7 @@
 #ifndef FUSE_CORE_UUID_H
 #define FUSE_CORE_UUID_H
 
-#include <ros/time.h>
+#include <fuse_core/timestamp.h>
 
 #include <boost/functional/hash.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -147,27 +147,27 @@ namespace uuid
   }
 
   /**
-   * @brief Generate a UUID from a namespace string and a ros timestamp
+   * @brief Generate a UUID from a namespace string and a timestamp
    *
    * Every unique timestamp will generate a unique UUID
    *
    * @param[in] namespace_string A namespace or parent string used to generate non-overlapping UUIDs
-   * @param[in] stamp            A ROS::Time timestamp
+   * @param[in] stamp            A fuse_core::Timestamp
    * @return                     A repeatable UUID specific to the provided namespace and timestamp
    */
-  UUID generate(const std::string& namespace_string, const ros::Time& stamp);
+  UUID generate(const std::string& namespace_string, const fuse_core::Timestamp& stamp);
 
   /**
-   * @brief Generate a UUID from a namespace string, a ros timestamp, and an additional id
+   * @brief Generate a UUID from a namespace string, a timestamp, and an additional id
    *
    * Every unique timestamp and id pair will generate a unique UUID
    *
    * @param[in] namespace_string A namespace or parent string used to generate non-overlapping UUIDs
-   * @param[in] stamp            A ROS::Time timestamp
+   * @param[in] stamp            A fuse_core::Timestamp
    * @param[in] id               A UUID
    * @return                     A repeatable UUID specific to the provided namespace and timestamp
    */
-  UUID generate(const std::string& namespace_string, const ros::Time& stamp, const UUID& id);
+  UUID generate(const std::string& namespace_string, const fuse_core::Timestamp& stamp, const UUID& id);
 
     /**
    * @brief Generate a UUID from a namespace string and a user provided id

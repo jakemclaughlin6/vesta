@@ -32,33 +32,3 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <fuse_variables/stamped.h>
-
-#include <fuse_core/uuid.h>
-#include <ros/node_handle.h>
-
-#include <string>
-
-
-namespace fuse_variables
-{
-
-fuse_core::UUID loadDeviceId(const ros::NodeHandle& node_handle)
-{
-  fuse_core::UUID device_id;
-  std::string device_str;
-  if (node_handle.getParam("device_id", device_str))
-  {
-    device_id = fuse_core::uuid::from_string(device_str);
-  }
-  else if (node_handle.getParam("device_name", device_str))
-  {
-    device_id = fuse_core::uuid::generate(device_str);
-  }
-  else
-  {
-    device_id = fuse_core::uuid::NIL;
-  }
-  return device_id;
-}
-
-}  // namespace fuse_variables

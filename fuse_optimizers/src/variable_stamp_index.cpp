@@ -33,11 +33,10 @@
  */
 #include <fuse_optimizers/variable_stamp_index.h>
 
+#include <fuse_core/timestamp.h>
 #include <fuse_core/transaction.h>
 #include <fuse_core/uuid.h>
 #include <fuse_variables/stamped.h>
-
-#include <ros/time.h>
 
 #include <algorithm>
 #include <stdexcept>
@@ -45,7 +44,7 @@
 
 namespace fuse_optimizers
 {
-ros::Time VariableStampIndex::currentStamp() const
+fuse_core::Timestamp VariableStampIndex::currentStamp() const
 {
   auto compare_stamps = [](const StampedMap::value_type& lhs, const StampedMap::value_type& rhs)
   {
@@ -58,7 +57,7 @@ ros::Time VariableStampIndex::currentStamp() const
   }
   else
   {
-    return ros::Time(0, 0);
+    return fuse_core::Timestamp(0);
   }
 }
 

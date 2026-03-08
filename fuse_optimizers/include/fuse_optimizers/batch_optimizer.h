@@ -36,6 +36,7 @@
 
 #include <fuse_core/graph.h>
 #include <fuse_core/fuse_macros.h>
+#include <fuse_core/timestamp.h>
 #include <fuse_core/transaction.h>
 #include <fuse_optimizers/batch_optimizer_params.h>
 #include <fuse_optimizers/optimizer.h>
@@ -140,7 +141,7 @@ protected:
    * the computer will run out of memory before the insertion time grows large enough to surpass the sensor update
    * period.
    */
-  using TransactionQueue = std::multimap<ros::Time, TransactionQueueElement>;
+  using TransactionQueue = std::multimap<fuse_core::Timestamp, TransactionQueueElement>;
 
   fuse_core::Transaction::SharedPtr combined_transaction_;  //!< Transaction used aggregate constraints and variables
                                                             //!< from multiple sensors and motions models before being
@@ -157,7 +158,7 @@ protected:
                                            //!< optimizer yet. Transactions are added by the main thread, and removed
                                            //!< and processed by the optimization thread.
   std::mutex pending_transactions_mutex_;  //!< Synchronize modification of the pending_transactions_ container
-  ros::Time start_time_;  //!< The timestamp of the first ignition sensor transaction
+  fuse_core::Timestamp start_time_;  //!< The timestamp of the first ignition sensor transaction
   bool started_;  //!< Flag indicating the optimizer is ready/has received a transaction from an ignition sensor
 
   /**

@@ -426,14 +426,14 @@ ceres::Solver::Summary HashGraph::optimize(const ceres::Solver::Options& options
 }
 
 ceres::Solver::Summary HashGraph::optimizeFor(
-  const ros::Duration& max_optimization_time,
+  const fuse_core::Duration& max_optimization_time,
   const ceres::Solver::Options& options)
 {
-  auto start = ros::Time::now();
+  auto start = fuse_core::Timestamp::now();
   // Construct the ceres::Problem object from scratch
   ceres::Problem problem(problem_options_);
   createProblem(problem);
-  auto created_problem = ros::Time::now();
+  auto created_problem = fuse_core::Timestamp::now();
   // Modify the options to enforce the maximum time
   auto remaining = max_optimization_time - (created_problem - start);
   auto time_constrained_options = options;
