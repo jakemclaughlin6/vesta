@@ -36,9 +36,8 @@
 
 #include <fuse_core/uuid.h>
 
-#include <boost/bimap/bimap.hpp>
-#include <boost/bimap/unordered_set_of.hpp>
-#include <boost/bimap/vector_of.hpp>
+#include <unordered_map>
+#include <vector>
 
 
 namespace fuse_constraints
@@ -150,9 +149,8 @@ public:
   unsigned int at(const fuse_core::UUID& uuid) const;
 
 private:
-  using UuidOrderMapping = boost::bimaps::bimap<boost::bimaps::vector_of<unsigned int>,
-                                                boost::bimaps::unordered_set_of<fuse_core::UUID>>;
-  UuidOrderMapping order_;  //!< Collection that contains the Index<-->UUID mapping
+  std::vector<fuse_core::UUID> index_to_uuid_;
+  std::unordered_map<fuse_core::UUID, unsigned int> uuid_to_index_;
 };
 
 template <typename UuidConstIterator>
@@ -160,7 +158,7 @@ UuidOrdering::UuidOrdering(UuidConstIterator first, UuidConstIterator last)
 {
   for (; first != last; ++first)
   {
-    order_.insert(order_.end(), UuidOrderMapping::value_type(order_.size(), *first));
+    push_back(*first);
   }
 }
 

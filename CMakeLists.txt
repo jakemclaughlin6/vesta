@@ -18,6 +18,11 @@ pkg_check_modules(GLOG REQUIRED libglog)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/fuse_constraints/cmake)
 find_package(SuiteSparse REQUIRED COMPONENTS CCOLAMD)
 
+# Testing - must be before add_subdirectory for tests to register
+if(BUILD_TESTING)
+  enable_testing()
+endif()
+
 # Add sub-packages in dependency order
 add_subdirectory(fuse_core)
 add_subdirectory(fuse_variables)
@@ -25,8 +30,3 @@ add_subdirectory(fuse_loss)
 add_subdirectory(fuse_graphs)
 add_subdirectory(fuse_constraints)
 add_subdirectory(fuse_optimizers)
-
-# Testing
-if(BUILD_TESTING)
-  enable_testing()
-endif()

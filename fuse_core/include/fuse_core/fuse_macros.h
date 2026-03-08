@@ -59,9 +59,6 @@
 #include <utility>
 #include <string>
 
-// Required by __MAKE_SHARED_ALIGNED_DEFINITION, that uses Eigen::aligned_allocator<T>().
-#include <Eigen/Core>
-
 /**
  * Creates a custom new() implementation that ensures memory is allocated with proper byte alignment. This should
  * be added to the public section of classes or structs that contain fixed-sized vectorable Eigen objects.
@@ -71,11 +68,7 @@
  * This function is called internally by the SMART_PTR_DEFINITIONS_WITH_EIGEN below. You only need to call this
  * function manually if the class or struct is not adding the smart pointer definitions.
  */
-#if __cpp_aligned_new
-  #define FUSE_MAKE_ALIGNED_OPERATOR_NEW()
-#else
-  #define FUSE_MAKE_ALIGNED_OPERATOR_NEW() EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-#endif
+#define FUSE_MAKE_ALIGNED_OPERATOR_NEW()
 
 /**
  * Defines smart pointer aliases and static functions for a typical class.
@@ -98,18 +91,8 @@
  *
  * Use in the public section of the class.
  */
-#if __cpp_aligned_new
-  #define FUSE_SMART_PTR_DEFINITIONS_WITH_EIGEN(...) \
-    FUSE_SMART_PTR_DEFINITIONS(__VA_ARGS__)
-#else
-  #define FUSE_SMART_PTR_DEFINITIONS_WITH_EIGEN(...) \
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW \
-    __FUSE_SHARED_PTR_ALIAS(__VA_ARGS__) \
-    __FUSE_MAKE_SHARED_ALIGNED_DEFINITION(__VA_ARGS__) \
-    __FUSE_WEAK_PTR_ALIAS(__VA_ARGS__) \
-    __FUSE_UNIQUE_PTR_ALIAS(__VA_ARGS__) \
-    __FUSE_MAKE_UNIQUE_DEFINITION(__VA_ARGS__)
-#endif
+#define FUSE_SMART_PTR_DEFINITIONS_WITH_EIGEN(...) \
+  FUSE_SMART_PTR_DEFINITIONS(__VA_ARGS__)
 
 /**
  * Defines smart pointers aliases only for abstract classes.
@@ -137,14 +120,6 @@
     return std::make_shared<__VA_ARGS__>(std::forward<Args>(args) ...); \
   }
 
-#define __FUSE_MAKE_SHARED_ALIGNED_DEFINITION(...) \
-  template<typename ... Args> \
-  static std::shared_ptr<__VA_ARGS__> \
-  make_shared(Args && ... args) \
-  { \
-    return std::allocate_shared<__VA_ARGS__>(Eigen::aligned_allocator<__VA_ARGS__>(), std::forward<Args>(args) ...); \
-  }
-
 #define __FUSE_WEAK_PTR_ALIAS(...) \
   using WeakPtr = std::weak_ptr<__VA_ARGS__>; \
   using ConstWeakPtr = std::weak_ptr<const __VA_ARGS__>;
@@ -152,22 +127,12 @@
 #define __FUSE_UNIQUE_PTR_ALIAS(...) \
   using UniquePtr = std::unique_ptr<__VA_ARGS__>;
 
-#if __cplusplus >= 201402L
-  #define __FUSE_MAKE_UNIQUE_DEFINITION(...) \
+#define __FUSE_MAKE_UNIQUE_DEFINITION(...) \
   template<typename ... Args> \
   static std::unique_ptr<__VA_ARGS__> \
   make_unique(Args && ... args) \
   { \
     return std::make_unique<__VA_ARGS__>(std::forward<Args>(args) ...); \
   }
-#else
-  #define __FUSE_MAKE_UNIQUE_DEFINITION(...) \
-  template<typename ... Args> \
-  static std::unique_ptr<__VA_ARGS__> \
-  make_unique(Args && ... args) \
-  { \
-    return std::unique_ptr<__VA_ARGS__>(new __VA_ARGS__(std::forward<Args>(args) ...)); \
-  }
-#endif
 
 #endif  // FUSE_CORE_FUSE_MACROS_H

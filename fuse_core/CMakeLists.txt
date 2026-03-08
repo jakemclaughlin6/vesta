@@ -50,7 +50,7 @@ if(BUILD_TESTING)
 
   fuse_core_add_test(test_constraint)
   fuse_core_add_test(test_eigen)
-  fuse_core_add_test(test_local_parameterization)
+  fuse_core_add_test(test_manifold)
   fuse_core_add_test(test_loss)
   fuse_core_add_test(test_message_buffer)
   fuse_core_add_test(test_timestamp_manager)

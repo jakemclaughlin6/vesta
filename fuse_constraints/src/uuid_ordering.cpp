@@ -45,49 +45,54 @@ UuidOrdering::UuidOrdering(std::initializer_list<fuse_core::UUID> uuid_list) :
 
 bool UuidOrdering::empty() const
 {
-  return order_.empty();
+  return index_to_uuid_.empty();
 }
 
 size_t UuidOrdering::size() const
 {
-  return order_.size();
+  return index_to_uuid_.size();
 }
 
 bool UuidOrdering::exists(const unsigned int index) const
 {
-  return (index < order_.size());
+  return (index < index_to_uuid_.size());
 }
 
 bool UuidOrdering::exists(const fuse_core::UUID& uuid) const
 {
-  return (order_.right.find(uuid) != order_.right.end());
+  return (uuid_to_index_.count(uuid) > 0);
 }
 
 bool UuidOrdering::push_back(const fuse_core::UUID& uuid)
 {
-  auto result = order_.insert(order_.end(), UuidOrderMapping::value_type(order_.size(), uuid));
-  return result.second;
+  if (uuid_to_index_.count(uuid) > 0)
+  {
+    return false;
+  }
+  uuid_to_index_.emplace(uuid, static_cast<unsigned int>(index_to_uuid_.size()));
+  index_to_uuid_.push_back(uuid);
+  return true;
 }
 
 const fuse_core::UUID& UuidOrdering::operator[](const unsigned int index) const
 {
-  return order_.left[index].second;
+  return index_to_uuid_[index];
 }
 
 unsigned int UuidOrdering::operator[](const fuse_core::UUID& uuid)
 {
-  auto result = order_.insert(order_.end(), UuidOrderMapping::value_type(order_.size(), uuid));
-  return (*result.first).get_left();
+  push_back(uuid);
+  return uuid_to_index_[uuid];
 }
 
 const fuse_core::UUID& UuidOrdering::at(const unsigned int index) const
 {
-  return order_.left.at(index).second;
+  return index_to_uuid_.at(index);
 }
 
 unsigned int UuidOrdering::at(const fuse_core::UUID& uuid) const
 {
-  return order_.right.at(uuid);
+  return uuid_to_index_.at(uuid);
 }
 
 }  // namespace fuse_constraints
