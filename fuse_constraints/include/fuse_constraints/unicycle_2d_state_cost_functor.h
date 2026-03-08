@@ -31,22 +31,22 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef FUSE_MODELS_UNICYCLE_2D_STATE_COST_FUNCTOR_H
-#define FUSE_MODELS_UNICYCLE_2D_STATE_COST_FUNCTOR_H
+#ifndef FUSE_CONSTRAINTS_UNICYCLE_2D_STATE_COST_FUNCTOR_H
+#define FUSE_CONSTRAINTS_UNICYCLE_2D_STATE_COST_FUNCTOR_H
 
-#include <fuse_models/unicycle_2d_predict.h>
+#include <fuse_constraints/unicycle_2d_predict.h>
 
 #include <fuse_core/eigen.h>
 #include <fuse_core/fuse_macros.h>
 #include <fuse_core/util.h>
 
 
-namespace fuse_models
+namespace fuse_constraints
 {
 
 /**
  * @brief Create a cost function for a 2D state vector
- * 
+ *
  * The state vector includes the following quantities, given in this order:
  *   x position
  *   y position
@@ -70,7 +70,7 @@ namespace fuse_models
  *             ||    [  yaw_vel_t2 - proj(yaw_vel_t1) ] ||
  *             ||    [    x_acc_t2 - proj(x_acc_t1)   ] ||
  *             ||    [    y_acc_t2 - proj(y_acc_t1)   ] ||
- * 
+ *
  * where, the matrix A is fixed, the state variables are provided at two discrete time steps, and proj is a function
  * that projects the state variables from time t1 to time t2. In case the user is interested in implementing a cost
  * function of the form
@@ -184,6 +184,6 @@ bool Unicycle2DStateCostFunctor::operator()(
   return true;
 }
 
-}  // namespace fuse_models
+}  // namespace fuse_constraints
 
-#endif  // FUSE_MODELS_UNICYCLE_2D_STATE_COST_FUNCTOR_H
+#endif  // FUSE_CONSTRAINTS_UNICYCLE_2D_STATE_COST_FUNCTOR_H

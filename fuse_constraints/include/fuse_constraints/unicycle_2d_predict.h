@@ -31,18 +31,17 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef FUSE_MODELS_UNICYCLE_2D_PREDICT_H
-#define FUSE_MODELS_UNICYCLE_2D_PREDICT_H
+#ifndef FUSE_CONSTRAINTS_UNICYCLE_2D_PREDICT_H
+#define FUSE_CONSTRAINTS_UNICYCLE_2D_PREDICT_H
 
 #include <ceres/jet.h>
 #include <fuse_core/util.h>
 #include <fuse_core/eigen.h>
-#include <tf2_2d/tf2_2d.h>
 
 #include <array>
 
 
-namespace fuse_models
+namespace fuse_constraints
 {
 
 /**
@@ -280,146 +279,6 @@ inline void predict(
     acc_linear2[1]);
 }
 
-/**
- * @brief Given a state and time delta, predicts a new state
- * @param[in] pose1 - The first 2D pose
- * @param[in] vel_linear_1 - The first linear velocity
- * @param[in] vel_yaw1 - The first yaw velocity
- * @param[in] acc_linear1 - The first linear acceleration
- * @param[in] dt - The time delta across which to predict the state
- * @param[in] pose2 - The second 2D pose
- * @param[in] vel_linear_2 - The second linear velocity
- * @param[in] vel_yaw2 - The second yaw velocity
- * @param[in] acc_linear2 - The second linear acceleration
- * @param[in] jacobian - The jacobian wrt the state
- */
-inline void predict(
-  const tf2_2d::Transform& pose1,
-  const tf2_2d::Vector2& vel_linear1,
-  const double vel_yaw1,
-  const tf2_2d::Vector2& acc_linear1,
-  const double dt,
-  tf2_2d::Transform& pose2,
-  tf2_2d::Vector2& vel_linear2,
-  double& vel_yaw2,
-  tf2_2d::Vector2& acc_linear2,
-  fuse_core::Matrix8d& jacobian)
-{
-  double x_pred {};
-  double y_pred {};
-  double yaw_pred {};
-  double vel_linear_x_pred {};
-  double vel_linear_y_pred {};
-  double acc_linear_x_pred {};
-  double acc_linear_y_pred {};
+}  // namespace fuse_constraints
 
-  // fuse_core::Matrix8d is Eigen::RowMajor, so we cannot use pointers to the columns where each parameter block starts.
-  // Instead, we need to create a vector of Eigen::RowMajor matrices per parameter block and later reconstruct the
-  // fuse_core::Matrix8d with the full jacobian.
-  // The parameter blocks have the following sizes: {position1: 2, yaw1: 1, vel_linear1: 2, vel_yaw1: 1, acc_linear1: 2}
-  static constexpr size_t num_residuals{ 8 };
-  static constexpr size_t num_parameter_blocks{ 5 };
-  static const std::array<size_t, num_parameter_blocks> block_sizes = {2, 1, 2, 1, 2};
-
-  std::array<fuse_core::MatrixXd, num_parameter_blocks> J;
-  std::array<double*, num_parameter_blocks> jacobians;
-
-  for (size_t i = 0; i < num_parameter_blocks; ++i)
-  {
-    J[i].resize(num_residuals, block_sizes[i]);
-    jacobians[i] = J[i].data();
-  }
-
-  predict(
-    pose1.x(),
-    pose1.y(),
-    pose1.yaw(),
-    vel_linear1.x(),
-    vel_linear1.y(),
-    vel_yaw1,
-    acc_linear1.x(),
-    acc_linear1.y(),
-    dt,
-    x_pred,
-    y_pred,
-    yaw_pred,
-    vel_linear_x_pred,
-    vel_linear_y_pred,
-    vel_yaw2,
-    acc_linear_x_pred,
-    acc_linear_y_pred,
-    jacobians.data());
-
-  jacobian << J[0], J[1], J[2], J[3], J[4];
-
-  pose2.setX(x_pred);
-  pose2.setY(y_pred);
-  pose2.setYaw(yaw_pred);
-  vel_linear2.setX(vel_linear_x_pred);
-  vel_linear2.setY(vel_linear_y_pred);
-  acc_linear2.setX(acc_linear_x_pred);
-  acc_linear2.setY(acc_linear_y_pred);
-}
-
-/**
- * @brief Given a state and time delta, predicts a new state
- * @param[in] pose1 - The first 2D pose
- * @param[in] vel_linear_1 - The first linear velocity
- * @param[in] vel_yaw1 - The first yaw velocity
- * @param[in] acc_linear1 - The first linear acceleration
- * @param[in] dt - The time delta across which to predict the state
- * @param[in] pose2 - The second 2D pose
- * @param[in] vel_linear_2 - The second linear velocity
- * @param[in] vel_yaw2 - The second yaw velocity
- * @param[in] acc_linear2 - The second linear acceleration
- */
-inline void predict(
-  const tf2_2d::Transform& pose1,
-  const tf2_2d::Vector2& vel_linear1,
-  const double vel_yaw1,
-  const tf2_2d::Vector2& acc_linear1,
-  const double dt,
-  tf2_2d::Transform& pose2,
-  tf2_2d::Vector2& vel_linear2,
-  double& vel_yaw2,
-  tf2_2d::Vector2& acc_linear2)
-{
-  double x_pred {};
-  double y_pred {};
-  double yaw_pred {};
-  double vel_linear_x_pred {};
-  double vel_linear_y_pred {};
-  double acc_linear_x_pred {};
-  double acc_linear_y_pred {};
-
-  predict(
-    pose1.x(),
-    pose1.y(),
-    pose1.yaw(),
-    vel_linear1.x(),
-    vel_linear1.y(),
-    vel_yaw1,
-    acc_linear1.x(),
-    acc_linear1.y(),
-    dt,
-    x_pred,
-    y_pred,
-    yaw_pred,
-    vel_linear_x_pred,
-    vel_linear_y_pred,
-    vel_yaw2,
-    acc_linear_x_pred,
-    acc_linear_y_pred);
-
-  pose2.setX(x_pred);
-  pose2.setY(y_pred);
-  pose2.setYaw(yaw_pred);
-  vel_linear2.setX(vel_linear_x_pred);
-  vel_linear2.setY(vel_linear_y_pred);
-  acc_linear2.setX(acc_linear_x_pred);
-  acc_linear2.setY(acc_linear_y_pred);
-}
-
-}  // namespace fuse_models
-
-#endif  // FUSE_MODELS_UNICYCLE_2D_PREDICT_H
+#endif  // FUSE_CONSTRAINTS_UNICYCLE_2D_PREDICT_H
