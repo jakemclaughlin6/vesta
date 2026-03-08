@@ -46,6 +46,7 @@
 #include <ceres/loss_function.h>
 
 #include <initializer_list>
+#include <iostream>
 #include <memory>
 #include <ostream>
 #include <string>

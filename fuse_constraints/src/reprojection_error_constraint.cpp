@@ -37,7 +37,6 @@
 #include <fuse_constraints/reprojection_error_constraint.h>
 #include <fuse_constraints/reprojection_error_cost_functor.h>
 
-#include <pluginlib/class_list_macros.hpp>
 
 #include <boost/serialization/export.hpp>
 #include <ceres/autodiff_cost_function.h>
@@ -85,4 +84,3 @@ ceres::CostFunction* ReprojectionErrorConstraint::costFunction() const
 }  // namespace fuse_constraints
 
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_constraints::ReprojectionErrorConstraint);
-PLUGINLIB_EXPORT_CLASS(fuse_constraints::ReprojectionErrorConstraint, fuse_core::Constraint);

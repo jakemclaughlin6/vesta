@@ -34,13 +34,9 @@
 #include <fuse_loss/fair_loss.h>
 #include <fuse_loss/loss_function.h>
 
-#include <pluginlib/class_list_macros.hpp>
-#include <ros/node_handle.h>
-
 #include <boost/serialization/export.hpp>
 
 #include <ostream>
-#include <string>
 
 
 namespace fuse_loss
@@ -48,13 +44,6 @@ namespace fuse_loss
 
 FairLoss::FairLoss(const double a) : a_(a)
 {
-}
-
-void FairLoss::initialize(const std::string& name)
-{
-  ros::NodeHandle private_node_handle(name);
-
-  private_node_handle.param("a", a_, a_);
 }
 
 void FairLoss::print(std::ostream& stream) const
@@ -71,4 +60,3 @@ ceres::LossFunction* FairLoss::lossFunction() const
 }  // namespace fuse_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_loss::FairLoss);
-PLUGINLIB_EXPORT_CLASS(fuse_loss::FairLoss, fuse_core::Loss);

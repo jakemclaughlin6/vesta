@@ -34,7 +34,7 @@
 #ifndef FUSE_VARIABLES_ORIENTATION_3D_STAMPED_H
 #define FUSE_VARIABLES_ORIENTATION_3D_STAMPED_H
 
-#include <fuse_core/local_parameterization.h>
+#include <fuse_core/manifold.h>
 #include <fuse_core/serialization.h>
 #include <fuse_core/util.h>
 #include <fuse_core/uuid.h>
@@ -55,13 +55,13 @@ namespace fuse_variables
 {
 
 /**
- * @brief A LocalParameterization class for 3D Orientations.
+ * @brief A Manifold class for 3D Orientations.
  *
  * 3D orientations add and subtract nonlinearly. Additionally, the typcial 3D orientation representation is a
- * quaternion, which has 4 degrees of freedom to parameterize a 3D space. This local parameterization uses the
+ * quaternion, which has 4 degrees of freedom to parameterize a 3D space. This manifold uses the
  * Rodrigues/angle-axis formulas to combine 3D rotations, along with the appropriate "analytic" derivatives.
  */
-class Orientation3DLocalParameterization : public fuse_core::LocalParameterization
+class Orientation3DManifold : public fuse_core::Manifold
 {
 public:
   /**
@@ -78,12 +78,12 @@ public:
     out[3] = -in[3];
   }
 
-  int GlobalSize() const override
+  int AmbientSize() const override
   {
     return 4;
   }
 
-  int LocalSize() const override
+  int TangentSize() const override
   {
     return 3;
   }
@@ -99,7 +99,7 @@ public:
     return true;
 }
 
-  bool ComputeJacobian(
+  bool PlusJacobian(
     const double* x,
     double* jacobian) const override
   {
@@ -127,7 +127,7 @@ public:
     return true;
   }
 
-  bool ComputeMinusJacobian(
+  bool MinusJacobian(
     const double* x,
     double* jacobian) const override
   {
@@ -154,7 +154,7 @@ private:
   template<class Archive>
   void serialize(Archive& archive, const unsigned int /* version */)
   {
-    archive & boost::serialization::base_object<fuse_core::LocalParameterization>(*this);
+    archive & boost::serialization::base_object<fuse_core::Manifold>(*this);
   }
 };
 
@@ -271,19 +271,19 @@ public:
   void print(std::ostream& stream = std::cout) const override;
 
   /**
-   * @brief Returns the number of elements of the local parameterization space.
+   * @brief Returns the number of elements of the tangent space.
    *
-   * While a quaternion has 4 parameters, a 3D rotation only has 3 degrees of freedom. Hence, the local
-   * parameterization space is only size 3.
+   * While a quaternion has 4 parameters, a 3D rotation only has 3 degrees of freedom. Hence, the tangent
+   * space is only size 3.
    */
-  size_t localSize() const override { return 3u; }
+  size_t tangentSize() const override { return 3u; }
 
   /**
-   * @brief Provides a Ceres local parameterization for the quaternion
+   * @brief Provides a Ceres manifold for the quaternion
    *
-   * @return A pointer to a local parameterization object that indicates how to "add" increments to the quaternion
+   * @return A pointer to a manifold object that indicates how to "add" increments to the quaternion
    */
-  fuse_core::LocalParameterization* localParameterization() const override;
+  fuse_core::Manifold* manifold() const override;
 
 private:
   // Allow Boost Serialization access to private methods
@@ -305,7 +305,7 @@ private:
 
 }  // namespace fuse_variables
 
-BOOST_CLASS_EXPORT_KEY(fuse_variables::Orientation3DLocalParameterization);
+BOOST_CLASS_EXPORT_KEY(fuse_variables::Orientation3DManifold);
 BOOST_CLASS_EXPORT_KEY(fuse_variables::Orientation3DStamped);
 
 #endif  // FUSE_VARIABLES_ORIENTATION_3D_STAMPED_H

@@ -36,7 +36,6 @@
 #include <fuse_core/uuid.h>
 #include <fuse_core/variable.h>
 #include <fuse_variables/point_3d_landmark.h>
-#include <pluginlib/class_list_macros.hpp>
 
 #include <boost/serialization/export.hpp>
 
@@ -50,4 +49,3 @@ Point3DFixedLandmark::Point3DFixedLandmark(const uint64_t& landmark_id) :
 }  // namespace fuse_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_variables::Point3DFixedLandmark);
-PLUGINLIB_EXPORT_CLASS(fuse_variables::Point3DFixedLandmark, fuse_core::Variable);

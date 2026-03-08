@@ -63,8 +63,8 @@ using fuse_variables::Position3DStamped;
 TEST(ReprojectionErrorConstraint, Constructor)
 {
   // Construct a constraint just to make sure it compiles.
-  Position3DStamped position_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
+  Position3DStamped position_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
   Point3DLandmark point(0);
   PinholeCameraFixed calibration_variable(0);
 
@@ -83,8 +83,8 @@ TEST(ReprojectionErrorConstraint, Constructor)
 TEST(ReprojectionErrorConstraint, Covariance)
 {
   // Verify the covariance <--> sqrt information conversions are correct
-  Position3DStamped position_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("mo"));
-  Orientation3DStamped orientation_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("mo"));
+  Position3DStamped position_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("mo"));
+  Orientation3DStamped orientation_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("mo"));
   Point3DLandmark point(0);
   PinholeCameraFixed calibration_variable(0);
 
@@ -114,12 +114,12 @@ TEST(ReprojectionErrorConstraint, Optimization)
 {
   // Optimize a single pose and single constraint, verify the expected value and covariance are generated.
   // Create the variables
-  auto position_variable = Position3DStamped::make_shared(ros::Time(1, 0), fuse_core::uuid::generate("spra"));
+  auto position_variable = Position3DStamped::make_shared(fuse_core::Timestamp(1, 0), fuse_core::uuid::generate("spra"));
   position_variable->x() = 1.5;
   position_variable->y() = -3.0;
   position_variable->z() = 10.0;
 
-  auto orientation_variable = Orientation3DStamped::make_shared(ros::Time(1, 0), fuse_core::uuid::generate("spra"));
+  auto orientation_variable = Orientation3DStamped::make_shared(fuse_core::Timestamp(1, 0), fuse_core::uuid::generate("spra"));
   orientation_variable->w() = 0.952;
   orientation_variable->x() = 0.038;
   orientation_variable->y() = -0.189;
@@ -159,11 +159,11 @@ TEST(ReprojectionErrorConstraint, Optimization)
 
   // Build the problem
   problem.AddParameterBlock(position_variable->data(), position_variable->size(),
-                            position_variable->localParameterization());
+                            position_variable->manifold());
   problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
-                            orientation_variable->localParameterization());
+                            orientation_variable->manifold());
   problem.AddParameterBlock(calibration_variable->data(), calibration_variable->size(),
-                            calibration_variable->localParameterization());
+                            calibration_variable->manifold());
 
   if (calibration_variable->holdConstant())
   {
@@ -177,7 +177,7 @@ TEST(ReprojectionErrorConstraint, Optimization)
                                                         *calibration_variable, means[i], cov);
 
     problem.AddParameterBlock(point_variables[i]->data(), point_variables[i]->size(),
-                        point_variables[i]->localParameterization());
+                        point_variables[i]->manifold());
 
     std::vector<double*> parameter_blocks;
     parameter_blocks.push_back(position_variable->data());
@@ -237,11 +237,11 @@ TEST(ReprojectionErrorConstraint, Optimization)
   // fuse_core::MatrixXd cov_pos_pos(position_variable->size(), position_variable->size());
   // covariance.GetCovarianceBlock(position_variable->data(), position_variable->data(), cov_pos_pos.data());
 
-  // fuse_core::MatrixXd cov_or_or(orientation_variable->localSize(), orientation_variable->localSize());
+  // fuse_core::MatrixXd cov_or_or(orientation_variable->tangentSize(), orientation_variable->tangentSize());
   // covariance.GetCovarianceBlockInTangentSpace(
   //   orientation_variable->data(), orientation_variable->data(), cov_or_or.data());
 
-  // fuse_core::MatrixXd cov_pos_or(position_variable->localSize(), orientation_variable->localSize());
+  // fuse_core::MatrixXd cov_pos_or(position_variable->tangentSize(), orientation_variable->tangentSize());
   // covariance.GetCovarianceBlockInTangentSpace(
   //   position_variable->data(), orientation_variable->data(), cov_pos_or.data());
 
@@ -265,8 +265,8 @@ TEST(ReprojectionErrorConstraint, Optimization)
 TEST(ReprojectionErrorConstraint, Serialization)
 {
   // Construct a constraint
-  Position3DStamped position_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
+  Position3DStamped position_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
 
   PinholeCameraFixed calibration_variable(0);
   calibration_variable.fx() = 638.34478759765620;

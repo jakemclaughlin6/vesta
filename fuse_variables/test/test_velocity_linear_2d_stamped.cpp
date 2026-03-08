@@ -126,7 +126,7 @@ TEST(VelocityLinear2DStamped, Optimization)
   problem.AddParameterBlock(
     velocity.data(),
     velocity.size(),
-    velocity.localParameterization());
+    velocity.manifold());
   std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(velocity.data());
   problem.AddResidualBlock(

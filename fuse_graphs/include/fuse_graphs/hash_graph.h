@@ -424,7 +424,7 @@ void serialize(Archive& archive, ceres::Problem::Options& options, const unsigne
   archive & options.cost_function_ownership;
   archive & options.disable_all_safety_checks;
   archive & options.enable_fast_removal;
-  archive & options.local_parameterization_ownership;
+  archive & options.manifold_ownership;
   archive & options.loss_function_ownership;
 }
 

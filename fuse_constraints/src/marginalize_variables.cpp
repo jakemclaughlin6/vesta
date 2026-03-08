@@ -261,7 +261,7 @@ fuse_core::Transaction marginalizeVariables(
 namespace detail
 {
 // TODO(swilliams) There are more graph lookups of each Variable than needed. Refactor so that each Variable is only
-//                 accessed once. This will mean storing the current variable value and local parameterization in
+//                 accessed once. This will mean storing the current variable value and manifold in
 //                 the LinearTerm.
 
 /**
@@ -327,34 +327,34 @@ LinearTerm linearize(
                              "during the jacobian computation.");
   }
 
-  // Update the Jacobians with the local parameterizations. This potentially changes the size of the Jacobian block.
+  // Update the Jacobians with the manifolds. This potentially changes the size of the Jacobian block.
   // The classic example is a quaternion parameter, which has 4 components but only 3 degrees of freedom. The Jacobian
-  // will be transformed from 4 columns to 3 columns after the local parameterization is applied.
+  // will be transformed from 4 columns to 3 columns after the manifold is applied.
   // We also check for variables that have been marked as constants. Since these variables cannot change value, their
   // derivatives/Jacobians should be zero.
   for (size_t index = 0ul; index < variable_count; ++index)
   {
     const auto& variable_uuid = variable_uuids[index];
     const auto& variable = graph.getVariable(variable_uuid);
-    auto local_parameterization = variable.localParameterization();
+    auto manifold = variable.manifold();
     auto& jacobian = result.A[index];
     if (variable.holdConstant())
     {
-      if (local_parameterization)
+      if (manifold)
       {
-        jacobian.resize(Eigen::NoChange, local_parameterization->LocalSize());
+        jacobian.resize(Eigen::NoChange, manifold->TangentSize());
       }
       jacobian.setZero();
     }
-    else if (local_parameterization)
+    else if (manifold)
     {
-      fuse_core::MatrixXd J(local_parameterization->GlobalSize(), local_parameterization->LocalSize());
-      local_parameterization->ComputeJacobian(variable_values[index], J.data());
+      fuse_core::MatrixXd J(manifold->AmbientSize(), manifold->TangentSize());
+      manifold->PlusJacobian(variable_values[index], J.data());
       jacobian *= J;
     }
-    if (local_parameterization)
+    if (manifold)
     {
-      delete local_parameterization;
+      delete manifold;
     }
   }
 

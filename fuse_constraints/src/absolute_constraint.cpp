@@ -33,7 +33,6 @@
  */
 #include <fuse_constraints/absolute_constraint.h>
 
-#include <pluginlib/class_list_macros.hpp>
 
 #include <boost/serialization/export.hpp>
 
@@ -46,10 +45,3 @@ BOOST_CLASS_EXPORT_IMPLEMENT(fuse_constraints::AbsolutePosition3DStampedConstrai
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_constraints::AbsoluteVelocityAngular2DStampedConstraint);
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_constraints::AbsoluteVelocityLinear2DStampedConstraint);
 
-PLUGINLIB_EXPORT_CLASS(fuse_constraints::AbsoluteAccelerationAngular2DStampedConstraint, fuse_core::Constraint);
-PLUGINLIB_EXPORT_CLASS(fuse_constraints::AbsoluteAccelerationLinear2DStampedConstraint, fuse_core::Constraint);
-PLUGINLIB_EXPORT_CLASS(fuse_constraints::AbsoluteOrientation2DStampedConstraint, fuse_core::Constraint);
-PLUGINLIB_EXPORT_CLASS(fuse_constraints::AbsolutePosition2DStampedConstraint, fuse_core::Constraint);
-PLUGINLIB_EXPORT_CLASS(fuse_constraints::AbsolutePosition3DStampedConstraint, fuse_core::Constraint);
-PLUGINLIB_EXPORT_CLASS(fuse_constraints::AbsoluteVelocityAngular2DStampedConstraint, fuse_core::Constraint);
-PLUGINLIB_EXPORT_CLASS(fuse_constraints::AbsoluteVelocityLinear2DStampedConstraint, fuse_core::Constraint);

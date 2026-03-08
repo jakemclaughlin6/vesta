@@ -36,7 +36,6 @@
 #include <fuse_core/eigen_gtest.h>
 #include <fuse_core/uuid.h>
 #include <fuse_variables/orientation_3d_stamped.h>
-#include <geometry_msgs/Quaternion.h>
 
 #include <ceres/covariance.h>
 #include <ceres/problem.h>
@@ -54,7 +53,7 @@ using fuse_variables::Orientation3DStamped;
 TEST(AbsoluteOrientation3DStampedEulerConstraint, Constructor)
 {
   // Construct a constraint just to make sure it compiles.
-  Orientation3DStamped orientation_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
   fuse_core::Vector3d mean;
   mean << 1.0, 2.0, 3.0;
   fuse_core::Matrix3d cov;
@@ -68,7 +67,7 @@ TEST(AbsoluteOrientation3DStampedEulerConstraint, Constructor)
 TEST(AbsoluteOrientation3DStampedEulerConstraint, Covariance)
 {
   // Verify the covariance <--> sqrt information conversions are correct
-  Orientation3DStamped orientation_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("mo"));
+  Orientation3DStamped orientation_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("mo"));
   fuse_core::Vector3d mean;
   mean << 1.0, 2.0, 3.0;
   fuse_core::Matrix3d cov;
@@ -93,7 +92,7 @@ TEST(AbsoluteOrientation3DStampedEulerConstraint, OptimizationFull)
 {
   // Optimize a single pose and single constraint, verify the expected value and covariance are generated.
   // Create the variables
-  auto orientation_variable = Orientation3DStamped::make_shared(ros::Time(1, 0), fuse_core::uuid::generate("spra"));
+  auto orientation_variable = Orientation3DStamped::make_shared(fuse_core::Timestamp(1, 0), fuse_core::uuid::generate("spra"));
   orientation_variable->w() = 0.952;
   orientation_variable->x() = 0.038;
   orientation_variable->y() = -0.189;
@@ -120,7 +119,7 @@ TEST(AbsoluteOrientation3DStampedEulerConstraint, OptimizationFull)
   problem.AddParameterBlock(
     orientation_variable->data(),
     orientation_variable->size(),
-    orientation_variable->localParameterization());
+    orientation_variable->manifold());
 
   std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(orientation_variable->data());
@@ -150,7 +149,7 @@ TEST(AbsoluteOrientation3DStampedEulerConstraint, OptimizationPartial)
 {
   // Optimize a single pose and single constraint, verify the expected value and covariance are generated.
   // Create the variables
-  auto orientation_variable = Orientation3DStamped::make_shared(ros::Time(1, 0), fuse_core::uuid::generate("spra"));
+  auto orientation_variable = Orientation3DStamped::make_shared(fuse_core::Timestamp(1, 0), fuse_core::uuid::generate("spra"));
   orientation_variable->w() = 0.952;
   orientation_variable->x() = 0.038;
   orientation_variable->y() = -0.189;
@@ -190,7 +189,7 @@ TEST(AbsoluteOrientation3DStampedEulerConstraint, OptimizationPartial)
   problem.AddParameterBlock(
     orientation_variable->data(),
     orientation_variable->size(),
-    orientation_variable->localParameterization());
+    orientation_variable->manifold());
 
   std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(orientation_variable->data());
@@ -223,7 +222,7 @@ TEST(AbsoluteOrientation3DStampedEulerConstraint, OptimizationPartial)
 TEST(AbsoluteOrientation3DStampedEulerConstraint, Serialization)
 {
   // Construct a constraint
-  Orientation3DStamped orientation_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
   fuse_core::Vector3d mean;
   mean << 1.0, 2.0, 3.0;
   fuse_core::Matrix3d cov;

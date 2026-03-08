@@ -153,7 +153,7 @@ public:
   FUSE_SMART_PTR_ALIASES_ONLY(Graph);
 
   /**
-   * @brief A range of fuse_ros::Constraint objects
+   * @brief A range of fuse_core::Constraint objects
    *
    * An object representing a range defined by two iterators. It has begin() and end() methods (which means it can
    * be used in range-based for loops), an empty() method, and a front() method for directly accessing the first
@@ -162,7 +162,7 @@ public:
   using const_constraint_range = boost::any_range<const Constraint, boost::forward_traversal_tag>;
 
   /**
-   * @brief A range of fuse_ros::Variable objects
+   * @brief A range of fuse_core::Variable objects
    *
    * An object representing a range defined by two iterators. It has begin() and end() methods (which means it can
    * be used in range-based for loops), an empty() method, and a front() method for directly accessing the first

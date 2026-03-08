@@ -59,8 +59,8 @@ using fuse_variables::Position3DStamped;
 TEST(Fixed3DLandmarkConstraint, Constructor)
 {
   // Construct a constraint just to make sure it compiles.
-  Position3DStamped position_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
+  Position3DStamped position_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
   PinholeCameraFixed calibration_variable(0);
 
   double marker_size = 1.0;
@@ -94,8 +94,8 @@ TEST(Fixed3DLandmarkConstraint, Constructor)
 TEST(Fixed3DLandmarkConstraint, Covariance)
 {
   // Verify the covariance <--> sqrt information conversions are correct
-  Position3DStamped position_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("mo"));
-  Orientation3DStamped orientation_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("mo"));
+  Position3DStamped position_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("mo"));
+  Orientation3DStamped orientation_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("mo"));
   PinholeCameraFixed calibration_variable(0);
 
   double marker_size = 1.0;
@@ -145,12 +145,12 @@ TEST(Fixed3DLandmarkConstraint, Optimization)
 {
   // Optimize a single pose and single constraint, verify the expected value and covariance are generated.
   // Create the variables
-  auto position_variable = Position3DStamped::make_shared(ros::Time(1, 0), fuse_core::uuid::generate("spra"));
+  auto position_variable = Position3DStamped::make_shared(fuse_core::Timestamp(1, 0), fuse_core::uuid::generate("spra"));
   position_variable->x() = 1.5;
   position_variable->y() = -3.0;
   position_variable->z() = 10.0;
 
-  auto orientation_variable = Orientation3DStamped::make_shared(ros::Time(1, 0), fuse_core::uuid::generate("spra"));
+  auto orientation_variable = Orientation3DStamped::make_shared(fuse_core::Timestamp(1, 0), fuse_core::uuid::generate("spra"));
   orientation_variable->w() = 0.952;
   orientation_variable->x() = 0.038;
   orientation_variable->y() = -0.189;
@@ -193,11 +193,11 @@ TEST(Fixed3DLandmarkConstraint, Optimization)
   problem_options.loss_function_ownership = fuse_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
   problem.AddParameterBlock(position_variable->data(), position_variable->size(),
-                            position_variable->localParameterization());
+                            position_variable->manifold());
   problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
-                            orientation_variable->localParameterization());
+                            orientation_variable->manifold());
   problem.AddParameterBlock(calibration_variable->data(), calibration_variable->size(),
-                            calibration_variable->localParameterization());
+                            calibration_variable->manifold());
 
   std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(position_variable->data());
@@ -243,11 +243,11 @@ TEST(Fixed3DLandmarkConstraint, Optimization)
   // fuse_core::MatrixXd cov_pos_pos(position_variable->size(), position_variable->size());
   // covariance.GetCovarianceBlock(position_variable->data(), position_variable->data(), cov_pos_pos.data());
 
-  // fuse_core::MatrixXd cov_or_or(orientation_variable->localSize(), orientation_variable->localSize());
+  // fuse_core::MatrixXd cov_or_or(orientation_variable->tangentSize(), orientation_variable->tangentSize());
   // covariance.GetCovarianceBlockInTangentSpace(
   //   orientation_variable->data(), orientation_variable->data(), cov_or_or.data());
 
-  // fuse_core::MatrixXd cov_pos_or(position_variable->localSize(), orientation_variable->localSize());
+  // fuse_core::MatrixXd cov_pos_or(position_variable->tangentSize(), orientation_variable->tangentSize());
   // covariance.GetCovarianceBlockInTangentSpace(
   //   position_variable->data(), orientation_variable->data(), cov_pos_or.data());
 
@@ -272,12 +272,12 @@ TEST(Fixed3DLandmarkConstraint, OptimizationScaledMarker)
 {
   // Optimize a single pose and single constraint, verify the expected value and covariance are generated.
   // Create the variables
-  auto position_variable = Position3DStamped::make_shared(ros::Time(1, 0), fuse_core::uuid::generate("spra"));
+  auto position_variable = Position3DStamped::make_shared(fuse_core::Timestamp(1, 0), fuse_core::uuid::generate("spra"));
   position_variable->x() = 1.5;
   position_variable->y() = -3.0;
   position_variable->z() = 10.0;
 
-  auto orientation_variable = Orientation3DStamped::make_shared(ros::Time(1, 0), fuse_core::uuid::generate("spra"));
+  auto orientation_variable = Orientation3DStamped::make_shared(fuse_core::Timestamp(1, 0), fuse_core::uuid::generate("spra"));
   orientation_variable->w() = 0.952;
   orientation_variable->x() = 0.038;
   orientation_variable->y() = -0.189;
@@ -320,11 +320,11 @@ TEST(Fixed3DLandmarkConstraint, OptimizationScaledMarker)
   problem_options.loss_function_ownership = fuse_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
   problem.AddParameterBlock(position_variable->data(), position_variable->size(),
-                            position_variable->localParameterization());
+                            position_variable->manifold());
   problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
-                            orientation_variable->localParameterization());
+                            orientation_variable->manifold());
   problem.AddParameterBlock(calibration_variable->data(), calibration_variable->size(),
-                            calibration_variable->localParameterization());
+                            calibration_variable->manifold());
 
   std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(position_variable->data());
@@ -363,12 +363,12 @@ TEST(Fixed3DLandmarkConstraint, OptimizationPoints)
 {
   // Optimize a single pose and single constraint, verify the expected value and covariance are generated.
   // Create the variables
-  auto position_variable = Position3DStamped::make_shared(ros::Time(1, 0), fuse_core::uuid::generate("spra"));
+  auto position_variable = Position3DStamped::make_shared(fuse_core::Timestamp(1, 0), fuse_core::uuid::generate("spra"));
   position_variable->x() = 1.5;
   position_variable->y() = -3.0;
   position_variable->z() = 10.0;
 
-  auto orientation_variable = Orientation3DStamped::make_shared(ros::Time(1, 0), fuse_core::uuid::generate("spra"));
+  auto orientation_variable = Orientation3DStamped::make_shared(fuse_core::Timestamp(1, 0), fuse_core::uuid::generate("spra"));
   orientation_variable->w() = 0.952;
   orientation_variable->x() = 0.038;
   orientation_variable->y() = -0.189;
@@ -423,11 +423,11 @@ TEST(Fixed3DLandmarkConstraint, OptimizationPoints)
   problem_options.loss_function_ownership = fuse_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
   problem.AddParameterBlock(position_variable->data(), position_variable->size(),
-                            position_variable->localParameterization());
+                            position_variable->manifold());
   problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
-                            orientation_variable->localParameterization());
+                            orientation_variable->manifold());
   problem.AddParameterBlock(calibration_variable->data(), calibration_variable->size(),
-                            calibration_variable->localParameterization());
+                            calibration_variable->manifold());
 
   std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(position_variable->data());
@@ -517,23 +517,23 @@ TEST(Fixed3DLandmarkConstraint, MultiViewOptimization)
 
   for (uint i = 0; i < N; i++)
   {
-    position_vars[i] = Position3DStamped::make_shared(ros::Time(1, 0), fuse_core::uuid::generate("spra"));
+    position_vars[i] = Position3DStamped::make_shared(fuse_core::Timestamp(1, 0), fuse_core::uuid::generate("spra"));
     position_vars[i]->x() = 0.0;
     position_vars[i]->y() = 0.0;
     position_vars[i]->z() = 0.0;
 
-    orientation_vars[i] = Orientation3DStamped::make_shared(ros::Time(1, 0), fuse_core::uuid::generate("spra"));
+    orientation_vars[i] = Orientation3DStamped::make_shared(fuse_core::Timestamp(1, 0), fuse_core::uuid::generate("spra"));
     orientation_vars[i]->w() = 0.952;
     orientation_vars[i]->x() = 0.038;
     orientation_vars[i]->y() = -0.189;
     orientation_vars[i]->z() = 0.239;
 
     problem.AddParameterBlock(position_vars[i]->data(), position_vars[i]->size(),
-                              position_vars[i]->localParameterization());
+                              position_vars[i]->manifold());
     problem.AddParameterBlock(orientation_vars[i]->data(), orientation_vars[i]->size(),
-                              orientation_vars[i]->localParameterization());
+                              orientation_vars[i]->manifold());
     problem.AddParameterBlock(calibration_variable->data(), calibration_variable->size(),
-                              calibration_variable->localParameterization());
+                              calibration_variable->manifold());
 
     std::vector<double*> parameter_blocks;
     parameter_blocks.push_back(position_vars[i]->data());
@@ -623,8 +623,8 @@ TEST(Fixed3DLandmarkConstraint, MultiViewOptimization)
 TEST(Fixed3DLandmarkConstraint, Serialization)
 {
   // Construct a constraint
-  Position3DStamped position_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
+  Position3DStamped position_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
 
   PinholeCameraFixed calibration_variable(0);
   calibration_variable.fx() = 638.34478759765620;

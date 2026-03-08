@@ -33,13 +33,9 @@
  */
 #include <fuse_loss/cauchy_loss.h>
 
-#include <pluginlib/class_list_macros.hpp>
-#include <ros/node_handle.h>
-
 #include <boost/serialization/export.hpp>
 
 #include <ostream>
-#include <string>
 
 
 namespace fuse_loss
@@ -47,13 +43,6 @@ namespace fuse_loss
 
 CauchyLoss::CauchyLoss(const double a) : a_(a)
 {
-}
-
-void CauchyLoss::initialize(const std::string& name)
-{
-  ros::NodeHandle private_node_handle(name);
-
-  private_node_handle.param("a", a_, a_);
 }
 
 void CauchyLoss::print(std::ostream& stream) const
@@ -70,4 +59,3 @@ ceres::LossFunction* CauchyLoss::lossFunction() const
 }  // namespace fuse_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_loss::CauchyLoss);
-PLUGINLIB_EXPORT_CLASS(fuse_loss::CauchyLoss, fuse_core::Loss);

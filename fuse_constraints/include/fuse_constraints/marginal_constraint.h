@@ -36,7 +36,7 @@
 
 #include <fuse_core/constraint.h>
 #include <fuse_core/eigen.h>
-#include <fuse_core/local_parameterization.h>
+#include <fuse_core/manifold.h>
 #include <fuse_core/fuse_macros.h>
 #include <fuse_core/serialization.h>
 #include <fuse_core/variable.h>
@@ -67,7 +67,7 @@ namespace fuse_constraints
  * The marginal constraint cost function is of the form:
  *   cost = A1 * (x1 - x1_bar) + A2 * (x2 - x2_bar) + ... + b
  * where x_bar is the linearization point of the variable taken from the variable value at the time of construction,
- * and the minus operator in implemented in the variable's local parameterization.
+ * and the minus operator is implemented in the variable's manifold.
  */
 class MarginalConstraint : public fuse_core::Constraint
 {
@@ -123,11 +123,11 @@ public:
   const std::vector<fuse_core::VectorXd>& x_bar() const { return x_bar_; }
 
   /**
-   * @brief Read-only access to the variable local parameterizations
+   * @brief Read-only access to the variable manifolds
    */
-  const std::vector<fuse_core::LocalParameterization::SharedPtr>& localParameterizations() const
+  const std::vector<fuse_core::Manifold::SharedPtr>& manifolds() const
   {
-    return local_parameterizations_;
+    return manifolds_;
   }
 
   /**
@@ -151,7 +151,7 @@ public:
 protected:
   std::vector<fuse_core::MatrixXd> A_;  //!< The A matrices of the marginal constraint
   fuse_core::VectorXd b_;  //!< The b vector of the marginal constraint
-  std::vector<fuse_core::LocalParameterization::SharedPtr> local_parameterizations_;  //!< The local parameterizations
+  std::vector<fuse_core::Manifold::SharedPtr> manifolds_;  //!< The manifolds
   std::vector<fuse_core::VectorXd> x_bar_;  //!< The linearization point of each involved variable
 
 private:
@@ -170,7 +170,7 @@ private:
     archive & boost::serialization::base_object<fuse_core::Constraint>(*this);
     archive & A_;
     archive & b_;
-    archive & local_parameterizations_;
+    archive & manifolds_;
     archive & x_bar_;
   }
 };
@@ -195,11 +195,11 @@ inline const fuse_core::VectorXd getCurrentValue(const fuse_core::Variable& vari
 }
 
 /**
- * @brief Return the local parameterization of the provided variable
+ * @brief Return the manifold of the provided variable
  */
-inline fuse_core::LocalParameterization::SharedPtr const getLocalParameterization(const fuse_core::Variable& variable)
+inline fuse_core::Manifold::SharedPtr const getManifold(const fuse_core::Variable& variable)
 {
-  return fuse_core::LocalParameterization::SharedPtr(variable.localParameterization());
+  return fuse_core::Manifold::SharedPtr(variable.manifold());
 }
 
 }  // namespace detail
@@ -217,23 +217,23 @@ MarginalConstraint::MarginalConstraint(
                boost::make_transform_iterator(last_variable, &fuse_constraints::detail::getUuid)),
     A_(first_A, last_A),
     b_(b),
-    local_parameterizations_(boost::make_transform_iterator(first_variable,
-                                                            &fuse_constraints::detail::getLocalParameterization),
+    manifolds_(boost::make_transform_iterator(first_variable,
+                                                            &fuse_constraints::detail::getManifold),
                              boost::make_transform_iterator(last_variable,
-                                                            &fuse_constraints::detail::getLocalParameterization)),
+                                                            &fuse_constraints::detail::getManifold)),
     x_bar_(boost::make_transform_iterator(first_variable, &fuse_constraints::detail::getCurrentValue),
            boost::make_transform_iterator(last_variable, &fuse_constraints::detail::getCurrentValue))
 {
   assert(!A_.empty());
   assert(A_.size() == x_bar_.size());
-  assert(A_.size() == local_parameterizations_.size());
+  assert(A_.size() == manifolds_.size());
   assert(b_.rows() > 0);
   assert(std::all_of(A_.begin(), A_.end(), [this](const auto& A){ return A.rows() == this->b_.rows(); }));  // NOLINT
   assert(std::all_of(boost::make_zip_iterator(boost::make_tuple(A_.begin(), first_variable)),
                      boost::make_zip_iterator(boost::make_tuple(A_.end(), last_variable)),
                      [](const boost::tuple<const fuse_core::MatrixXd&, const fuse_core::Variable&>& tuple)  // NOLINT
                      {
-                       return static_cast<size_t>(tuple.get<0>().cols()) == tuple.get<1>().localSize();
+                       return static_cast<size_t>(tuple.get<0>().cols()) == tuple.get<1>().tangentSize();
                      }));  // NOLINT
 }
 

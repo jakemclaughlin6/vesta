@@ -34,7 +34,7 @@
 #ifndef FUSE_VARIABLES_ORIENTATION_2D_STAMPED_H
 #define FUSE_VARIABLES_ORIENTATION_2D_STAMPED_H
 
-#include <fuse_core/local_parameterization.h>
+#include <fuse_core/manifold.h>
 #include <fuse_core/serialization.h>
 #include <fuse_core/util.h>
 #include <fuse_core/uuid.h>
@@ -54,21 +54,21 @@ namespace fuse_variables
 {
 
 /**
- * @brief A LocalParameterization class for 2D Orientations.
+ * @brief A Manifold class for 2D Orientations.
  *
- * 2D orientations add and subtract in the "usual" way, except for the 2*pi rollover issue. This local parameterization
- * handles the rollover. Because the Jacobians for this parameterization are always identity, we implement this
- * parameterization with "analytic" derivatives, instead of using the Ceres's autodiff system.
+ * 2D orientations add and subtract in the "usual" way, except for the 2*pi rollover issue. This manifold
+ * handles the rollover. Because the Jacobians for this manifold are always identity, we implement this
+ * manifold with "analytic" derivatives, instead of using the Ceres's autodiff system.
  */
-class Orientation2DLocalParameterization : public fuse_core::LocalParameterization
+class Orientation2DManifold : public fuse_core::Manifold
 {
 public:
-  int GlobalSize() const override
+  int AmbientSize() const override
   {
     return 1;
   }
 
-  int LocalSize() const override
+  int TangentSize() const override
   {
     return 1;
   }
@@ -83,7 +83,7 @@ public:
     return true;
   }
 
-  bool ComputeJacobian(
+  bool PlusJacobian(
     const double* /*x*/,
     double* jacobian) const override
   {
@@ -101,7 +101,7 @@ public:
     return true;
   }
 
-  bool ComputeMinusJacobian(
+  bool MinusJacobian(
     const double* /*x*/,
     double* jacobian) const override
   {
@@ -122,7 +122,7 @@ private:
   template<class Archive>
   void serialize(Archive& archive, const unsigned int /* version */)
   {
-    archive & boost::serialization::base_object<fuse_core::LocalParameterization>(*this);
+    archive & boost::serialization::base_object<fuse_core::Manifold>(*this);
   }
 };
 
@@ -188,22 +188,22 @@ public:
   void print(std::ostream& stream = std::cout) const override;
 
   /**
-   * @brief Returns the number of elements of the local parameterization space.
+   * @brief Returns the number of elements of the tangent space.
    *
-   * Since we are overriding the \p localParameterization() method, it is good practice to override the \p localSize()
+   * Since we are overriding the \p manifold() method, it is good practice to override the \p tangentSize()
    * method as well.
    */
-  size_t localSize() const override { return 1u; }
+  size_t tangentSize() const override { return 1u; }
 
   /**
-   * @brief Create a new Ceres local parameterization object to apply to updates of this variable
+   * @brief Create a new Ceres manifold object to apply to updates of this variable
    *
    * A 2D rotation has a nonlinearity when the angle wraps around from -PI to PI. This is handled by a custom
-   * local parameterization to ensure smooth derivatives.
+   * manifold to ensure smooth derivatives.
    *
-   * @return A base pointer to an instance of a derived LocalParameterization
+   * @return A base pointer to an instance of a derived Manifold
    */
-  fuse_core::LocalParameterization* localParameterization() const override;
+  fuse_core::Manifold* manifold() const override;
 
 private:
   // Allow Boost Serialization access to private methods
@@ -225,7 +225,7 @@ private:
 
 }  // namespace fuse_variables
 
-BOOST_CLASS_EXPORT_KEY(fuse_variables::Orientation2DLocalParameterization);
+BOOST_CLASS_EXPORT_KEY(fuse_variables::Orientation2DManifold);
 BOOST_CLASS_EXPORT_KEY(fuse_variables::Orientation2DStamped);
 
 #endif  // FUSE_VARIABLES_ORIENTATION_2D_STAMPED_H

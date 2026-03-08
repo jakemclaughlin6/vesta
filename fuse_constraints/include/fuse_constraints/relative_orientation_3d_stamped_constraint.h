@@ -40,8 +40,6 @@
 #include <fuse_core/serialization.h>
 #include <fuse_core/uuid.h>
 #include <fuse_variables/orientation_3d_stamped.h>
-#include <geometry_msgs/PoseWithCovariance.h>
-#include <geometry_msgs/Quaternion.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -104,22 +102,6 @@ public:
     const fuse_core::Matrix3d& covariance);
 
   /**
-   * @brief Create a constraint using a measurement/prior of a 3D orientation
-   *
-   * @param[in] source       The name of the sensor or motion model that generated this constraint
-   * @param[in] orientation1 The variable representing the first orientation
-   * @param[in] orientation2 The variable representing the second orientation
-   * @param[in] delta        The measured orientation change as a ROS quaternion message
-   * @param[in] covariance   The measurement covariance (3x3 matrix: qx, qy, qz)
-   */
-  RelativeOrientation3DStampedConstraint(
-    const std::string& source,
-    const fuse_variables::Orientation3DStamped& orientation1,
-    const fuse_variables::Orientation3DStamped& orientation2,
-    const geometry_msgs::Quaternion& delta,
-    const std::array<double, 9>& covariance);
-
-  /**
    * @brief Destructor
    */
   virtual ~RelativeOrientation3DStampedConstraint() = default;
@@ -171,14 +153,6 @@ protected:
    * @return The \p quaternion, converted to an Eigen Vector4d
    */
   static fuse_core::Vector4d toEigen(const Eigen::Quaterniond& quaternion);
-
-  /**
-   * @brief Utility method to convert an ROS quaternion message to an Eigen Vector4d
-   *
-   * @param[in] quaternion The input ROS quaternion message
-   * @return The \p quaternion, converted to an Eigen Vector4d
-   */
-  static fuse_core::Vector4d toEigen(const geometry_msgs::Quaternion& quaternion);
 
   /**
    * @brief Utility method to convert a flat 1D array to a 3x3 Eigen matrix

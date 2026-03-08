@@ -40,8 +40,6 @@
 #include <fuse_core/serialization.h>
 #include <fuse_core/uuid.h>
 #include <fuse_variables/orientation_3d_stamped.h>
-#include <geometry_msgs/PoseWithCovariance.h>
-#include <geometry_msgs/Quaternion.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>

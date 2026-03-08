@@ -34,15 +34,10 @@
 #include <fuse_loss/composed_loss.h>
 #include <fuse_loss/trivial_loss.h>
 
-#include <fuse_core/parameter.h>
-#include <pluginlib/class_list_macros.hpp>
-#include <ros/node_handle.h>
-
 #include <boost/serialization/export.hpp>
 
 #include <memory>
 #include <ostream>
-#include <string>
 
 
 namespace fuse_loss
@@ -52,14 +47,6 @@ ComposedLoss::ComposedLoss(const std::shared_ptr<fuse_core::Loss>& f_loss,
                            const std::shared_ptr<fuse_core::Loss>& g_loss)
   : f_loss_(f_loss), g_loss_(g_loss)
 {
-}
-
-void ComposedLoss::initialize(const std::string& name)
-{
-  ros::NodeHandle private_node_handle(name);
-
-  f_loss_ = fuse_core::loadLossConfig(private_node_handle, "f_loss");
-  g_loss_ = fuse_core::loadLossConfig(private_node_handle, "g_loss");
 }
 
 void ComposedLoss::print(std::ostream& stream) const
@@ -86,4 +73,3 @@ ceres::LossFunction* ComposedLoss::lossFunction() const
 }  // namespace fuse_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_loss::ComposedLoss);
-PLUGINLIB_EXPORT_CLASS(fuse_loss::ComposedLoss, fuse_core::Loss);

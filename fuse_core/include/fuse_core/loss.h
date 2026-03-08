@@ -41,6 +41,7 @@
 #include <boost/type_index/stl_type_index.hpp>
 #include <ceres/loss_function.h>
 
+#include <iostream>
 #include <ostream>
 #include <string>
 

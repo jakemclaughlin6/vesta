@@ -33,15 +33,10 @@
  */
 #include <fuse_loss/scaled_loss.h>
 
-#include <fuse_core/parameter.h>
-#include <pluginlib/class_list_macros.hpp>
-#include <ros/node_handle.h>
-
 #include <boost/serialization/export.hpp>
 
 #include <memory>
 #include <ostream>
-#include <string>
 
 
 namespace fuse_loss
@@ -49,15 +44,6 @@ namespace fuse_loss
 
 ScaledLoss::ScaledLoss(const double a, const std::shared_ptr<fuse_core::Loss>& loss) : a_(a), loss_(loss)
 {
-}
-
-void ScaledLoss::initialize(const std::string& name)
-{
-  ros::NodeHandle private_node_handle(name);
-
-  private_node_handle.param("a", a_, a_);
-
-  loss_ = fuse_core::loadLossConfig(private_node_handle, "loss");
 }
 
 void ScaledLoss::print(std::ostream& stream) const
@@ -79,4 +65,3 @@ ceres::LossFunction* ScaledLoss::lossFunction() const
 }  // namespace fuse_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_loss::ScaledLoss);
-PLUGINLIB_EXPORT_CLASS(fuse_loss::ScaledLoss, fuse_core::Loss);

@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <fuse_core/serialization.h>
-#include <fuse_core/autodiff_local_parameterization.h>
+#include <fuse_core/autodiff_manifold.h>
 #include <fuse_core/eigen.h>
 #include <fuse_variables/orientation_3d_stamped.h>
 #include <fuse_variables/stamped.h>
@@ -136,12 +136,12 @@ struct Orientation3DMinus
   }
 };
 
-using Orientation3DLocalParameterization =
-    fuse_core::AutoDiffLocalParameterization<Orientation3DPlus, Orientation3DMinus, 4, 3>;
+using Orientation3DManifold =
+    fuse_core::AutoDiffManifold<Orientation3DPlus, Orientation3DMinus, 4, 3>;
 
 TEST(Orientation3DStamped, Plus)
 {
-  auto parameterization = Orientation3DStamped(fuse_core::Timestamp(0, 0)).localParameterization();
+  auto parameterization = Orientation3DStamped(fuse_core::Timestamp(0, 0)).manifold();
 
   double x[4] = {0.842614977, 0.2, 0.3, 0.4};
   double delta[3] = {0.15, -0.2, 0.433012702};
@@ -159,7 +159,7 @@ TEST(Orientation3DStamped, Plus)
 
 TEST(Orientation3DStamped, Minus)
 {
-  auto parameterization = Orientation3DStamped(fuse_core::Timestamp(0, 0)).localParameterization();
+  auto parameterization = Orientation3DStamped(fuse_core::Timestamp(0, 0)).manifold();
 
   double x1[4] = {0.842614977, 0.2, 0.3, 0.4};
   double x2[4] = {0.745561, 0.360184, 0.194124, 0.526043};
@@ -176,8 +176,8 @@ TEST(Orientation3DStamped, Minus)
 
 TEST(Orientation3DStamped, PlusJacobian)
 {
-  auto parameterization = Orientation3DStamped(fuse_core::Timestamp(0, 0)).localParameterization();
-  auto reference = Orientation3DLocalParameterization();
+  auto parameterization = Orientation3DStamped(fuse_core::Timestamp(0, 0)).manifold();
+  auto reference = Orientation3DManifold();
 
   for (double qx = -0.5; qx < 0.5; qx += 0.1)
   {
@@ -193,16 +193,15 @@ TEST(Orientation3DStamped, PlusJacobian)
                   0.0, 0.0, 0.0,
                   0.0, 0.0, 0.0,
                   0.0, 0.0, 0.0;
-        bool success = parameterization->ComputeJacobian(x, actual.data());
+        parameterization->PlusJacobian(x, actual.data());
 
         fuse_core::MatrixXd expected(4, 3);
         expected << 0.0, 0.0, 0.0,
                     0.0, 0.0, 0.0,
                     0.0, 0.0, 0.0,
                     0.0, 0.0, 0.0;
-        reference.ComputeJacobian(x, expected.data());
+        reference.PlusJacobian(x, expected.data());
 
-        EXPECT_TRUE(success);
         Eigen::IOFormat clean(4, 0, ", ", "\n", "[", "]");
         EXPECT_TRUE(expected.isApprox(actual, 1.0e-5)) << "Expected is:\n" << expected.format(clean) << "\n"
                                                        << "Actual is:\n" << actual.format(clean) << "\n"
@@ -217,8 +216,8 @@ TEST(Orientation3DStamped, PlusJacobian)
 
 TEST(Orientation3DStamped, MinusJacobian)
 {
-  auto parameterization = Orientation3DStamped(fuse_core::Timestamp(0, 0)).localParameterization();
-  auto reference = Orientation3DLocalParameterization();
+  auto parameterization = Orientation3DStamped(fuse_core::Timestamp(0, 0)).manifold();
+  auto reference = Orientation3DManifold();
 
   for (double qx = -0.5; qx < 0.5; qx += 0.1)
   {
@@ -233,15 +232,14 @@ TEST(Orientation3DStamped, MinusJacobian)
         actual << 0.0, 0.0, 0.0, 0.0,
                   0.0, 0.0, 0.0, 0.0,
                   0.0, 0.0, 0.0, 0.0;
-        bool success = parameterization->ComputeMinusJacobian(x, actual.data());
+        parameterization->MinusJacobian(x, actual.data());
 
         fuse_core::MatrixXd expected(3, 4);
         expected << 0.0, 0.0, 0.0, 0.0,
                     0.0, 0.0, 0.0, 0.0,
                     0.0, 0.0, 0.0, 0.0;
-        reference.ComputeMinusJacobian(x, expected.data());
+        reference.MinusJacobian(x, expected.data());
 
-        EXPECT_TRUE(success);
         Eigen::IOFormat clean(4, 0, ", ", "\n", "[", "]");
         EXPECT_TRUE(expected.isApprox(actual, 1.0e-5)) << "Expected is:\n" << expected.format(clean) << "\n"
                                                        << "Actual is:\n" << actual.format(clean) << "\n"
@@ -332,7 +330,7 @@ TEST(Orientation3DStamped, Optimization)
   problem.AddParameterBlock(
     orientation.data(),
     orientation.size(),
-    orientation.localParameterization());
+    orientation.manifold());
   std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(orientation.data());
   problem.AddResidualBlock(

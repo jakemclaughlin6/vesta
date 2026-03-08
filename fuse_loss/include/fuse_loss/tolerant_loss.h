@@ -79,7 +79,9 @@ public:
    *
    * @param[in] name A unique name to initialize this plugin instance, such as from the parameter server.
    */
-  void initialize(const std::string& name) override;
+  void initialize(const std::string& /*name*/) override
+  {
+  }
 
   /**
    * @brief Print a human-readable description of the loss function to the provided stream.

@@ -33,13 +33,9 @@
  */
 #include <fuse_loss/huber_loss.h>
 
-#include <pluginlib/class_list_macros.hpp>
-#include <ros/node_handle.h>
-
 #include <boost/serialization/export.hpp>
 
 #include <ostream>
-#include <string>
 
 
 namespace fuse_loss
@@ -47,13 +43,6 @@ namespace fuse_loss
 
 HuberLoss::HuberLoss(const double a) : a_(a)
 {
-}
-
-void HuberLoss::initialize(const std::string& name)
-{
-  ros::NodeHandle private_node_handle(name);
-
-  private_node_handle.param("a", a_, a_);
 }
 
 void HuberLoss::print(std::ostream& stream) const
@@ -70,4 +59,3 @@ ceres::LossFunction* HuberLoss::lossFunction() const
 }  // namespace fuse_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_loss::HuberLoss);
-PLUGINLIB_EXPORT_CLASS(fuse_loss::HuberLoss, fuse_core::Loss);

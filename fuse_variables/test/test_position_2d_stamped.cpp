@@ -126,7 +126,7 @@ TEST(Position2DStamped, Optimization)
   problem.AddParameterBlock(
     position.data(),
     position.size(),
-    position.localParameterization());
+    position.manifold());
   std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(position.data());
   problem.AddResidualBlock(

@@ -35,13 +35,9 @@
 
 #include <fuse_core/ceres_macros.h>
 
-#include <pluginlib/class_list_macros.hpp>
-#include <ros/node_handle.h>
-
 #include <boost/serialization/export.hpp>
 
 #include <ostream>
-#include <string>
 
 
 namespace fuse_loss
@@ -49,13 +45,6 @@ namespace fuse_loss
 
 TukeyLoss::TukeyLoss(const double a) : a_(a)
 {
-}
-
-void TukeyLoss::initialize(const std::string& name)
-{
-  ros::NodeHandle private_node_handle(name);
-
-  private_node_handle.param("a", a_, a_);
 }
 
 void TukeyLoss::print(std::ostream& stream) const
@@ -90,4 +79,3 @@ ceres::LossFunction* TukeyLoss::lossFunction() const
 }  // namespace fuse_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_loss::TukeyLoss);
-PLUGINLIB_EXPORT_CLASS(fuse_loss::TukeyLoss, fuse_core::Loss);

@@ -34,7 +34,7 @@
 #ifndef FUSE_CORE_VARIABLE_H
 #define FUSE_CORE_VARIABLE_H
 
-#include <fuse_core/local_parameterization.h>
+#include <fuse_core/manifold.h>
 #include <fuse_core/fuse_macros.h>
 #include <fuse_core/serialization.h>
 #include <fuse_core/uuid.h>
@@ -42,6 +42,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/type_index/stl_type_index.hpp>
 
+#include <iostream>
 #include <limits>
 #include <ostream>
 #include <string>
@@ -182,8 +183,8 @@ namespace fuse_core
  * Some Variables may require special update rules, either because they are over-parameterized, as is the case with
  * 3D rotations represented as quaternions, or because the update of the individual dimensions exhibit some nonlinear
  * properties, as is the case with rotations in general (e.g. 2D rotations have a discontinuity around &pi;). To
- * support these situations, Ceres uses an optional "local parameterization". See the Ceres documentation for more
- * details. http://ceres-solver.org/nnls_modeling.html#localparameterization
+ * support these situations, Ceres uses an optional "manifold". See the Ceres documentation for more
+ * details. http://ceres-solver.org/nnls_modeling.html#manifold
  */
 class Variable
 {
@@ -249,12 +250,12 @@ public:
   virtual size_t size() const = 0;
 
   /**
-   * @brief Returns the number of elements of the local parameterization space.
+   * @brief Returns the number of elements of the tangent space.
    *
-   * If you override the \p localParameterization() method, it is good practice to also override the \p localSize()
-   * method. By default, the \p size() method is used for \p localSize() as well.
+   * If you override the \p manifold() method, it is good practice to also override the \p tangentSize()
+   * method. By default, the \p size() method is used for \p tangentSize() as well.
    */
-  virtual size_t localSize() const { return size(); }
+  virtual size_t tangentSize() const { return size(); }
 
   /**
    * @brief Read-only access to the variable data
@@ -299,20 +300,19 @@ public:
   virtual Variable::UniquePtr clone() const = 0;
 
   /**
-   * @brief Create a new Ceres local parameterization object to apply to updates of this variable
+   * @brief Create a new Ceres manifold object to apply to updates of this variable
    *
-   * If a local parameterization is not needed, a null pointer should be returned. If a local parameterization is
-   * needed, remember to also override the \p localSize() method to return the appropriate local parameterization
-   * size.
+   * If a manifold is not needed, a null pointer should be returned. If a manifold is needed, remember to also
+   * override the \p tangentSize() method to return the appropriate tangent space size.
    *
    * The Ceres interface requires a raw pointer. Ceres will take ownership of the pointer and promises to properly
-   * delete the local parameterization when it is done. Additionally, fuse promises that the Variable object will
-   * outlive any generated local parameterization (i.e. the Ceres objects will be destroyed before the Variable
-   * objects). This guarantee may allow optimizations for the creation of the local parameterization objects.
+   * delete the manifold when it is done. Additionally, fuse promises that the Variable object will outlive any
+   * generated manifold (i.e. the Ceres objects will be destroyed before the Variable objects). This guarantee may
+   * allow optimizations for the creation of the manifold objects.
    *
-   * @return A base pointer to an instance of a derived LocalParameterization
+   * @return A base pointer to an instance of a derived Manifold
    */
-  virtual fuse_core::LocalParameterization* localParameterization() const
+  virtual fuse_core::Manifold* manifold() const
   {
     return nullptr;
   }

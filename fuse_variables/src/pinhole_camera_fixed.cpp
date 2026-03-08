@@ -39,7 +39,6 @@
 #include <fuse_core/uuid.h>
 #include <fuse_core/variable.h>
 #include <fuse_variables/point_2d_landmark.h>
-#include <pluginlib/class_list_macros.hpp>
 
 #include <boost/serialization/export.hpp>
 
@@ -60,4 +59,3 @@ PinholeCameraFixed::PinholeCameraFixed(const uint64_t& camera_id,
 }  // namespace fuse_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_variables::PinholeCameraFixed);
-PLUGINLIB_EXPORT_CLASS(fuse_variables::PinholeCameraFixed, fuse_core::Variable);

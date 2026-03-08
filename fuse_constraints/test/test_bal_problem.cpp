@@ -273,8 +273,8 @@ struct SnavelyReprojectionErrorWithQuaternions
 TEST(ReprojectionErrorSnavellyConstraint, Constructor)
 {
   // Construct a constraint just to make sure it compiles.
-  Position3DStamped position_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
+  Position3DStamped position_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
   Point3DLandmark point(0);
   PinholeCameraRadial calibration_variable(0);
 
@@ -293,8 +293,8 @@ TEST(ReprojectionErrorSnavellyConstraint, Constructor)
 TEST(ReprojectionErrorSnavellyConstraint, Covariance)
 {
   // Verify the covariance <--> sqrt information conversions are correct
-  Position3DStamped position_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("mo"));
-  Orientation3DStamped orientation_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("mo"));
+  Position3DStamped position_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("mo"));
+  Orientation3DStamped orientation_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("mo"));
   Point3DLandmark point(0);
   PinholeCameraRadial calibration_variable(0);
 
@@ -407,7 +407,7 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL)
     auto constraint =
         ReprojectionErrorSnavellyConstraint::make_shared("test", cams_p[c], cams_q[c], cams_k[c], mean, cov);
 
-    problem.AddParameterBlock(pts[p].data(), pts[p].size(), pts[p].localParameterization());
+    problem.AddParameterBlock(pts[p].data(), pts[p].size(), pts[p].manifold());
 
     std::vector<double*> parameter_blocks;
     parameter_blocks.push_back(cams_p[c].data());
@@ -453,8 +453,8 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL)
 TEST(ReprojectionErrorSnavellyConstraint, Serialization)
 {
   // Construct a constraint
-  Position3DStamped position_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(ros::Time(1234, 5678), fuse_core::uuid::generate("walle"));
+  Position3DStamped position_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("walle"));
 
   PinholeCameraRadial calibration_variable(0);
   calibration_variable.f() = 640;

@@ -1,7 +1,7 @@
 /*
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2020, Clearpath Robotics
+ *  Copyright (c) 2019, Locus Robotics
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -31,50 +31,57 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef FUSE_OPTIMIZERS_TEST_EXAMPLE_OPTIMIZER_H  // NOLINT{build/header_guard}
-#define FUSE_OPTIMIZERS_TEST_EXAMPLE_OPTIMIZER_H  // NOLINT{build/header_guard}
+#ifndef FUSE_CORE_MANIFOLD_H
+#define FUSE_CORE_MANIFOLD_H
 
-#include <fuse_optimizers/optimizer.h>
+#include <fuse_core/fuse_macros.h>
+#include <fuse_core/serialization.h>
 
-#include <string>
-#include <utility>
+#include <boost/serialization/access.hpp>
+#include <ceres/manifold.h>
 
+
+namespace fuse_core
+{
 
 /**
- * @brief Example optimizer that exposes the motion and sensor models, and the publishers, so we can check the expected
- * ones are loaded.
+ * @brief The Manifold interface definition.
+ *
+ * This class extends the Ceres Manifold class, adding Boost serialization support.
+ *
+ * The Ceres Manifold interface requires the following pure virtual methods:
+ *  - Plus(x, delta) -> x_plus_delta
+ *  - Minus(x1, x2) -> delta
+ *  - AmbientSize() -> int
+ *  - TangentSize() -> int
+ *  - PlusJacobian(x, jacobian) -> void
+ *  - MinusJacobian(x, jacobian) -> void
+ *
+ * If Plus(x1, delta) -> x2, then Minus(x1, x2) -> delta
+ *
+ * See the Ceres documentation for more details. http://ceres-solver.org/nnls_modeling.html#manifold
  */
-class ExampleOptimizer : public fuse_optimizers::Optimizer
+class Manifold : public ceres::Manifold
 {
 public:
-  FUSE_SMART_PTR_DEFINITIONS(ExampleOptimizer);
+  FUSE_SMART_PTR_ALIASES_ONLY(Manifold);
 
-  ExampleOptimizer(fuse_core::Graph::UniquePtr graph, const ros::NodeHandle& node_handle = ros::NodeHandle(),
-                 const ros::NodeHandle& private_node_handle = ros::NodeHandle("~"))
-    : fuse_optimizers::Optimizer(std::move(graph), node_handle, private_node_handle)
-  {
-  }
+private:
+  // Allow Boost Serialization access to private methods
+  friend class boost::serialization::access;
 
-  const MotionModels& getMotionModels() const
-  {
-    return motion_models_;
-  }
-
-  const SensorModels& getSensorModels() const
-  {
-    return sensor_models_;
-  }
-
-  const Publishers& getPublishers() const
-  {
-    return publishers_;
-  }
-
-  void transactionCallback(
-      const std::string& sensor_name,
-      fuse_core::Transaction::SharedPtr transaction) override
+  /**
+   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   *
+   * @param[in/out] archive - The archive object that holds the serialized class members
+   * @param[in] version - The version of the archive being read/written. Generally unused.
+   */
+  template<class Archive>
+  void serialize(Archive& /* archive */, const unsigned int /* version */)
   {
   }
 };
 
-#endif  // FUSE_OPTIMIZERS_TEST_EXAMPLE_OPTIMIZER_H  // NOLINT{build/header_guard}
+}  // namespace fuse_core
+
+#endif  // FUSE_CORE_MANIFOLD_H

@@ -58,8 +58,8 @@ TEST(RelativeConstraint, Constructor)
 {
   // Construct a constraint for every type, just to make sure they compile.
   {
-    fuse_variables::AccelerationAngular2DStamped x1(ros::Time(1234, 5678), fuse_core::uuid::generate("robby"));
-    fuse_variables::AccelerationAngular2DStamped x2(ros::Time(1235, 5678), fuse_core::uuid::generate("robby"));
+    fuse_variables::AccelerationAngular2DStamped x1(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("robby"));
+    fuse_variables::AccelerationAngular2DStamped x2(fuse_core::Timestamp(1235, 5678), fuse_core::uuid::generate("robby"));
     fuse_core::Vector1d delta;
     delta << 3.0;
     fuse_core::Matrix1d cov;
@@ -68,8 +68,8 @@ TEST(RelativeConstraint, Constructor)
       fuse_constraints::RelativeAccelerationAngular2DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
   {
-    fuse_variables::AccelerationLinear2DStamped x1(ros::Time(1234, 5678), fuse_core::uuid::generate("bender"));
-    fuse_variables::AccelerationLinear2DStamped x2(ros::Time(1235, 5678), fuse_core::uuid::generate("bender"));
+    fuse_variables::AccelerationLinear2DStamped x1(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("bender"));
+    fuse_variables::AccelerationLinear2DStamped x2(fuse_core::Timestamp(1235, 5678), fuse_core::uuid::generate("bender"));
     fuse_core::Vector2d delta;
     delta << 1.0, 2.0;
     fuse_core::Matrix2d cov;
@@ -78,8 +78,8 @@ TEST(RelativeConstraint, Constructor)
       fuse_constraints::RelativeAccelerationLinear2DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
   {
-    fuse_variables::Orientation2DStamped x1(ros::Time(1234, 5678), fuse_core::uuid::generate("johnny5"));
-    fuse_variables::Orientation2DStamped x2(ros::Time(1235, 5678), fuse_core::uuid::generate("johnny5"));
+    fuse_variables::Orientation2DStamped x1(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("johnny5"));
+    fuse_variables::Orientation2DStamped x2(fuse_core::Timestamp(1235, 5678), fuse_core::uuid::generate("johnny5"));
     fuse_core::Vector1d delta;
     delta << 3.0;
     fuse_core::Matrix1d cov;
@@ -88,8 +88,8 @@ TEST(RelativeConstraint, Constructor)
       fuse_constraints::RelativeOrientation2DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
   {
-    fuse_variables::Position2DStamped x1(ros::Time(1234, 5678), fuse_core::uuid::generate("rosie"));
-    fuse_variables::Position2DStamped x2(ros::Time(1235, 5678), fuse_core::uuid::generate("rosie"));
+    fuse_variables::Position2DStamped x1(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("rosie"));
+    fuse_variables::Position2DStamped x2(fuse_core::Timestamp(1235, 5678), fuse_core::uuid::generate("rosie"));
     fuse_core::Vector2d delta;
     delta << 1.0, 2.0;
     fuse_core::Matrix2d cov;
@@ -98,8 +98,8 @@ TEST(RelativeConstraint, Constructor)
       fuse_constraints::RelativePosition2DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
   {
-    fuse_variables::Position3DStamped x1(ros::Time(1234, 5678), fuse_core::uuid::generate("clank"));
-    fuse_variables::Position3DStamped x2(ros::Time(1235, 5678), fuse_core::uuid::generate("clank"));
+    fuse_variables::Position3DStamped x1(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("clank"));
+    fuse_variables::Position3DStamped x2(fuse_core::Timestamp(1235, 5678), fuse_core::uuid::generate("clank"));
     fuse_core::Vector3d delta;
     delta << 1.0, 2.0, 3.0;
     fuse_core::Matrix3d cov;
@@ -108,8 +108,8 @@ TEST(RelativeConstraint, Constructor)
       fuse_constraints::RelativePosition3DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
   {
-    fuse_variables::VelocityAngular2DStamped x1(ros::Time(1234, 5678), fuse_core::uuid::generate("gort"));
-    fuse_variables::VelocityAngular2DStamped x2(ros::Time(1235, 5678), fuse_core::uuid::generate("gort"));
+    fuse_variables::VelocityAngular2DStamped x1(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("gort"));
+    fuse_variables::VelocityAngular2DStamped x2(fuse_core::Timestamp(1235, 5678), fuse_core::uuid::generate("gort"));
     fuse_core::Vector1d delta;
     delta << 3.0;
     fuse_core::Matrix1d cov;
@@ -118,8 +118,8 @@ TEST(RelativeConstraint, Constructor)
       fuse_constraints::RelativeVelocityAngular2DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
   {
-    fuse_variables::VelocityLinear2DStamped x1(ros::Time(1234, 5678), fuse_core::uuid::generate("bishop"));
-    fuse_variables::VelocityLinear2DStamped x2(ros::Time(1235, 5678), fuse_core::uuid::generate("bishop"));
+    fuse_variables::VelocityLinear2DStamped x1(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("bishop"));
+    fuse_variables::VelocityLinear2DStamped x2(fuse_core::Timestamp(1235, 5678), fuse_core::uuid::generate("bishop"));
     fuse_core::Vector2d delta;
     delta << 1.0, 2.0;
     fuse_core::Matrix2d cov;
@@ -131,8 +131,8 @@ TEST(RelativeConstraint, Constructor)
 
 TEST(RelativeConstraint, PartialMeasurement)
 {
-  fuse_variables::Position3DStamped x1(ros::Time(1234, 5678), fuse_core::uuid::generate("vici"));
-  fuse_variables::Position3DStamped x2(ros::Time(1235, 5678), fuse_core::uuid::generate("vici"));
+  fuse_variables::Position3DStamped x1(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("vici"));
+  fuse_variables::Position3DStamped x2(fuse_core::Timestamp(1235, 5678), fuse_core::uuid::generate("vici"));
   fuse_core::Vector2d delta;
   delta << 3.0, 1.0;
   fuse_core::Matrix2d cov;
@@ -147,8 +147,8 @@ TEST(RelativeConstraint, Covariance)
   // Test the covariance of a full measurement
   {
     // Verify the covariance <--> sqrt information conversions are correct
-    fuse_variables::AccelerationLinear2DStamped x1(ros::Time(1234, 5678), fuse_core::uuid::generate("chappie"));
-    fuse_variables::AccelerationLinear2DStamped x2(ros::Time(1235, 5678), fuse_core::uuid::generate("chappie"));
+    fuse_variables::AccelerationLinear2DStamped x1(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("chappie"));
+    fuse_variables::AccelerationLinear2DStamped x2(fuse_core::Timestamp(1235, 5678), fuse_core::uuid::generate("chappie"));
     fuse_core::Vector2d delta;
     delta << 1.0, 2.0;
     fuse_core::Matrix2d cov;
@@ -165,8 +165,8 @@ TEST(RelativeConstraint, Covariance)
   }
   // Test the covariance of a partial measurement
   {
-    fuse_variables::Position3DStamped x1(ros::Time(1234, 5678), fuse_core::uuid::generate("astroboy"));
-    fuse_variables::Position3DStamped x2(ros::Time(1235, 5678), fuse_core::uuid::generate("astroboy"));
+    fuse_variables::Position3DStamped x1(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("astroboy"));
+    fuse_variables::Position3DStamped x2(fuse_core::Timestamp(1235, 5678), fuse_core::uuid::generate("astroboy"));
     fuse_core::Vector2d delta;
     delta << 3.0, 1.0;
     fuse_core::Matrix2d cov;
@@ -196,12 +196,12 @@ TEST(RelativeConstraint, Optimization)
     // Verify the expected value and covariance are generated.
     // Create the variables
     auto x1 = fuse_variables::AccelerationLinear2DStamped::make_shared(
-      ros::Time(1234, 5678),
+      fuse_core::Timestamp(1234, 5678),
       fuse_core::uuid::generate("t800"));
     x1->x() = 10.7;
     x1->y() = -3.2;
     auto x2 = fuse_variables::AccelerationLinear2DStamped::make_shared(
-      ros::Time(1235, 5678),
+      fuse_core::Timestamp(1235, 5678),
       fuse_core::uuid::generate("t800"));
     x2->x() = -4.2;
     x2->y() = 1.9;
@@ -233,11 +233,11 @@ TEST(RelativeConstraint, Optimization)
     problem.AddParameterBlock(
       x1->data(),
       x1->size(),
-      x1->localParameterization());
+      x1->manifold());
     problem.AddParameterBlock(
       x2->data(),
       x2->size(),
-      x2->localParameterization());
+      x2->manifold());
     std::vector<double*> prior_parameter_blocks;
     prior_parameter_blocks.push_back(x1->data());
     problem.AddResidualBlock(
@@ -290,13 +290,13 @@ TEST(RelativeConstraint, Optimization)
     // Verify the expected value and covariance are generated.
     // Create the variables
     auto x1 = fuse_variables::Position3DStamped::make_shared(
-      ros::Time(1234, 5678),
+      fuse_core::Timestamp(1234, 5678),
       fuse_core::uuid::generate("t1000"));
     x1->x() = 10.7;
     x1->y() = -3.2;
     x1->z() = 0.4;
     auto x2 = fuse_variables::Position3DStamped::make_shared(
-      ros::Time(1235, 5678),
+      fuse_core::Timestamp(1235, 5678),
       fuse_core::uuid::generate("t1000"));
     x2->x() = -4.2;
     x2->y() = 1.9;
@@ -342,11 +342,11 @@ TEST(RelativeConstraint, Optimization)
     problem.AddParameterBlock(
       x1->data(),
       x1->size(),
-      x1->localParameterization());
+      x1->manifold());
     problem.AddParameterBlock(
       x2->data(),
       x2->size(),
-      x2->localParameterization());
+      x2->manifold());
     std::vector<double*> c1_parameter_blocks;
     c1_parameter_blocks.push_back(x1->data());
     problem.AddResidualBlock(
@@ -408,11 +408,11 @@ TEST(RelativeConstraint, RelativeOrientation2DOptimization)
   // Verify the expected value and covariance are generated.
   // Create the variables
   auto x1 = fuse_variables::Orientation2DStamped::make_shared(
-    ros::Time(1234, 5678),
+    fuse_core::Timestamp(1234, 5678),
     fuse_core::uuid::generate("t800"));
   x1->setYaw(0.7);
   auto x2 = fuse_variables::Orientation2DStamped::make_shared(
-    ros::Time(1235, 5678),
+    fuse_core::Timestamp(1235, 5678),
     fuse_core::uuid::generate("t800"));
   x2->setYaw(-2.2);
   // Create an absolute constraint
@@ -443,11 +443,11 @@ TEST(RelativeConstraint, RelativeOrientation2DOptimization)
   problem.AddParameterBlock(
     x1->data(),
     x1->size(),
-    x1->localParameterization());
+    x1->manifold());
   problem.AddParameterBlock(
     x2->data(),
     x2->size(),
-    x2->localParameterization());
+    x2->manifold());
   std::vector<double*> prior_parameter_blocks;
   prior_parameter_blocks.push_back(x1->data());
   problem.AddResidualBlock(
@@ -494,8 +494,8 @@ TEST(RelativeConstraint, RelativeOrientation2DOptimization)
 TEST(RelativeConstraint, Serialization)
 {
   // Construct a constraint
-  fuse_variables::AccelerationAngular2DStamped x1(ros::Time(1234, 5678), fuse_core::uuid::generate("robby"));
-  fuse_variables::AccelerationAngular2DStamped x2(ros::Time(1235, 5678), fuse_core::uuid::generate("robby"));
+  fuse_variables::AccelerationAngular2DStamped x1(fuse_core::Timestamp(1234, 5678), fuse_core::uuid::generate("robby"));
+  fuse_variables::AccelerationAngular2DStamped x2(fuse_core::Timestamp(1235, 5678), fuse_core::uuid::generate("robby"));
   fuse_core::Vector1d delta;
   delta << 3.0;
   fuse_core::Matrix1d cov;

@@ -37,7 +37,6 @@
 #include <fuse_constraints/reprojection_error_snavelly_constraint.h>
 #include <fuse_constraints/reprojection_error_snavelly_cost_functor.h>
 
-#include <pluginlib/class_list_macros.hpp>
 
 #include <boost/serialization/export.hpp>
 #include <ceres/autodiff_cost_function.h>
@@ -86,4 +85,3 @@ ceres::CostFunction* ReprojectionErrorSnavellyConstraint::costFunction() const
 }  // namespace fuse_constraints
 
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_constraints::ReprojectionErrorSnavellyConstraint);
-PLUGINLIB_EXPORT_CLASS(fuse_constraints::ReprojectionErrorSnavellyConstraint, fuse_core::Constraint);

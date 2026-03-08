@@ -34,7 +34,6 @@
 #include <fuse_graphs/hash_graph.h>
 
 #include <fuse_core/uuid.h>
-#include <pluginlib/class_list_macros.hpp>
 
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/serialization/export.hpp>
@@ -350,7 +349,7 @@ void HashGraph::getCovariance(
     // Create the output covariance matrix
     if (use_tangent_space)
     {
-      covariance_matrices[i].resize(variable1_iter->second->localSize() * variable2_iter->second->localSize());
+      covariance_matrices[i].resize(variable1_iter->second->tangentSize() * variable2_iter->second->tangentSize());
     }
     else
     {
@@ -481,7 +480,7 @@ void HashGraph::createProblem(ceres::Problem& problem) const
     problem.AddParameterBlock(
       variable.data(),
       variable.size(),
-      variable.localParameterization());
+      variable.manifold());
     // Handle optimization bounds
     for (size_t index = 0; index < variable.size(); ++index)
     {
@@ -524,4 +523,3 @@ void HashGraph::createProblem(ceres::Problem& problem) const
 }  // namespace fuse_graphs
 
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_graphs::HashGraph);
-PLUGINLIB_EXPORT_CLASS(fuse_graphs::HashGraph, fuse_core::Graph);

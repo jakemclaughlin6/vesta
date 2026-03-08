@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <fuse_core/serialization.h>
-#include <fuse_core/autodiff_local_parameterization.h>
+#include <fuse_core/autodiff_manifold.h>
 #include <fuse_core/util.h>
 #include <fuse_variables/orientation_2d_stamped.h>
 #include <fuse_variables/stamped.h>
@@ -122,12 +122,12 @@ struct Orientation2DMinus
   }
 };
 
-using Orientation2DLocalParameterization =
-    fuse_core::AutoDiffLocalParameterization<Orientation2DPlus, Orientation2DMinus, 1, 1>;
+using Orientation2DManifold =
+    fuse_core::AutoDiffManifold<Orientation2DPlus, Orientation2DMinus, 1, 1>;
 
 TEST(Orientation2DStamped, Plus)
 {
-  auto parameterization = Orientation2DStamped(fuse_core::Timestamp(0, 0)).localParameterization();
+  auto parameterization = Orientation2DStamped(fuse_core::Timestamp(0, 0)).manifold();
 
   // Simple test
   {
@@ -156,20 +156,19 @@ TEST(Orientation2DStamped, Plus)
 
 TEST(Orientation2DStamped, PlusJacobian)
 {
-  auto parameterization = Orientation2DStamped(fuse_core::Timestamp(0, 0)).localParameterization();
-  auto reference = Orientation2DLocalParameterization();
+  auto parameterization = Orientation2DStamped(fuse_core::Timestamp(0, 0)).manifold();
+  auto reference = Orientation2DManifold();
 
   auto test_values = std::vector<double>{-2 * M_PI, -1 * M_PI, -1.0, 0.0, 1.0, M_PI, 2 * M_PI};
   for (auto test_value : test_values)
   {
     double x[1] = {test_value};
     double actual[1] = {0.0};
-    bool success = parameterization->ComputeJacobian(x, actual);
+    parameterization->PlusJacobian(x, actual);
 
     double expected[1] = {0.0};
-    reference.ComputeJacobian(x, expected);
+    reference.PlusJacobian(x, expected);
 
-    EXPECT_TRUE(success);
     EXPECT_NEAR(expected[0], actual[0], 1.0e-5);
   }
 
@@ -178,7 +177,7 @@ TEST(Orientation2DStamped, PlusJacobian)
 
 TEST(Orientation2DStamped, Minus)
 {
-  auto parameterization = Orientation2DStamped(fuse_core::Timestamp(0, 0)).localParameterization();
+  auto parameterization = Orientation2DStamped(fuse_core::Timestamp(0, 0)).manifold();
 
   // Simple test
   {
@@ -205,20 +204,19 @@ TEST(Orientation2DStamped, Minus)
 
 TEST(Orientation2DStamped, MinusJacobian)
 {
-  auto parameterization = Orientation2DStamped(fuse_core::Timestamp(0, 0)).localParameterization();
-  auto reference = Orientation2DLocalParameterization();
+  auto parameterization = Orientation2DStamped(fuse_core::Timestamp(0, 0)).manifold();
+  auto reference = Orientation2DManifold();
 
   auto test_values = std::vector<double>{-2 * M_PI, -1 * M_PI, -1.0, 0.0, 1.0, M_PI, 2 * M_PI};
   for (auto test_value : test_values)
   {
     double x[1] = {test_value};
     double actual[1] = {0.0};
-    bool success = parameterization->ComputeMinusJacobian(x, actual);
+    parameterization->MinusJacobian(x, actual);
 
     double expected[1] = {0.0};
-    reference.ComputeMinusJacobian(x, expected);
+    reference.MinusJacobian(x, expected);
 
-    EXPECT_TRUE(success);
     EXPECT_NEAR(expected[0], actual[0], 1.0e-5);
   }
 
@@ -250,7 +248,7 @@ TEST(Orientation2DStamped, Optimization)
   problem.AddParameterBlock(
     orientation.data(),
     orientation.size(),
-    orientation.localParameterization());
+    orientation.manifold());
   std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(orientation.data());
   problem.AddResidualBlock(

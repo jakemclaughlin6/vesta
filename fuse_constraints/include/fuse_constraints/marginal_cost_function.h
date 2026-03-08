@@ -35,7 +35,7 @@
 #define FUSE_CONSTRAINTS_MARGINAL_COST_FUNCTION_H
 
 #include <fuse_core/eigen.h>
-#include <fuse_core/local_parameterization.h>
+#include <fuse_core/manifold.h>
 
 #include <ceres/cost_function.h>
 
@@ -55,11 +55,11 @@ namespace fuse_constraints
  *             ||                                                                        ||
  *
  * where, the A matrices and the b vector are fixed, x_bar is the linearization point used when calculating the A
- * matrices and b vector, and the minus operator in (x - x_bar) is provided by the variable's local parameterization.
- * 
+ * matrices and b vector, and the minus operator in (x - x_bar) is provided by the variable's manifold.
+ *
  * The A matrices can have any number of rows, but they must all be the same. The number of columns of each A matrix
- * must match the associated variable's local parameterization size, and the number of rows of each x_bar must match
- * the associated variable's global size. The cost function will have the same number of residuals as the rows of A.
+ * must match the associated variable's tangent size, and the number of rows of each x_bar must match
+ * the associated variable's ambient size. The cost function will have the same number of residuals as the rows of A.
  */
 class MarginalCostFunction : public ceres::CostFunction
 {
@@ -70,13 +70,13 @@ public:
    * @param[in] A                       The A matrix of the marginal cost (of the form A*(x - x_bar) + b)
    * @param[in] b                       The b vector of the marginal cost (of the form A*(x - x_bar) + b)
    * @param[in] x_bar                   The linearization point of the involved variables
-   * @param[in] local_parameterizations The local parameterization associated with the variable
+   * @param[in] manifolds The manifold associated with the variable
    */
   MarginalCostFunction(
     const std::vector<fuse_core::MatrixXd>& A,
     const fuse_core::VectorXd& b,
     const std::vector<fuse_core::VectorXd>& x_bar,
-    const std::vector<fuse_core::LocalParameterization::SharedPtr>& local_parameterizations);
+    const std::vector<fuse_core::Manifold::SharedPtr>& manifolds);
 
   /**
    * @brief Destructor
@@ -95,7 +95,7 @@ public:
 private:
   const std::vector<fuse_core::MatrixXd>& A_;  //!< The A matrices of the marginal cost
   const fuse_core::VectorXd& b_;  //!< The b vector of the marginal cost
-  const std::vector<fuse_core::LocalParameterization::SharedPtr>& local_parameterizations_;  //!< Parameterizations
+  const std::vector<fuse_core::Manifold::SharedPtr>& manifolds_;  //!< Manifolds
   const std::vector<fuse_core::VectorXd>& x_bar_;  //!< The linearization point of each variable
 };
 

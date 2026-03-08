@@ -37,7 +37,7 @@
 #include <fuse_core/serialization.h>
 #include <fuse_variables/orientation_3d_stamped.h>
 #include <fuse_variables/position_2d_stamped.h>
-#include <ros/time.h>
+#include <fuse_core/timestamp.h>
 
 #include <gtest/gtest.h>
 
@@ -47,9 +47,9 @@
 
 TEST(MarginalConstraint, OneVariable)
 {
-  // Create a marginal constraint with one variable, no local parameterizations
+  // Create a marginal constraint with one variable, no manifolds
   std::vector<fuse_variables::Position2DStamped> variables;
-  fuse_variables::Position2DStamped x1(ros::Time(1, 0));
+  fuse_variables::Position2DStamped x1(fuse_core::Timestamp(1, 0));
   x1.x() = 1.0;
   x1.y() = 2.0;
   variables.push_back(x1);
@@ -97,14 +97,14 @@ TEST(MarginalConstraint, OneVariable)
 
 TEST(MarginalConstraint, TwoVariables)
 {
-  // Create a marginal constraint with one variable, no local parameterizations
+  // Create a marginal constraint with one variable, no manifolds
   std::vector<fuse_variables::Position2DStamped> variables;
-  fuse_variables::Position2DStamped x1(ros::Time(1, 0));
+  fuse_variables::Position2DStamped x1(fuse_core::Timestamp(1, 0));
   x1.x() = 1.0;
   x1.y() = 2.0;
   variables.push_back(x1);
 
-  fuse_variables::Position2DStamped x2(ros::Time(2, 0));
+  fuse_variables::Position2DStamped x2(fuse_core::Timestamp(2, 0));
   x2.x() = 3.0;
   x2.y() = 4.0;
   variables.push_back(x2);
@@ -161,11 +161,11 @@ TEST(MarginalConstraint, TwoVariables)
   delete cost_function;
 }
 
-TEST(MarginalConstraint, LocalParameterization)
+TEST(MarginalConstraint, Manifold)
 {
-  // Create a marginal constraint with one variable with a local parameterizations
+  // Create a marginal constraint with one variable with a manifolds
   std::vector<fuse_variables::Orientation3DStamped> variables;
-  fuse_variables::Orientation3DStamped x1(ros::Time(1, 0));
+  fuse_variables::Orientation3DStamped x1(fuse_core::Timestamp(1, 0));
   x1.w() = 0.842614977;
   x1.x() = 0.2;
   x1.y() = 0.3;
@@ -223,7 +223,7 @@ TEST(MarginalConstraint, Serialization)
 {
   // Construct a constraint
   std::vector<fuse_variables::Orientation3DStamped> variables;
-  fuse_variables::Orientation3DStamped x1(ros::Time(1, 0));
+  fuse_variables::Orientation3DStamped x1(fuse_core::Timestamp(1, 0));
   x1.w() = 0.842614977;
   x1.x() = 0.2;
   x1.y() = 0.3;
@@ -267,11 +267,11 @@ TEST(MarginalConstraint, Serialization)
   EXPECT_EQ(expected.b(), actual.b());
   EXPECT_EQ(expected.x_bar(), actual.x_bar());
   // The shared ptrs will not be the same instances, but they should point to the same types
-  using ExpectedLocalParam = fuse_variables::Orientation3DLocalParameterization;
-  ASSERT_EQ(expected.localParameterizations().size(), actual.localParameterizations().size());
-  for (auto i = 0u; i < actual.localParameterizations().size(); ++i)
+  using ExpectedManifold = fuse_variables::Orientation3DManifold;
+  ASSERT_EQ(expected.manifolds().size(), actual.manifolds().size());
+  for (auto i = 0u; i < actual.manifolds().size(); ++i)
   {
-    auto actual_derived = std::dynamic_pointer_cast<ExpectedLocalParam>(actual.localParameterizations()[i]);
+    auto actual_derived = std::dynamic_pointer_cast<ExpectedManifold>(actual.manifolds()[i]);
     EXPECT_TRUE(static_cast<bool>(actual_derived));
   }
 }

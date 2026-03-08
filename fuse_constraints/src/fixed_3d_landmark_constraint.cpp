@@ -37,7 +37,6 @@
 #include <fuse_constraints/fixed_3d_landmark_constraint.h>
 
 #include <fuse_constraints/fixed_3d_landmark_cost_functor.h>
-#include <pluginlib/class_list_macros.hpp>
 
 #include <boost/serialization/export.hpp>
 #include <ceres/autodiff_cost_function.h>
@@ -115,4 +114,3 @@ ceres::CostFunction* Fixed3DLandmarkConstraint::costFunction() const
 }  // namespace fuse_constraints
 
 BOOST_CLASS_EXPORT_IMPLEMENT(fuse_constraints::Fixed3DLandmarkConstraint);
-PLUGINLIB_EXPORT_CLASS(fuse_constraints::Fixed3DLandmarkConstraint, fuse_core::Constraint);
