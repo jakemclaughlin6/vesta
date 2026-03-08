@@ -41,14 +41,11 @@
 #include <fuse_core/serialization.h>
 #include <fuse_core/variable.h>
 
-#include <boost/iterator/transform_iterator.hpp>
-#include <boost/iterator/zip_iterator.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <ceres/cost_function.h>
 
 #include <algorithm>
@@ -202,6 +199,35 @@ inline fuse_core::Manifold::SharedPtr const getManifold(const fuse_core::Variabl
   return fuse_core::Manifold::SharedPtr(variable.manifold());
 }
 
+// Simple transform iterator to avoid boost::make_transform_iterator
+template<typename Iterator, typename Func>
+class TransformIterator
+{
+public:
+  using value_type = std::invoke_result_t<Func, typename std::iterator_traits<Iterator>::reference>;
+  using reference = value_type;
+  using pointer = void;
+  using difference_type = typename std::iterator_traits<Iterator>::difference_type;
+  using iterator_category = std::forward_iterator_tag;
+
+  TransformIterator(Iterator it, Func func) : it_(it), func_(func) {}
+  reference operator*() const { return func_(*it_); }
+  TransformIterator& operator++() { ++it_; return *this; }
+  TransformIterator operator++(int) { auto tmp = *this; ++it_; return tmp; }
+  bool operator==(const TransformIterator& other) const { return it_ == other.it_; }
+  bool operator!=(const TransformIterator& other) const { return it_ != other.it_; }
+
+private:
+  Iterator it_;
+  Func func_;
+};
+
+template<typename Iterator, typename Func>
+TransformIterator<Iterator, Func> makeTransformIterator(Iterator it, Func func)
+{
+  return TransformIterator<Iterator, Func>(it, func);
+}
+
 }  // namespace detail
 
 template<typename VariableIterator, typename MatrixIterator>
@@ -213,28 +239,31 @@ MarginalConstraint::MarginalConstraint(
   MatrixIterator last_A,
   const fuse_core::VectorXd& b) :
     Constraint(source,
-               boost::make_transform_iterator(first_variable, &fuse_constraints::detail::getUuid),
-               boost::make_transform_iterator(last_variable, &fuse_constraints::detail::getUuid)),
+               fuse_constraints::detail::makeTransformIterator(first_variable, &fuse_constraints::detail::getUuid),
+               fuse_constraints::detail::makeTransformIterator(last_variable, &fuse_constraints::detail::getUuid)),
     A_(first_A, last_A),
-    b_(b),
-    manifolds_(boost::make_transform_iterator(first_variable,
-                                                            &fuse_constraints::detail::getManifold),
-                             boost::make_transform_iterator(last_variable,
-                                                            &fuse_constraints::detail::getManifold)),
-    x_bar_(boost::make_transform_iterator(first_variable, &fuse_constraints::detail::getCurrentValue),
-           boost::make_transform_iterator(last_variable, &fuse_constraints::detail::getCurrentValue))
+    b_(b)
 {
+  // Build manifold and x_bar vectors from the variable range
+  for (auto it = first_variable; it != last_variable; ++it)
+  {
+    manifolds_.push_back(fuse_constraints::detail::getManifold(*it));
+    x_bar_.push_back(fuse_constraints::detail::getCurrentValue(*it));
+  }
+
   assert(!A_.empty());
   assert(A_.size() == x_bar_.size());
   assert(A_.size() == manifolds_.size());
   assert(b_.rows() > 0);
   assert(std::all_of(A_.begin(), A_.end(), [this](const auto& A){ return A.rows() == this->b_.rows(); }));  // NOLINT
-  assert(std::all_of(boost::make_zip_iterator(boost::make_tuple(A_.begin(), first_variable)),
-                     boost::make_zip_iterator(boost::make_tuple(A_.end(), last_variable)),
-                     [](const boost::tuple<const fuse_core::MatrixXd&, const fuse_core::Variable&>& tuple)  // NOLINT
-                     {
-                       return static_cast<size_t>(tuple.get<0>().cols()) == tuple.get<1>().tangentSize();
-                     }));  // NOLINT
+  // Verify A matrix columns match variable tangent sizes
+  {
+    auto var_it = first_variable;
+    for (size_t i = 0; i < A_.size() && var_it != last_variable; ++i, ++var_it)
+    {
+      assert(static_cast<size_t>(A_[i].cols()) == (*var_it).tangentSize());
+    }
+  }
 }
 
 }  // namespace fuse_constraints

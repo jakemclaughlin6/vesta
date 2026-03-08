@@ -38,7 +38,6 @@
 #include <fuse_core/uuid.h>
 
 #include <boost/iterator/transform_iterator.hpp>
-#include <boost/range/empty.hpp>
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <suitesparse/ccolamd.h>
@@ -82,7 +81,7 @@ UuidOrdering computeEliminationOrder(
 
     // If the variable is orphan (it has no constraints), add it to the VariableConstraints object without constraints
     // New variable index is automatically generated
-    if (boost::empty(constraints))
+    if (constraints.empty())
     {
       variable_constraints.insert(variable_order[variable_uuid]);
     }

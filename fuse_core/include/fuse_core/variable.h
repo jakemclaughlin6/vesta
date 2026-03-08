@@ -36,11 +36,11 @@
 
 #include <fuse_core/manifold.h>
 #include <fuse_core/fuse_macros.h>
+#include <fuse_core/type_name.h>
 #include <fuse_core/serialization.h>
 #include <fuse_core/uuid.h>
 
 #include <boost/serialization/access.hpp>
-#include <boost/type_index/stl_type_index.hpp>
 
 #include <iostream>
 #include <limits>
@@ -118,7 +118,7 @@
   { \
     static std::string type() \
     { \
-      return boost::typeindex::stl_type_index::type_id<__VA_ARGS__>().pretty_name(); \
+      return fuse_core::typeName<__VA_ARGS__>(); \
     }  /* NOLINT */ \
   };  /* NOLINT */ \
   std::string type() const override \
@@ -232,7 +232,7 @@ public:
    *
    * The suggested implementation for all derived classes is:
    * @code{.cpp}
-   * return return boost::typeindex::stl_type_index::type_id<Derived>().pretty_name();
+   * return fuse_core::typeName<Derived>();
    * @endcode
    *
    * To make this easy to implement in all derived classes, the FUSE_VARIABLE_TYPE_DEFINITION() and
