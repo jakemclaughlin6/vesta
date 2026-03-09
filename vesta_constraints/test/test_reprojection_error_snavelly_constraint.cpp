@@ -41,7 +41,6 @@
 #include <vesta_core/uuid.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/vision/point_3d_landmark.h>
-#include <vesta_variables/vision/point_3d_fixed_landmark.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 #include <vesta_variables/vision/pinhole_camera_radial.h>
 
@@ -57,7 +56,6 @@ using vesta_constraints::ReprojectionErrorSnavellyConstraint;
 using vesta_variables::Orientation3DStamped;
 using vesta_variables::PinholeCameraRadial;
 using vesta_variables::Point3DLandmark;
-using vesta_variables::Point3DFixedLandmark;
 using vesta_variables::Position3DStamped;
 
 TEST(ReprojectionErrorSnavellyConstraint, Constructor)
@@ -77,7 +75,7 @@ TEST(ReprojectionErrorSnavellyConstraint, Constructor)
          0.00, 0.25;     // NOLINT
 
   EXPECT_NO_THROW(ReprojectionErrorSnavellyConstraint constraint("test", position_variable, orientation_variable,
-                                                         calibration_variable, mean, cov));
+                                                         calibration_variable, point, mean, cov));
 }
 
 TEST(ReprojectionErrorSnavellyConstraint, Covariance)
@@ -97,7 +95,7 @@ TEST(ReprojectionErrorSnavellyConstraint, Covariance)
       0.00, 0.25;     // NOLINT
 
   ReprojectionErrorSnavellyConstraint constraint("test", position_variable, orientation_variable,
-                                                calibration_variable, mean, cov);
+                                                calibration_variable, point, mean, cov);
 
   // Define the expected matrices (used Octave to compute sqrt_info: 'chol(inv(A))')
   vesta_core::Matrix2d expected_sqrt_info;
@@ -130,11 +128,11 @@ TEST(ReprojectionErrorSnavellyConstraint, Optimization)
   calibration_variable->r1() = 0.13281739520782995;
   calibration_variable->r2() = -0.17255676937880005;
 
-  std::vector<Point3DFixedLandmark::SharedPtr> point_variables;
-  point_variables.push_back(Point3DFixedLandmark::make_shared(0));
-  point_variables.push_back(Point3DFixedLandmark::make_shared(1));
-  point_variables.push_back(Point3DFixedLandmark::make_shared(2));
-  point_variables.push_back(Point3DFixedLandmark::make_shared(3));
+  std::vector<Point3DLandmark::SharedPtr> point_variables;
+  point_variables.push_back(Point3DLandmark::make_shared(0));
+  point_variables.push_back(Point3DLandmark::make_shared(1));
+  point_variables.push_back(Point3DLandmark::make_shared(2));
+  point_variables.push_back(Point3DLandmark::make_shared(3));
   point_variables[0]->array() = {-0.70710681, -1.0,  9.29289324};
   point_variables[1]->array() = {-0.70710681,  1.0,  9.29289324};
   point_variables[2]->array() = { 0.70710681, -1.0, 10.70710676};
@@ -170,7 +168,7 @@ TEST(ReprojectionErrorSnavellyConstraint, Optimization)
   {
     auto constraint = ReprojectionErrorSnavellyConstraint::make_shared("test",
                                                         *position_variable, *orientation_variable,
-                                                        *calibration_variable, means[i], cov);
+                                                        *calibration_variable, *point_variables[i], means[i], cov);
 
     problem.AddParameterBlock(point_variables[i]->data(), point_variables[i]->size(),
                         point_variables[i]->manifold());
@@ -268,6 +266,8 @@ TEST(ReprojectionErrorSnavellyConstraint, Serialization)
   calibration_variable.r1() = 0.13281739520782995;
   calibration_variable.r2() = -0.17255676937880005;
 
+  Point3DLandmark point(0);
+
   vesta_core::Vector2d mean;
   mean << 261.71822455, 168.60442225;
 
@@ -279,7 +279,7 @@ TEST(ReprojectionErrorSnavellyConstraint, Serialization)
 
   ReprojectionErrorSnavellyConstraint expected("test", position_variable,
                                         orientation_variable, calibration_variable,
-                                        mean, cov);
+                                        point, mean, cov);
 
   // Serialize the constraint into an archive
   std::stringstream stream;

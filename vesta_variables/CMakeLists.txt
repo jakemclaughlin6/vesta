@@ -13,6 +13,8 @@ add_library(vesta_variables
   src/3d/orientation_3d_stamped.cpp
   src/3d/position_3d_stamped.cpp
   src/3d/velocity_angular_3d_stamped.cpp
+  src/3d/acceleration_bias_3d_stamped.cpp
+  src/3d/gyroscope_bias_3d_stamped.cpp
   src/3d/velocity_linear_3d_stamped.cpp
   # Vision variables
   src/vision/pinhole_camera.cpp
@@ -72,6 +74,8 @@ if(BUILD_TESTING)
   vesta_variables_add_test(test_position_3d_stamped)
   vesta_variables_add_test(test_stereo_camera)
   vesta_variables_add_test(test_stereo_camera_fixed)
+  vesta_variables_add_test(test_acceleration_bias_3d_stamped)
+  vesta_variables_add_test(test_gyroscope_bias_3d_stamped)
   vesta_variables_add_test(test_velocity_angular_2d_stamped)
   vesta_variables_add_test(test_velocity_angular_3d_stamped)
   vesta_variables_add_test(test_velocity_linear_2d_stamped)

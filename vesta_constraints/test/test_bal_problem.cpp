@@ -41,7 +41,6 @@
 #include <vesta_core/uuid.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/vision/point_3d_landmark.h>
-#include <vesta_variables/vision/point_3d_fixed_landmark.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 #include <vesta_variables/vision/pinhole_camera_radial.h>
 
@@ -59,7 +58,6 @@
 using vesta_constraints::ReprojectionErrorSnavellyConstraint;
 using vesta_variables::Orientation3DStamped;
 using vesta_variables::PinholeCameraRadial;
-using vesta_variables::Point3DFixedLandmark;
 using vesta_variables::Point3DLandmark;
 using vesta_variables::Position3DStamped;
 
@@ -287,7 +285,7 @@ TEST(ReprojectionErrorSnavellyConstraint, Constructor)
       0.0, 0.5;     // NOLINT
 
   EXPECT_NO_THROW(ReprojectionErrorSnavellyConstraint constraint("test", position_variable, orientation_variable,
-                                                                 calibration_variable, mean, cov));
+                                                                 calibration_variable, point, mean, cov));
 }
 
 TEST(ReprojectionErrorSnavellyConstraint, Covariance)
@@ -307,7 +305,7 @@ TEST(ReprojectionErrorSnavellyConstraint, Covariance)
       0.0, 0.5;     // NOLINT
 
   ReprojectionErrorSnavellyConstraint constraint("test", position_variable, orientation_variable, calibration_variable,
-                                                 mean, cov);
+                                                 point, mean, cov);
 
   // Define the expected matrices (used Octave to compute sqrt_info: 'chol(inv(A))')
   vesta_core::Matrix2d expected_sqrt_info;
@@ -405,7 +403,7 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL)
         0.0, 1e-5;     // NOLINT
 
     auto constraint =
-        ReprojectionErrorSnavellyConstraint::make_shared("test", cams_p[c], cams_q[c], cams_k[c], mean, cov);
+        ReprojectionErrorSnavellyConstraint::make_shared("test", cams_p[c], cams_q[c], cams_k[c], pts[p], mean, cov);
 
     problem.AddParameterBlock(pts[p].data(), pts[p].size(), pts[p].manifold());
 
@@ -469,8 +467,10 @@ TEST(ReprojectionErrorSnavellyConstraint, Serialization)
   cov << 0.5, 0.0,  // NOLINT
       0.5, 0.5;     // NOLINT
 
+  Point3DLandmark point(0);
+
   ReprojectionErrorSnavellyConstraint expected("test", position_variable, orientation_variable, calibration_variable,
-                                               mean, cov);
+                                               point, mean, cov);
 
   // Serialize the constraint into an archive
   std::stringstream stream;

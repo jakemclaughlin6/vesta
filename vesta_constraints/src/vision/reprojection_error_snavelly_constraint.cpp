@@ -51,9 +51,10 @@ ReprojectionErrorSnavellyConstraint::ReprojectionErrorSnavellyConstraint(
     const std::string& source, const vesta_variables::Position3DStamped& position,
     const vesta_variables::Orientation3DStamped& orientation,
     const vesta_variables::PinholeCameraRadial& calibration,
+    const vesta_variables::Point3DLandmark& point,
     const vesta_core::Vector2d& mean,
     const vesta_core::Matrix2d& covariance)
-  : vesta_core::Constraint(source, { position.uuid(), orientation.uuid(), calibration.uuid() })
+  : vesta_core::Constraint(source, { position.uuid(), orientation.uuid(), calibration.uuid(), point.uuid() })
   , mean_(mean)
   , sqrt_information_(covariance.inverse().llt().matrixU())
 {
@@ -66,6 +67,8 @@ void ReprojectionErrorSnavellyConstraint::print(std::ostream& stream) const
          << "  uuid: " << uuid() << "\n"
          << "  position variable: " << variables().at(0) << "\n"
          << "  orientation variable: " << variables().at(1) << "\n"
+         << "  calibration variable: " << variables().at(2) << "\n"
+         << "  point variable: " << variables().at(3) << "\n"
          << "  mean: " << mean().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 

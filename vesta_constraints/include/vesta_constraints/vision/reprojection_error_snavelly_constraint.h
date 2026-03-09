@@ -45,6 +45,7 @@
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 #include <vesta_variables/vision/pinhole_camera_radial.h>
+#include <vesta_variables/vision/point_3d_landmark.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -86,12 +87,14 @@ public:
    * @param[in] calibraton    The calibration parameters of the camera (3x1 vector: f, r1, r2).
    *                          NOTE: Best practice is to fix this variable unless we have several observations
    *                          with the same camera
+   * @param[in] point         The 3D landmark point variable
    * @param[in] mean          The measured observation of the point as a vector (2x1 vector: u,v)
    * @param[in] covariance    The prior observation covariance (2x2 matrix: u, v)
    */
   ReprojectionErrorSnavellyConstraint(const std::string& source, const vesta_variables::Position3DStamped& position,
                                       const vesta_variables::Orientation3DStamped& orientation,
                                       const vesta_variables::PinholeCameraRadial& calibraton,
+                                      const vesta_variables::Point3DLandmark& point,
                                       const vesta_core::Vector2d& mean, const vesta_core::Matrix2d& covariance);
 
   /**

@@ -173,6 +173,8 @@ ceres::Solver::Summary FixedLagSmoother::optimize()
     computeVariablesToMarginalize(lag_expiration_),
     *graph_);
 
+  // TODO: marginalize non stamped variables that are connected to the marginalized subgraph and not the window subgraph
+
   // Perform any post-marginal cleanup
   postprocessMarginalization(marginal_transaction_);
   // Note: The marginal transaction will not be applied until the next optimization iteration

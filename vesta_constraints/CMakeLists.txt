@@ -28,6 +28,11 @@ add_library(vesta_constraints
   src/vision/reprojection_error_constraint.cpp
   src/vision/reprojection_error_snavelly_constraint.cpp
   src/vision/stereo_reprojection_error_constraint.cpp
+  # Inertial
+  src/inertial/absolute_imu_state_3d_stamped_constraint.cpp
+  src/inertial/imu_preintegration.cpp
+  src/inertial/imu_preintegrator.cpp
+  src/inertial/relative_imu_state_3d_stamped_constraint.cpp
 )
 target_include_directories(vesta_constraints PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -85,6 +90,10 @@ if(BUILD_TESTING)
   vesta_constraints_add_test(test_relative_pose_3d_stamped_constraint)
   vesta_constraints_add_test(test_uuid_ordering)
   vesta_constraints_add_test(test_variable_constraints)
+  vesta_constraints_add_test(test_imu_preintegrator)
+  vesta_constraints_add_test(test_absolute_imu_state_3d_stamped_constraint)
+  vesta_constraints_add_test(test_relative_imu_state_3d_stamped_constraint)
+  vesta_constraints_add_test(test_imu_preintegration)
 
   # BAL Problem test (needs WORKING_DIRECTORY set)
   add_executable(test_bal_problem test/test_bal_problem.cpp)
