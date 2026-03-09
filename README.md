@@ -292,11 +292,6 @@ graph = optimizer.graph()     // Read optimized state
 - **Transaction**: A batch of variable/constraint additions and removals, applied atomically.
 - **Optimizer**: Accepts transactions, maintains a graph, and runs the Ceres solver.
 
-## API Documentation
-
-- [Variables](doc/Variables.md) -- Design principles and custom variable creation
-- [Constraints](doc/Constraints.md) -- Cost functions, loss functions, and custom constraint creation
-
 ## License
 
 BSD License. See [LICENSE](LICENSE) for details.
