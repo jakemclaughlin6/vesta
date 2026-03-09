@@ -41,56 +41,66 @@
 #include <memory>
 #include <vector>
 
-namespace vesta_core
-{
+namespace vesta_core {
 
 /**
- * @brief Policy controlling how often Jacobians are recomputed during optimization.
+ * @brief Policy controlling how often Jacobians are recomputed during
+ * optimization.
  */
-enum class JacobianPolicy
-{
-  kDefault,         ///< Recompute every iteration (standard Ceres behavior, zero overhead)
-  kEveryN,          ///< Recompute every N iterations, use cached Jacobians otherwise
-  kFirstEstimate,   ///< Freeze Jacobians at first linearization (full FEJ)
-  kAdaptive         ///< Relinearize only when parameter values change beyond a threshold
+enum class JacobianPolicy {
+  kDefault, ///< Recompute every iteration (standard Ceres behavior, zero
+            ///< overhead)
+  kEveryN,  ///< Recompute every N iterations, use cached Jacobians otherwise
+  kFirstEstimate, ///< Freeze Jacobians at first linearization (full FEJ)
+  kAdaptive       ///< Relinearize only when parameter values change beyond a
+                  ///< threshold
 };
 
 /**
- * @brief Controls when cost functions should recompute vs. use cached Jacobians.
+ * @brief Controls when cost functions should recompute vs. use cached
+ * Jacobians.
  *
  * Shared between JacobianEvaluationCallback (which updates state) and
- * CachedJacobianCostFunction instances (which read state during parallel evaluation).
+ * CachedJacobianCostFunction instances (which read state during parallel
+ * evaluation).
  */
-class JacobianRelinearizationController
-{
+class JacobianRelinearizationController {
 public:
   /**
    * @brief Constructor
    *
    * @param[in] policy The relinearization policy
    * @param[in] period Recompute period for kEveryN (ignored for other policies)
-   * @param[in] threshold Change threshold for kAdaptive — relinearize when any parameter block's
-   *            L2 norm of change exceeds this value (ignored for other policies)
+   * @param[in] threshold Change threshold for kAdaptive — relinearize when any
+   * parameter block's L2 norm of change exceeds this value (ignored for other
+   * policies)
    */
-  explicit JacobianRelinearizationController(JacobianPolicy policy, int period = 1,
+  explicit JacobianRelinearizationController(JacobianPolicy policy,
+                                             int period = 1,
                                              double threshold = 0.01);
 
   /**
-   * @brief Called by EvaluationCallback::PrepareForEvaluation before each evaluation batch.
+   * @brief Called by EvaluationCallback::PrepareForEvaluation before each
+   * evaluation batch.
    *
-   * Updates the internal state to determine whether the upcoming Evaluate() calls should
-   * recompute or use cached Jacobians. This method is called single-threaded by Ceres.
+   * Updates the internal state to determine whether the upcoming Evaluate()
+   * calls should recompute or use cached Jacobians. This method is called
+   * single-threaded by Ceres.
    *
-   * @param[in] evaluate_jacobians Whether the upcoming evaluation will request Jacobians
-   * @param[in] new_evaluation_point Whether the parameter values have changed since last call
+   * @param[in] evaluate_jacobians Whether the upcoming evaluation will request
+   * Jacobians
+   * @param[in] new_evaluation_point Whether the parameter values have changed
+   * since last call
    */
   void prepareForEvaluation(bool evaluate_jacobians, bool new_evaluation_point);
 
   /**
-   * @brief Returns whether cost functions should recompute Jacobians in the current evaluation.
+   * @brief Returns whether cost functions should recompute Jacobians in the
+   * current evaluation.
    *
-   * Thread-safe (atomic read). Called from CachedJacobianCostFunction::Evaluate() which may
-   * run in parallel across multiple threads.
+   * Thread-safe (atomic read). Called from
+   * CachedJacobianCostFunction::Evaluate() which may run in parallel across
+   * multiple threads.
    */
   bool shouldRecomputeJacobians() const;
 
@@ -98,7 +108,8 @@ public:
    * @brief Reset iteration counter for a new optimize() call.
    *
    * For kEveryN, resets the iteration counter so the period restarts.
-   * For kFirstEstimate, this is a no-op (Jacobians remain frozen across optimize calls).
+   * For kFirstEstimate, this is a no-op (Jacobians remain frozen across
+   * optimize calls).
    */
   void resetForNewOptimization();
 
@@ -127,16 +138,17 @@ private:
 };
 
 /**
- * @brief Ceres EvaluationCallback that delegates to a JacobianRelinearizationController.
+ * @brief Ceres EvaluationCallback that delegates to a
+ * JacobianRelinearizationController.
  *
- * Set on ceres::Problem::Options::evaluation_callback. Ceres calls PrepareForEvaluation()
- * once (single-threaded) before each batch of CostFunction::Evaluate() calls.
+ * Set on ceres::Problem::Options::evaluation_callback. Ceres calls
+ * PrepareForEvaluation() once (single-threaded) before each batch of
+ * CostFunction::Evaluate() calls.
  */
-class JacobianEvaluationCallback : public ceres::EvaluationCallback
-{
+class JacobianEvaluationCallback : public ceres::EvaluationCallback {
 public:
   explicit JacobianEvaluationCallback(
-    std::shared_ptr<JacobianRelinearizationController> controller);
+      std::shared_ptr<JacobianRelinearizationController> controller);
 
   void PrepareForEvaluation(bool evaluate_jacobians,
                             bool new_evaluation_point) override;
@@ -146,52 +158,56 @@ private:
 };
 
 /**
- * @brief CostFunction wrapper that caches Jacobians and returns cached values when instructed.
+ * @brief CostFunction wrapper that caches Jacobians and returns cached values
+ * when instructed.
  *
- * Always computes fresh residuals at the current parameter values. Jacobians are either
- * recomputed or returned from cache based on the controller's decision.
+ * Always computes fresh residuals at the current parameter values. Jacobians
+ * are either recomputed or returned from cache based on the controller's
+ * decision.
  *
- * This wrapper is transparent to the inner cost function — it works with any CostFunction
- * including AutoDiffCostFunction, NumericDiffCostFunction, and analytic cost functions.
+ * This wrapper is transparent to the inner cost function — it works with any
+ * CostFunction including AutoDiffCostFunction, NumericDiffCostFunction, and
+ * analytic cost functions.
  */
-class CachedJacobianCostFunction : public ceres::CostFunction
-{
+class CachedJacobianCostFunction : public ceres::CostFunction {
 public:
   /**
    * @brief Constructor
    *
    * @param[in] inner Takes ownership of the inner cost function
-   * @param[in] controller Shared controller that signals cache/recompute decisions
+   * @param[in] controller Shared controller that signals cache/recompute
+   * decisions
    */
   CachedJacobianCostFunction(
-    ceres::CostFunction* inner,
-    std::shared_ptr<JacobianRelinearizationController> controller);
+      ceres::CostFunction *inner,
+      std::shared_ptr<JacobianRelinearizationController> controller);
 
   ~CachedJacobianCostFunction() override = default;
 
-  bool Evaluate(const double* const* parameters,
-                double* residuals,
-                double** jacobians) const override;
+  bool Evaluate(const double *const *parameters, double *residuals,
+                double **jacobians) const override;
 
 private:
   std::unique_ptr<ceres::CostFunction> inner_;
   std::shared_ptr<JacobianRelinearizationController> controller_;
 
   /**
-   * @brief Check if any parameter block has changed more than the adaptive threshold.
+   * @brief Check if any parameter block has changed more than the adaptive
+   * threshold.
    *
-   * Computes L2 norm of the difference between current and cached parameter values for each block.
-   * Returns true if any block's change exceeds the controller's threshold.
+   * Computes L2 norm of the difference between current and cached parameter
+   * values for each block. Returns true if any block's change exceeds the
+   * controller's threshold.
    */
-  bool parametersChangedSignificantly(const double* const* parameters) const;
+  bool parametersChangedSignificantly(const double *const *parameters) const;
 
-  // Thread-safety note: These mutable members are safe because each residual block in the
-  // ceres::Problem gets its own CachedJacobianCostFunction instance. Ceres never shares a
-  // CostFunction* across residual blocks, so parallel Evaluate() calls operate on distinct instances.
+  // Thread-safety note: These mutable members are safe because each residual
+  // block in the ceres::Problem gets its own CachedJacobianCostFunction
+  // instance. Ceres never shares a CostFunction* across residual blocks, so
+  // parallel Evaluate() calls operate on distinct instances.
   mutable bool has_cached_jacobians_ = false;
   mutable std::vector<std::vector<double>> cached_jacobians_;
   mutable std::vector<std::vector<double>> cached_parameters_;
 };
 
-}  // namespace vesta_core
-
+} // namespace vesta_core

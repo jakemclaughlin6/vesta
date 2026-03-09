@@ -40,15 +40,15 @@
 #include <vesta_core/serialization.h>
 #include <vesta_core/uuid.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
-#include <vesta_variables/vision/point_3d_landmark.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 #include <vesta_variables/vision/pinhole_camera_radial.h>
+#include <vesta_variables/vision/point_3d_landmark.h>
 
+#include <ceres/ceres.h>
 #include <ceres/covariance.h>
 #include <ceres/problem.h>
-#include <ceres/solver.h>
-#include <ceres/ceres.h>
 #include <ceres/rotation.h>
+#include <ceres/solver.h>
 #include <gtest/gtest.h>
 
 #include <string>
@@ -66,65 +66,33 @@ using vesta_variables::Position3DStamped;
 
 // BALProblem adapted from:
 // https://ceres-solver.googlesource.com/ceres-solver/+/master/examples/simple_bundle_adjuster.cc
-class BALProblem
-{
+class BALProblem {
 public:
-  BALProblem()
-  {
-  }
-  ~BALProblem()
-  {
+  BALProblem() {}
+  ~BALProblem() {
     delete[] point_index_;
     delete[] camera_index_;
     delete[] observations_;
     delete[] parameters_;
   }
-  int num_observations() const
-  {
-    return num_observations_;
-  }
-  const double* observations() const
-  {
-    return observations_;
-  }
-  double* mutable_cameras()
-  {
-    return parameters_;
-  }
-  double* mutable_points()
-  {
-    return parameters_ + 10 * num_cameras_;
-  }
-  double* mutable_camera_for_observation(int i)
-  {
+  int num_observations() const { return num_observations_; }
+  const double *observations() const { return observations_; }
+  double *mutable_cameras() { return parameters_; }
+  double *mutable_points() { return parameters_ + 10 * num_cameras_; }
+  double *mutable_camera_for_observation(int i) {
     return mutable_cameras() + camera_index_[i] * 10;
   }
-  double* mutable_point_for_observation(int i)
-  {
+  double *mutable_point_for_observation(int i) {
     return mutable_points() + point_index_[i] * 3;
   }
-  int camera_for_observation(int i)
-  {
-    return camera_index_[i];
-  }
-  int point_for_observation(int i)
-  {
-    return point_index_[i];
-  }
-  double* camera(int i)
-  {
-    return mutable_cameras() + i * 10;
-  }
-  double* points(int i)
-  {
-    return mutable_points() + i * 3;
-  }
+  int camera_for_observation(int i) { return camera_index_[i]; }
+  int point_for_observation(int i) { return point_index_[i]; }
+  double *camera(int i) { return mutable_cameras() + i * 10; }
+  double *points(int i) { return mutable_points() + i * 3; }
 
-  bool LoadFile(const char* filename)
-  {
-    FILE* fptr = fopen(filename, "r");
-    if (fptr == nullptr)
-    {
+  bool LoadFile(const char *filename) {
+    FILE *fptr = fopen(filename, "r");
+    if (fptr == nullptr) {
       return false;
     };
     FscanfOrDie(fptr, "%d", &num_cameras_);
@@ -135,40 +103,34 @@ public:
     observations_ = new double[2 * num_observations_];
     num_parameters_ = 9 * num_cameras_ + 3 * num_points_;
     parameters_ = new double[num_parameters_];
-    for (int i = 0; i < num_observations_; ++i)
-    {
+    for (int i = 0; i < num_observations_; ++i) {
       FscanfOrDie(fptr, "%d", camera_index_ + i);
       FscanfOrDie(fptr, "%d", point_index_ + i);
-      for (int j = 0; j < 2; ++j)
-      {
+      for (int j = 0; j < 2; ++j) {
         FscanfOrDie(fptr, "%lf", observations_ + 2 * i + j);
       }
     }
 
-    for (int i = 0; i < num_parameters_; ++i)
-    {
+    for (int i = 0; i < num_parameters_; ++i) {
       FscanfOrDie(fptr, "%lf", parameters_ + i);
     }
 
     {
       // Switch the angle-axis rotations to quaternions.
       num_parameters_ = 10 * num_cameras_ + 3 * num_points_;
-      auto* quaternion_parameters = new double[num_parameters_];
-      double* original_cursor = parameters_;
-      double* quaternion_cursor = quaternion_parameters;
-      for (int i = 0; i < num_cameras_; ++i)
-      {
+      auto *quaternion_parameters = new double[num_parameters_];
+      double *original_cursor = parameters_;
+      double *quaternion_cursor = quaternion_parameters;
+      for (int i = 0; i < num_cameras_; ++i) {
         ceres::AngleAxisToQuaternion(original_cursor, quaternion_cursor);
         quaternion_cursor += 4;
         original_cursor += 3;
-        for (int j = 4; j < 10; ++j)
-        {
+        for (int j = 4; j < 10; ++j) {
           *quaternion_cursor++ = *original_cursor++;
         }
       }
       // Copy the rest of the points.
-      for (int i = 0; i < 3 * num_points_; ++i)
-      {
+      for (int i = 0; i < 3 * num_points_; ++i) {
         *quaternion_cursor++ = *original_cursor++;
       }
       // Swap in the quaternion parameters.
@@ -179,23 +141,15 @@ public:
     return true;
   }
 
-  int num_cameras()
-  {
-    return num_cameras_;
-  }
+  int num_cameras() { return num_cameras_; }
 
-  int num_points()
-  {
-    return num_points_;
-  }
+  int num_points() { return num_points_; }
 
 private:
   template <typename T>
-  void FscanfOrDie(FILE* fptr, const char* format, T* value)
-  {
+  void FscanfOrDie(FILE *fptr, const char *format, T *value) {
     int num_scanned = fscanf(fptr, format, value);
-    if (num_scanned != 1)
-    {
+    if (num_scanned != 1) {
       LOG(FATAL) << "Invalid UW data file.";
     }
   }
@@ -203,10 +157,10 @@ private:
   int num_points_;
   int num_observations_;
   int num_parameters_;
-  int* point_index_;
-  int* camera_index_;
-  double* observations_;
-  double* parameters_;
+  int *point_index_;
+  int *camera_index_;
+  double *observations_;
+  double *parameters_;
   bool use_quaternions_;
 };
 #endif
@@ -217,17 +171,14 @@ private:
 // parameterized using 9 parameters: 3 for rotation, 3 for translation, 1 for
 // focal length and 2 for radial distortion. The principal point is not modeled
 // (i.e. it is assumed be located at the image center).
-struct SnavelyReprojectionErrorWithQuaternions
-{
+struct SnavelyReprojectionErrorWithQuaternions {
   // (u, v): the position of the observation with respect to the image
   // center point.
   SnavelyReprojectionErrorWithQuaternions(double observed_x, double observed_y)
-    : observed_x(observed_x), observed_y(observed_y)
-  {
-  }
+      : observed_x(observed_x), observed_y(observed_y) {}
   template <typename T>
-  bool operator()(const T* const camera, const T* const point, T* residuals) const
-  {
+  bool operator()(const T *const camera, const T *const point,
+                  T *residuals) const {
     // camera[0,1,2,3] is the rotation of the camera as a quaternion.
     //
     // We use QuaternionRotatePoint as it does not assume that the
@@ -245,12 +196,12 @@ struct SnavelyReprojectionErrorWithQuaternions
     const T xp = -p[0] / p[2];
     const T yp = -p[1] / p[2];
     // Apply second and fourth order radial distortion.
-    const T& l1 = camera[8];
-    const T& l2 = camera[9];
+    const T &l1 = camera[8];
+    const T &l2 = camera[9];
     const T r2 = xp * xp + yp * yp;
     const T distortion = 1.0 + r2 * (l1 + l2 * r2);
     // Compute final projected point position.
-    const T& focal = camera[7];
+    const T &focal = camera[7];
     const T predicted_x = focal * distortion * xp;
     const T predicted_y = focal * distortion * yp;
 
@@ -259,58 +210,64 @@ struct SnavelyReprojectionErrorWithQuaternions
     return true;
   }
 
-  static ceres::CostFunction* Create(const double observed_x, const double observed_y)
-  {
-    return (new ceres::AutoDiffCostFunction<SnavelyReprojectionErrorWithQuaternions, 2, 10, 3>(
+  static ceres::CostFunction *Create(const double observed_x,
+                                     const double observed_y) {
+    return (new ceres::AutoDiffCostFunction<
+            SnavelyReprojectionErrorWithQuaternions, 2, 10, 3>(
         new SnavelyReprojectionErrorWithQuaternions(observed_x, observed_y)));
   }
   double observed_x;
   double observed_y;
 };
 
-TEST(ReprojectionErrorSnavellyConstraint, Constructor)
-{
+TEST(ReprojectionErrorSnavellyConstraint, Constructor) {
   // Construct a constraint just to make sure it compiles.
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
+                                      vesta_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(
+      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
   Point3DLandmark point(0);
   PinholeCameraRadial calibration_variable(0);
 
   vesta_core::Vector2d mean;
-  mean << 320.0, 240.0;  // Centre of a 640x480 camera
+  mean << 320.0, 240.0; // Centre of a 640x480 camera
 
   // Assume Half a pixel Variance
   vesta_core::Matrix2d cov;
-  cov << 0.5, 0.0,  // NOLINT
-      0.0, 0.5;     // NOLINT
+  cov << 0.5, 0.0, // NOLINT
+      0.0, 0.5;    // NOLINT
 
-  EXPECT_NO_THROW(ReprojectionErrorSnavellyConstraint constraint("test", position_variable, orientation_variable,
-                                                                 calibration_variable, point, mean, cov));
+  EXPECT_NO_THROW(ReprojectionErrorSnavellyConstraint constraint(
+      "test", position_variable, orientation_variable, calibration_variable,
+      point, mean, cov));
 }
 
-TEST(ReprojectionErrorSnavellyConstraint, Covariance)
-{
+TEST(ReprojectionErrorSnavellyConstraint, Covariance) {
   // Verify the covariance <--> sqrt information conversions are correct
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("mo"));
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("mo"));
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
+                                      vesta_core::uuid::generate("mo"));
+  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678),
+                                            vesta_core::uuid::generate("mo"));
   Point3DLandmark point(0);
   PinholeCameraRadial calibration_variable(0);
 
   vesta_core::Vector2d mean;
-  mean << 320.0, 240.0;  // Centre of a 640x480 camera
+  mean << 320.0, 240.0; // Centre of a 640x480 camera
 
   // Assume Half a pixel Variance
   vesta_core::Matrix2d cov;
-  cov << 0.5, 0.0,  // NOLINT
-      0.0, 0.5;     // NOLINT
+  cov << 0.5, 0.0, // NOLINT
+      0.0, 0.5;    // NOLINT
 
-  ReprojectionErrorSnavellyConstraint constraint("test", position_variable, orientation_variable, calibration_variable,
-                                                 point, mean, cov);
+  ReprojectionErrorSnavellyConstraint constraint(
+      "test", position_variable, orientation_variable, calibration_variable,
+      point, mean, cov);
 
-  // Define the expected matrices (used Octave to compute sqrt_info: 'chol(inv(A))')
+  // Define the expected matrices (used Octave to compute sqrt_info:
+  // 'chol(inv(A))')
   vesta_core::Matrix2d expected_sqrt_info;
-  expected_sqrt_info << 1.414213562373095, 0,  // NOLINT
-      0, 1.414213562373095;                    // NOLINT
+  expected_sqrt_info << 1.414213562373095, 0, // NOLINT
+      0, 1.414213562373095;                   // NOLINT
   vesta_core::Matrix2d expected_cov = cov;
 
   // Compare
@@ -318,26 +275,25 @@ TEST(ReprojectionErrorSnavellyConstraint, Covariance)
   EXPECT_MATRIX_NEAR(expected_sqrt_info, constraint.sqrtInformation(), 1.0e-9);
 }
 
-TEST(ReprojectionErrorSnavellyConstraint, BAL)
-{
+TEST(ReprojectionErrorSnavellyConstraint, BAL) {
   std::string filename = "problem-21-11315-pre.txt";
   BALProblem bal_problem_ceres;
-  if (!bal_problem_ceres.LoadFile(filename.c_str()))
-  {
+  if (!bal_problem_ceres.LoadFile(filename.c_str())) {
     std::cerr << "ERROR: unable to open file " << filename << "\n";
     throw;
   }
 
   // Use Ceres Standard
-  const double* observations_ceres = bal_problem_ceres.observations();
+  const double *observations_ceres = bal_problem_ceres.observations();
   ceres::Problem problem_ceres;
-  for (int i = 0; i < bal_problem_ceres.num_observations(); ++i)
-  {
-    ceres::CostFunction* cost_function =
-        SnavelyReprojectionErrorWithQuaternions::Create(observations_ceres[2 * i + 0], observations_ceres[2 * i + 1]);
-    problem_ceres.AddResidualBlock(cost_function, nullptr /* squared loss */,
-                                   bal_problem_ceres.mutable_camera_for_observation(i),
-                                   bal_problem_ceres.mutable_point_for_observation(i));
+  for (int i = 0; i < bal_problem_ceres.num_observations(); ++i) {
+    ceres::CostFunction *cost_function =
+        SnavelyReprojectionErrorWithQuaternions::Create(
+            observations_ceres[2 * i + 0], observations_ceres[2 * i + 1]);
+    problem_ceres.AddResidualBlock(
+        cost_function, nullptr /* squared loss */,
+        bal_problem_ceres.mutable_camera_for_observation(i),
+        bal_problem_ceres.mutable_point_for_observation(i));
   }
   ceres::Solver::Options options_ceres;
   options_ceres.linear_solver_type = ceres::DENSE_SCHUR;
@@ -345,8 +301,7 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL)
   ceres::Solve(options_ceres, &problem_ceres, &summary_ceres);
 
   BALProblem bal_problem;
-  if (!bal_problem.LoadFile(filename.c_str()))
-  {
+  if (!bal_problem.LoadFile(filename.c_str())) {
     std::cerr << "ERROR: unable to open file " << filename << "\n";
     throw;
   }
@@ -354,8 +309,7 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL)
   std::vector<Position3DStamped> cams_p(bal_problem.num_cameras());
   std::vector<Orientation3DStamped> cams_q(bal_problem.num_cameras());
   std::vector<PinholeCameraRadial> cams_k(bal_problem.num_cameras());
-  for (int i = 0; i < bal_problem.num_cameras(); i++)
-  {
+  for (int i = 0; i < bal_problem.num_cameras(); i++) {
     auto cam = bal_problem.camera(i);
 
     cams_q[i].w() = cam[0];
@@ -373,8 +327,7 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL)
   }
 
   std::vector<Point3DLandmark> pts(bal_problem.num_points());
-  for (int i = 0; i < bal_problem.num_points(); i++)
-  {
+  for (int i = 0; i < bal_problem.num_points(); i++) {
     auto pt = bal_problem.points(i);
     pts[i].x() = pt[0];
     pts[i].y() = pt[1];
@@ -382,9 +335,8 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL)
   }
 
   ceres::Problem problem;
-  const double* observations = bal_problem.observations();
-  for (int i = 0; i < bal_problem.num_observations(); ++i)
-  {
+  const double *observations = bal_problem.observations();
+  for (int i = 0; i < bal_problem.num_observations(); ++i) {
     int c = bal_problem.camera_for_observation(i);
     cams_q[c];
     cams_p[c];
@@ -399,21 +351,22 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL)
 
     // Define Observation Covariance
     vesta_core::Matrix2d cov;
-    cov << 1e-5, 0.0,  // NOLINT
-        0.0, 1e-5;     // NOLINT
+    cov << 1e-5, 0.0, // NOLINT
+        0.0, 1e-5;    // NOLINT
 
-    auto constraint =
-        ReprojectionErrorSnavellyConstraint::make_shared("test", cams_p[c], cams_q[c], cams_k[c], pts[p], mean, cov);
+    auto constraint = ReprojectionErrorSnavellyConstraint::make_shared(
+        "test", cams_p[c], cams_q[c], cams_k[c], pts[p], mean, cov);
 
     problem.AddParameterBlock(pts[p].data(), pts[p].size(), pts[p].manifold());
 
-    std::vector<double*> parameter_blocks;
+    std::vector<double *> parameter_blocks;
     parameter_blocks.push_back(cams_p[c].data());
     parameter_blocks.push_back(cams_q[c].data());
     parameter_blocks.push_back(cams_k[c].data());
     parameter_blocks.push_back(pts[p].data());
 
-    problem.AddResidualBlock(constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
+    problem.AddResidualBlock(constraint->costFunction(),
+                             constraint->lossFunction(), parameter_blocks);
   }
 
   ceres::Solver::Options options;
@@ -421,8 +374,7 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL)
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
 
-  for (int i = 0; i < bal_problem.num_cameras(); i++)
-  {
+  for (int i = 0; i < bal_problem.num_cameras(); i++) {
     auto cam = bal_problem_ceres.camera(i);
 
     EXPECT_NEAR(cams_q[i].w(), cam[0], 1e-2);
@@ -439,8 +391,7 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL)
     EXPECT_NEAR(cams_k[i].r2(), cam[9], 1e-2);
   }
 
-  for (int i = 0; i < bal_problem.num_points(); i++)
-  {
+  for (int i = 0; i < bal_problem.num_points(); i++) {
     auto pt = bal_problem_ceres.points(i);
     EXPECT_NEAR(pts[i].x(), pt[0], 1e-2);
     EXPECT_NEAR(pts[i].y(), pt[1], 1e-2);
@@ -448,11 +399,12 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL)
   }
 }
 
-TEST(ReprojectionErrorSnavellyConstraint, Serialization)
-{
+TEST(ReprojectionErrorSnavellyConstraint, Serialization) {
   // Construct a constraint
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
+                                      vesta_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(
+      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
 
   PinholeCameraRadial calibration_variable(0);
   calibration_variable.f() = 640;
@@ -462,15 +414,17 @@ TEST(ReprojectionErrorSnavellyConstraint, Serialization)
   vesta_core::Vector2d mean;
   mean << 261.71822455, 168.60442225;
 
-  // Generated PD matrix using Octave: R = rand(6, 6); A = R * R' (use format long g to get the required precision)
+  // Generated PD matrix using Octave: R = rand(6, 6); A = R * R' (use format
+  // long g to get the required precision)
   vesta_core::Matrix2d cov;
-  cov << 0.5, 0.0,  // NOLINT
-      0.5, 0.5;     // NOLINT
+  cov << 0.5, 0.0, // NOLINT
+      0.5, 0.5;    // NOLINT
 
   Point3DLandmark point(0);
 
-  ReprojectionErrorSnavellyConstraint expected("test", position_variable, orientation_variable, calibration_variable,
-                                               point, mean, cov);
+  ReprojectionErrorSnavellyConstraint expected(
+      "test", position_variable, orientation_variable, calibration_variable,
+      point, mean, cov);
 
   // Serialize the constraint into an archive
   std::stringstream stream;
@@ -493,8 +447,7 @@ TEST(ReprojectionErrorSnavellyConstraint, Serialization)
   EXPECT_MATRIX_EQ(expected.sqrtInformation(), actual.sqrtInformation());
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

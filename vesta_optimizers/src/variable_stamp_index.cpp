@@ -42,86 +42,78 @@
 #include <stdexcept>
 #include <vector>
 
-namespace vesta_optimizers
-{
-vesta_core::Timestamp VariableStampIndex::currentStamp() const
-{
-  auto compare_stamps = [](const StampedMap::value_type& lhs, const StampedMap::value_type& rhs)
-  {
+namespace vesta_optimizers {
+vesta_core::Timestamp VariableStampIndex::currentStamp() const {
+  auto compare_stamps = [](const StampedMap::value_type &lhs,
+                           const StampedMap::value_type &rhs) {
     return lhs.second < rhs.second;
   };
-  auto iter = std::max_element(stamped_index_.begin(), stamped_index_.end(), compare_stamps);
-  if (iter != stamped_index_.end())
-  {
+  auto iter = std::max_element(stamped_index_.begin(), stamped_index_.end(),
+                               compare_stamps);
+  if (iter != stamped_index_.end()) {
     return iter->second;
-  }
-  else
-  {
+  } else {
     return vesta_core::Timestamp(0);
   }
 }
 
-void VariableStampIndex::addNewTransaction(const vesta_core::Transaction& transaction)
-{
+void VariableStampIndex::addNewTransaction(
+    const vesta_core::Transaction &transaction) {
   applyAddedVariables(transaction);
   applyAddedConstraints(transaction);
   applyRemovedConstraints(transaction);
   applyRemovedVariables(transaction);
 }
 
-void VariableStampIndex::addMarginalTransaction(const vesta_core::Transaction& transaction)
-{
-  // Only the removed variables and removed constraints should be applied to the VariableStampIndex
-  // No variables will be added by a marginal transaction, and the added constraints add variable links
-  // that we *do not* want to track. These links are merely an artifact of the marginalization process.
+void VariableStampIndex::addMarginalTransaction(
+    const vesta_core::Transaction &transaction) {
+  // Only the removed variables and removed constraints should be applied to the
+  // VariableStampIndex No variables will be added by a marginal transaction,
+  // and the added constraints add variable links that we *do not* want to
+  // track. These links are merely an artifact of the marginalization process.
   applyRemovedConstraints(transaction);
   applyRemovedVariables(transaction);
 }
 
-void VariableStampIndex::applyAddedConstraints(const vesta_core::Transaction& transaction)
-{
-  for (const auto& constraint : transaction.addedConstraints())
-  {
-    constraints_[constraint.uuid()].insert(constraint.variables().begin(), constraint.variables().end());
-    for (const auto& variable_uuid : constraint.variables())
-    {
+void VariableStampIndex::applyAddedConstraints(
+    const vesta_core::Transaction &transaction) {
+  for (const auto &constraint : transaction.addedConstraints()) {
+    constraints_[constraint.uuid()].insert(constraint.variables().begin(),
+                                           constraint.variables().end());
+    for (const auto &variable_uuid : constraint.variables()) {
       variables_[variable_uuid].insert(constraint.uuid());
     }
   }
 }
 
-void VariableStampIndex::applyAddedVariables(const vesta_core::Transaction& transaction)
-{
-  for (const auto& variable : transaction.addedVariables())
-  {
-    auto stamped_variable = dynamic_cast<const vesta_variables::Stamped*>(&variable);
-    if (stamped_variable)
-    {
+void VariableStampIndex::applyAddedVariables(
+    const vesta_core::Transaction &transaction) {
+  for (const auto &variable : transaction.addedVariables()) {
+    auto stamped_variable =
+        dynamic_cast<const vesta_variables::Stamped *>(&variable);
+    if (stamped_variable) {
       stamped_index_[variable.uuid()] = stamped_variable->stamp();
     }
-    variables_[variable.uuid()];  // Add an empty set of constraints
+    variables_[variable.uuid()]; // Add an empty set of constraints
   }
 }
 
-void VariableStampIndex::applyRemovedConstraints(const vesta_core::Transaction& transaction)
-{
-  for (const auto& constraint_uuid : transaction.removedConstraints())
-  {
-    for (auto& variable_uuid : constraints_[constraint_uuid])
-    {
+void VariableStampIndex::applyRemovedConstraints(
+    const vesta_core::Transaction &transaction) {
+  for (const auto &constraint_uuid : transaction.removedConstraints()) {
+    for (auto &variable_uuid : constraints_[constraint_uuid]) {
       variables_[variable_uuid].erase(constraint_uuid);
     }
     constraints_.erase(constraint_uuid);
   }
 }
 
-void VariableStampIndex::applyRemovedVariables(const vesta_core::Transaction& transaction)
-{
-  for (const auto& variable_uuid : transaction.removedVariables())
-  {
+void VariableStampIndex::applyRemovedVariables(
+    const vesta_core::Transaction &transaction) {
+  for (const auto &variable_uuid : transaction.removedVariables()) {
     stamped_index_.erase(variable_uuid);
     variables_.erase(variable_uuid);
   }
 }
 
-}  // namespace vesta_optimizers
+} // namespace vesta_optimizers

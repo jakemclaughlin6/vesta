@@ -38,173 +38,147 @@
 #include <algorithm>
 #include <cmath>
 
-namespace vesta_core
-{
+namespace vesta_core {
 
 // --- JacobianRelinearizationController ---
 
 JacobianRelinearizationController::JacobianRelinearizationController(
-  JacobianPolicy policy, int period, double threshold)
-: policy_(policy),
-  period_(period),
-  threshold_(threshold)
-{
+    JacobianPolicy policy, int period, double threshold)
+    : policy_(policy), period_(period), threshold_(threshold) {
   CHECK_GT(period_, 0) << "Jacobian relinearization period must be positive.";
-  CHECK_GE(threshold_, 0.0) << "Jacobian relinearization threshold must be non-negative.";
+  CHECK_GE(threshold_, 0.0)
+      << "Jacobian relinearization threshold must be non-negative.";
 }
 
 void JacobianRelinearizationController::prepareForEvaluation(
-  bool evaluate_jacobians, bool new_evaluation_point)
-{
-  if (!evaluate_jacobians)
-  {
+    bool evaluate_jacobians, bool new_evaluation_point) {
+  if (!evaluate_jacobians) {
     // Ceres is only requesting residuals (e.g., to check cost reduction).
-    // No Jacobian decision needed — set recompute to false since no Jacobians will be requested.
+    // No Jacobian decision needed — set recompute to false since no Jacobians
+    // will be requested.
     recompute_jacobians_.store(false, std::memory_order_release);
     return;
   }
 
-  switch (policy_)
-  {
-    case JacobianPolicy::kDefault:
+  switch (policy_) {
+  case JacobianPolicy::kDefault:
+    recompute_jacobians_.store(true, std::memory_order_release);
+    break;
+
+  case JacobianPolicy::kEveryN:
+    if (new_evaluation_point) {
+      ++jacobian_eval_count_;
+    }
+    // Recompute on iterations 1, 1+period, 1+2*period, etc.
+    recompute_jacobians_.store(((jacobian_eval_count_ - 1) % period_) == 0,
+                               std::memory_order_release);
+    break;
+
+  case JacobianPolicy::kFirstEstimate:
+    if (!first_jacobian_done_) {
       recompute_jacobians_.store(true, std::memory_order_release);
-      break;
-
-    case JacobianPolicy::kEveryN:
-      if (new_evaluation_point)
-      {
-        ++jacobian_eval_count_;
-      }
-      // Recompute on iterations 1, 1+period, 1+2*period, etc.
-      recompute_jacobians_.store(
-        ((jacobian_eval_count_ - 1) % period_) == 0,
-        std::memory_order_release);
-      break;
-
-    case JacobianPolicy::kFirstEstimate:
-      if (!first_jacobian_done_)
-      {
-        recompute_jacobians_.store(true, std::memory_order_release);
-        first_jacobian_done_ = true;
-      }
-      else
-      {
-        recompute_jacobians_.store(false, std::memory_order_release);
-      }
-      break;
-
-    case JacobianPolicy::kAdaptive:
-      // Don't force global recompute — each CachedJacobianCostFunction decides locally
-      // by comparing current parameters to the values at which Jacobians were last computed.
+      first_jacobian_done_ = true;
+    } else {
       recompute_jacobians_.store(false, std::memory_order_release);
-      break;
+    }
+    break;
+
+  case JacobianPolicy::kAdaptive:
+    // Don't force global recompute — each CachedJacobianCostFunction decides
+    // locally by comparing current parameters to the values at which Jacobians
+    // were last computed.
+    recompute_jacobians_.store(false, std::memory_order_release);
+    break;
   }
 }
 
-bool JacobianRelinearizationController::shouldRecomputeJacobians() const
-{
+bool JacobianRelinearizationController::shouldRecomputeJacobians() const {
   return recompute_jacobians_.load(std::memory_order_acquire);
 }
 
-void JacobianRelinearizationController::resetForNewOptimization()
-{
-  if (policy_ == JacobianPolicy::kEveryN)
-  {
+void JacobianRelinearizationController::resetForNewOptimization() {
+  if (policy_ == JacobianPolicy::kEveryN) {
     jacobian_eval_count_ = 0;
   }
-  // For kFirstEstimate, do NOT reset — Jacobians remain frozen across optimize() calls.
-  // For kDefault, nothing to reset.
+  // For kFirstEstimate, do NOT reset — Jacobians remain frozen across
+  // optimize() calls. For kDefault, nothing to reset.
 }
 
 // --- JacobianEvaluationCallback ---
 
 JacobianEvaluationCallback::JacobianEvaluationCallback(
-  std::shared_ptr<JacobianRelinearizationController> controller)
-: controller_(std::move(controller))
-{
-}
+    std::shared_ptr<JacobianRelinearizationController> controller)
+    : controller_(std::move(controller)) {}
 
 void JacobianEvaluationCallback::PrepareForEvaluation(
-  bool evaluate_jacobians, bool new_evaluation_point)
-{
+    bool evaluate_jacobians, bool new_evaluation_point) {
   controller_->prepareForEvaluation(evaluate_jacobians, new_evaluation_point);
 }
 
 // --- CachedJacobianCostFunction ---
 
 CachedJacobianCostFunction::CachedJacobianCostFunction(
-  ceres::CostFunction* inner,
-  std::shared_ptr<JacobianRelinearizationController> controller)
-: inner_(inner),
-  controller_(std::move(controller))
-{
-  // Copy the parameter block sizes and residual count from the inner cost function
+    ceres::CostFunction *inner,
+    std::shared_ptr<JacobianRelinearizationController> controller)
+    : inner_(inner), controller_(std::move(controller)) {
+  // Copy the parameter block sizes and residual count from the inner cost
+  // function
   *mutable_parameter_block_sizes() = inner_->parameter_block_sizes();
   set_num_residuals(inner_->num_residuals());
 }
 
-bool CachedJacobianCostFunction::Evaluate(
-  const double* const* parameters,
-  double* residuals,
-  double** jacobians) const
-{
+bool CachedJacobianCostFunction::Evaluate(const double *const *parameters,
+                                          double *residuals,
+                                          double **jacobians) const {
   // If no Jacobians are requested, just evaluate residuals
-  if (!jacobians)
-  {
+  if (!jacobians) {
     return inner_->Evaluate(parameters, residuals, nullptr);
   }
 
-  bool recompute = controller_->shouldRecomputeJacobians() || !has_cached_jacobians_;
+  bool recompute =
+      controller_->shouldRecomputeJacobians() || !has_cached_jacobians_;
 
-  // For kAdaptive, check if parameters changed significantly since last linearization
-  if (!recompute && controller_->policy() == JacobianPolicy::kAdaptive && has_cached_jacobians_)
-  {
+  // For kAdaptive, check if parameters changed significantly since last
+  // linearization
+  if (!recompute && controller_->policy() == JacobianPolicy::kAdaptive &&
+      has_cached_jacobians_) {
     recompute = parametersChangedSignificantly(parameters);
   }
 
-  if (recompute)
-  {
+  if (recompute) {
     // Compute fresh residuals and Jacobians
-    if (!inner_->Evaluate(parameters, residuals, jacobians))
-    {
+    if (!inner_->Evaluate(parameters, residuals, jacobians)) {
       return false;
     }
 
     // Cache the Jacobians and parameter values
-    const auto& block_sizes = parameter_block_sizes();
+    const auto &block_sizes = parameter_block_sizes();
     const int num_res = num_residuals();
     cached_jacobians_.resize(block_sizes.size());
     cached_parameters_.resize(block_sizes.size());
-    for (size_t i = 0; i < block_sizes.size(); ++i)
-    {
-      if (jacobians[i])
-      {
+    for (size_t i = 0; i < block_sizes.size(); ++i) {
+      if (jacobians[i]) {
         const int jac_size = num_res * block_sizes[i];
         cached_jacobians_[i].assign(jacobians[i], jacobians[i] + jac_size);
-      }
-      else
-      {
+      } else {
         cached_jacobians_[i].clear();
       }
       // Always cache parameter values for adaptive threshold checking
-      cached_parameters_[i].assign(parameters[i], parameters[i] + block_sizes[i]);
+      cached_parameters_[i].assign(parameters[i],
+                                   parameters[i] + block_sizes[i]);
     }
     has_cached_jacobians_ = true;
-  }
-  else
-  {
+  } else {
     // Compute fresh residuals only
-    if (!inner_->Evaluate(parameters, residuals, nullptr))
-    {
+    if (!inner_->Evaluate(parameters, residuals, nullptr)) {
       return false;
     }
 
     // Copy cached Jacobians to output
-    for (size_t i = 0; i < cached_jacobians_.size(); ++i)
-    {
-      if (jacobians[i] && !cached_jacobians_[i].empty())
-      {
-        std::copy(cached_jacobians_[i].begin(), cached_jacobians_[i].end(), jacobians[i]);
+    for (size_t i = 0; i < cached_jacobians_.size(); ++i) {
+      if (jacobians[i] && !cached_jacobians_[i].empty()) {
+        std::copy(cached_jacobians_[i].begin(), cached_jacobians_[i].end(),
+                  jacobians[i]);
       }
     }
   }
@@ -213,26 +187,22 @@ bool CachedJacobianCostFunction::Evaluate(
 }
 
 bool CachedJacobianCostFunction::parametersChangedSignificantly(
-  const double* const* parameters) const
-{
-  const auto& block_sizes = parameter_block_sizes();
+    const double *const *parameters) const {
+  const auto &block_sizes = parameter_block_sizes();
   const double threshold = controller_->threshold();
   const double threshold_sq = threshold * threshold;
 
-  for (size_t i = 0; i < block_sizes.size(); ++i)
-  {
+  for (size_t i = 0; i < block_sizes.size(); ++i) {
     double sum_sq = 0.0;
-    for (int j = 0; j < block_sizes[i]; ++j)
-    {
+    for (int j = 0; j < block_sizes[i]; ++j) {
       const double diff = parameters[i][j] - cached_parameters_[i][j];
       sum_sq += diff * diff;
     }
-    if (sum_sq > threshold_sq)
-    {
+    if (sum_sq > threshold_sq) {
       return true;
     }
   }
   return false;
 }
 
-}  // namespace vesta_core
+} // namespace vesta_core

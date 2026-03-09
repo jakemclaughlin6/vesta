@@ -48,52 +48,47 @@
 #include <initializer_list>
 #include <string>
 
-
 /**
  * @brief Dummy constraint implementation for testing
  */
-class ExampleConstraint : public vesta_core::Constraint
-{
+class ExampleConstraint : public vesta_core::Constraint {
 public:
   VESTA_CONSTRAINT_DEFINITIONS(ExampleConstraint);
 
   ExampleConstraint() = default;
 
-  ExampleConstraint(const std::string& source, std::initializer_list<vesta_core::UUID> variable_uuid_list) :
-    vesta_core::Constraint(source, variable_uuid_list),
-    data(0.0)
-  {
-  }
+  ExampleConstraint(const std::string &source,
+                    std::initializer_list<vesta_core::UUID> variable_uuid_list)
+      : vesta_core::Constraint(source, variable_uuid_list), data(0.0) {}
 
-  template<typename VariableUuidIterator>
-  ExampleConstraint(const std::string& source, VariableUuidIterator first, VariableUuidIterator last) :
-    vesta_core::Constraint(source, first, last),
-    data(0.0)
-  {
-  }
+  template <typename VariableUuidIterator>
+  ExampleConstraint(const std::string &source, VariableUuidIterator first,
+                    VariableUuidIterator last)
+      : vesta_core::Constraint(source, first, last), data(0.0) {}
 
-  void print(std::ostream& /*stream = std::cout*/) const override {}
-  ceres::CostFunction* costFunction() const override { return nullptr; }
+  void print(std::ostream & /*stream = std::cout*/) const override {}
+  ceres::CostFunction *costFunction() const override { return nullptr; }
 
-  double data;  // Public member variable just for testing
+  double data; // Public member variable just for testing
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_core::Constraint>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & data;
   }
 };
 
 BOOST_CLASS_EXPORT(ExampleConstraint);
-

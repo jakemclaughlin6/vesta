@@ -40,9 +40,9 @@
 #include <vesta_core/serialization.h>
 #include <vesta_core/uuid.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
-#include <vesta_variables/vision/point_3d_landmark.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 #include <vesta_variables/vision/pinhole_camera_fixed.h>
+#include <vesta_variables/vision/point_3d_landmark.h>
 
 #include <ceres/covariance.h>
 #include <ceres/problem.h>
@@ -58,49 +58,54 @@ using vesta_variables::PinholeCameraFixed;
 using vesta_variables::Point3DLandmark;
 using vesta_variables::Position3DStamped;
 
-TEST(ReprojectionErrorConstraint, Constructor)
-{
+TEST(ReprojectionErrorConstraint, Constructor) {
   // Construct a constraint just to make sure it compiles.
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
+                                      vesta_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(
+      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
   Point3DLandmark point(0);
   PinholeCameraFixed calibration_variable(0);
 
   vesta_core::Vector2d mean;
-  mean << 320.0, 240.0;  // Centre of a 640x480 camera
+  mean << 320.0, 240.0; // Centre of a 640x480 camera
 
   // Assume Half a pixel Variance
   vesta_core::Matrix2d cov;
-  cov << 0.25, 0.00,  // NOLINT
-         0.00, 0.25;     // NOLINT
+  cov << 0.25, 0.00, // NOLINT
+      0.00, 0.25;    // NOLINT
 
-  EXPECT_NO_THROW(ReprojectionErrorConstraint constraint("test", position_variable, orientation_variable,
-                                                         calibration_variable, point, mean, cov));
+  EXPECT_NO_THROW(ReprojectionErrorConstraint constraint(
+      "test", position_variable, orientation_variable, calibration_variable,
+      point, mean, cov));
 }
 
-TEST(ReprojectionErrorConstraint, Covariance)
-{
+TEST(ReprojectionErrorConstraint, Covariance) {
   // Verify the covariance <--> sqrt information conversions are correct
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("mo"));
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("mo"));
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
+                                      vesta_core::uuid::generate("mo"));
+  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678),
+                                            vesta_core::uuid::generate("mo"));
   Point3DLandmark point(0);
   PinholeCameraFixed calibration_variable(0);
 
   vesta_core::Vector2d mean;
-  mean << 320.0, 240.0;  // Centre of a 640x480 camera
+  mean << 320.0, 240.0; // Centre of a 640x480 camera
 
   // Assume Half a pixel Variance
   vesta_core::Matrix2d cov;
-  cov << 0.25, 0.00,  // NOLINT
-      0.00, 0.25;     // NOLINT
+  cov << 0.25, 0.00, // NOLINT
+      0.00, 0.25;    // NOLINT
 
-  ReprojectionErrorConstraint constraint("test", position_variable, orientation_variable, calibration_variable, point,
-                                         mean, cov);
+  ReprojectionErrorConstraint constraint(
+      "test", position_variable, orientation_variable, calibration_variable,
+      point, mean, cov);
 
-  // Define the expected matrices (used Octave to compute sqrt_info: 'chol(inv(A))')
+  // Define the expected matrices (used Octave to compute sqrt_info:
+  // 'chol(inv(A))')
   vesta_core::Matrix2d expected_sqrt_info;
-  expected_sqrt_info << 2, 0,  // NOLINT
-                      0, 2;    // NOLINT
+  expected_sqrt_info << 2, 0, // NOLINT
+      0, 2;                   // NOLINT
   vesta_core::Matrix2d expected_cov = cov;
 
   // Compare
@@ -108,16 +113,17 @@ TEST(ReprojectionErrorConstraint, Covariance)
   EXPECT_MATRIX_NEAR(expected_sqrt_info, constraint.sqrtInformation(), 1.0e-9);
 }
 
-TEST(ReprojectionErrorConstraint, Optimization)
-{
-  // Optimize a single pose and single constraint, verify the expected value and covariance are generated.
-  // Create the variables
-  auto position_variable = Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+TEST(ReprojectionErrorConstraint, Optimization) {
+  // Optimize a single pose and single constraint, verify the expected value and
+  // covariance are generated. Create the variables
+  auto position_variable = Position3DStamped::make_shared(
+      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   position_variable->x() = 1.5;
   position_variable->y() = -3.0;
   position_variable->z() = 10.0;
 
-  auto orientation_variable = Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+  auto orientation_variable = Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   orientation_variable->w() = 0.952;
   orientation_variable->x() = 0.038;
   orientation_variable->y() = -0.189;
@@ -134,10 +140,10 @@ TEST(ReprojectionErrorConstraint, Optimization)
   point_variables.push_back(Point3DLandmark::make_shared(1));
   point_variables.push_back(Point3DLandmark::make_shared(2));
   point_variables.push_back(Point3DLandmark::make_shared(3));
-  point_variables[0]->array() = {-0.70710681, -1.0,  9.29289324};
-  point_variables[1]->array() = {-0.70710681,  1.0,  9.29289324};
-  point_variables[2]->array() = { 0.70710681, -1.0, 10.70710676};
-  point_variables[3]->array() = { 0.70710681,  1.0, 10.70710676};
+  point_variables[0]->array() = {-0.70710681, -1.0, 9.29289324};
+  point_variables[1]->array() = {-0.70710681, 1.0, 9.29289324};
+  point_variables[2]->array() = {0.70710681, -1.0, 10.70710676};
+  point_variables[3]->array() = {0.70710681, 1.0, 10.70710676};
 
   // Create an observation
   std::vector<vesta_core::Vector2d> means(4);
@@ -148,43 +154,46 @@ TEST(ReprojectionErrorConstraint, Optimization)
 
   // Define Observation Covariance
   vesta_core::Matrix2d cov;
-  cov <<  0.25, 0.00,  // NOLINT
-          0.00, 0.25;  // NOLINT
+  cov << 0.25, 0.00, // NOLINT
+      0.00, 0.25;    // NOLINT
 
   ceres::Problem::Options problem_options;
   problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
 
   // Build the problem
-  problem.AddParameterBlock(position_variable->data(), position_variable->size(),
+  problem.AddParameterBlock(position_variable->data(),
+                            position_variable->size(),
                             position_variable->manifold());
-  problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
+  problem.AddParameterBlock(orientation_variable->data(),
+                            orientation_variable->size(),
                             orientation_variable->manifold());
-  problem.AddParameterBlock(calibration_variable->data(), calibration_variable->size(),
+  problem.AddParameterBlock(calibration_variable->data(),
+                            calibration_variable->size(),
                             calibration_variable->manifold());
 
-  if (calibration_variable->holdConstant())
-  {
+  if (calibration_variable->holdConstant()) {
     problem.SetParameterBlockConstant(calibration_variable->data());
   }
 
-  for (uint i = 0; i < point_variables.size(); i++)
-  {
-    auto constraint = ReprojectionErrorConstraint::make_shared("test",
-                                                        *position_variable, *orientation_variable,
-                                                        *calibration_variable, *point_variables[i], means[i], cov);
+  for (uint i = 0; i < point_variables.size(); i++) {
+    auto constraint = ReprojectionErrorConstraint::make_shared(
+        "test", *position_variable, *orientation_variable,
+        *calibration_variable, *point_variables[i], means[i], cov);
 
-    problem.AddParameterBlock(point_variables[i]->data(), point_variables[i]->size(),
-                        point_variables[i]->manifold());
+    problem.AddParameterBlock(point_variables[i]->data(),
+                              point_variables[i]->size(),
+                              point_variables[i]->manifold());
 
-    std::vector<double*> parameter_blocks;
+    std::vector<double *> parameter_blocks;
     parameter_blocks.push_back(position_variable->data());
     parameter_blocks.push_back(orientation_variable->data());
     parameter_blocks.push_back(calibration_variable->data());
     parameter_blocks.push_back(point_variables[i]->data());
 
     problem.SetParameterBlockConstant(point_variables[i]->data());
-    problem.AddResidualBlock(constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
+    problem.AddResidualBlock(constraint->costFunction(),
+                             constraint->lossFunction(), parameter_blocks);
   }
 
   // Run the solver
@@ -208,44 +217,54 @@ TEST(ReprojectionErrorConstraint, Optimization)
   EXPECT_NEAR(237.80861559081677, calibration_variable->cy(), 1.0e-3);
 
   EXPECT_NEAR(-0.70710681, point_variables[0]->x(), 1.0e-3);
-  EXPECT_NEAR(-1.0,        point_variables[0]->y(), 1.0e-3);
-  EXPECT_NEAR(9.29289324,  point_variables[0]->z(), 1.0e-3);
+  EXPECT_NEAR(-1.0, point_variables[0]->y(), 1.0e-3);
+  EXPECT_NEAR(9.29289324, point_variables[0]->z(), 1.0e-3);
 
   EXPECT_NEAR(-0.70710681, point_variables[1]->x(), 1.0e-3);
-  EXPECT_NEAR(1.0,         point_variables[1]->y(), 1.0e-3);
-  EXPECT_NEAR(9.29289324,  point_variables[1]->z(), 1.0e-3);
+  EXPECT_NEAR(1.0, point_variables[1]->y(), 1.0e-3);
+  EXPECT_NEAR(9.29289324, point_variables[1]->z(), 1.0e-3);
 
-  EXPECT_NEAR(0.70710681,  point_variables[2]->x(), 1.0e-3);
-  EXPECT_NEAR(-1.0,        point_variables[2]->y(), 1.0e-3);
+  EXPECT_NEAR(0.70710681, point_variables[2]->x(), 1.0e-3);
+  EXPECT_NEAR(-1.0, point_variables[2]->y(), 1.0e-3);
   EXPECT_NEAR(10.70710676, point_variables[2]->z(), 1.0e-3);
 
-  EXPECT_NEAR(0.70710681,  point_variables[3]->x(), 1.0e-3);
-  EXPECT_NEAR(1.0,         point_variables[3]->y(), 1.0e-3);
+  EXPECT_NEAR(0.70710681, point_variables[3]->x(), 1.0e-3);
+  EXPECT_NEAR(1.0, point_variables[3]->y(), 1.0e-3);
   EXPECT_NEAR(10.70710676, point_variables[3]->z(), 1.0e-3);
 
   // // Compute the covariance
   // std::vector<std::pair<const double*, const double*> > covariance_blocks;
-  // covariance_blocks.emplace_back(position_variable->data(), position_variable->data());
-  // covariance_blocks.emplace_back(orientation_variable->data(), orientation_variable->data());
-  // covariance_blocks.emplace_back(position_variable->data(), orientation_variable->data());
+  // covariance_blocks.emplace_back(position_variable->data(),
+  // position_variable->data());
+  // covariance_blocks.emplace_back(orientation_variable->data(),
+  // orientation_variable->data());
+  // covariance_blocks.emplace_back(position_variable->data(),
+  // orientation_variable->data());
 
   // ceres::Covariance::Options cov_options;
   // ceres::Covariance covariance(cov_options);
   // covariance.Compute(covariance_blocks, &problem);
-  // vesta_core::MatrixXd cov_pos_pos(position_variable->size(), position_variable->size());
-  // covariance.GetCovarianceBlock(position_variable->data(), position_variable->data(), cov_pos_pos.data());
+  // vesta_core::MatrixXd cov_pos_pos(position_variable->size(),
+  // position_variable->size());
+  // covariance.GetCovarianceBlock(position_variable->data(),
+  // position_variable->data(), cov_pos_pos.data());
 
-  // vesta_core::MatrixXd cov_or_or(orientation_variable->tangentSize(), orientation_variable->tangentSize());
+  // vesta_core::MatrixXd cov_or_or(orientation_variable->tangentSize(),
+  // orientation_variable->tangentSize());
   // covariance.GetCovarianceBlockInTangentSpace(
-  //   orientation_variable->data(), orientation_variable->data(), cov_or_or.data());
+  //   orientation_variable->data(), orientation_variable->data(),
+  //   cov_or_or.data());
 
-  // vesta_core::MatrixXd cov_pos_or(position_variable->tangentSize(), orientation_variable->tangentSize());
+  // vesta_core::MatrixXd cov_pos_or(position_variable->tangentSize(),
+  // orientation_variable->tangentSize());
   // covariance.GetCovarianceBlockInTangentSpace(
-  //   position_variable->data(), orientation_variable->data(), cov_pos_or.data());
+  //   position_variable->data(), orientation_variable->data(),
+  //   cov_pos_or.data());
 
   // // Assemble the full covariance from the covariance blocks
   // vesta_core::Matrix6d actual_covariance;
-  // actual_covariance << cov_pos_pos, cov_pos_or, cov_pos_or.transpose(), cov_or_or;
+  // actual_covariance << cov_pos_pos, cov_pos_or, cov_pos_or.transpose(),
+  // cov_or_or;
 
   // // Define the expected covariance
   // vesta_core::Matrix6d expected_covariance;
@@ -260,11 +279,12 @@ TEST(ReprojectionErrorConstraint, Optimization)
   // EXPECT_MATRIX_NEAR(expected_covariance, actual_covariance, 1.0e-5);
 }
 
-TEST(ReprojectionErrorConstraint, Serialization)
-{
+TEST(ReprojectionErrorConstraint, Serialization) {
   // Construct a constraint
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
+                                      vesta_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(
+      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
 
   PinholeCameraFixed calibration_variable(0);
   calibration_variable.fx() = 638.34478759765620;
@@ -277,15 +297,15 @@ TEST(ReprojectionErrorConstraint, Serialization)
   vesta_core::Vector2d mean;
   mean << 261.71822455, 168.60442225;
 
-  // Generated PD matrix using Octave: R = rand(6, 6); A = R * R' (use format long g to get the required precision)
+  // Generated PD matrix using Octave: R = rand(6, 6); A = R * R' (use format
+  // long g to get the required precision)
   vesta_core::Matrix2d cov;
-  cov << 0.25, 0.00,  //NOLINT
-         0.00, 0.25;  //NOLINT
-
+  cov << 0.25, 0.00, // NOLINT
+      0.00, 0.25;    // NOLINT
 
   ReprojectionErrorConstraint expected("test", position_variable,
-                                        orientation_variable, calibration_variable,
-                                        point, mean, cov);
+                                       orientation_variable,
+                                       calibration_variable, point, mean, cov);
 
   // Serialize the constraint into an archive
   std::stringstream stream;
@@ -308,8 +328,7 @@ TEST(ReprojectionErrorConstraint, Serialization)
   EXPECT_MATRIX_EQ(expected.sqrtInformation(), actual.sqrtInformation());
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

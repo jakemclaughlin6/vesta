@@ -41,29 +41,28 @@
 #include <vesta_core/uuid.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 
+#include <Eigen/Geometry>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
-#include <Eigen/Geometry>
 
 #include <array>
 #include <ostream>
 #include <string>
 
-
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 /**
- * @brief A constraint that represents either prior information about a 3D orientation, or a direct measurement of the
- * 3D orientation.
+ * @brief A constraint that represents either prior information about a 3D
+ * orientation, or a direct measurement of the 3D orientation.
  *
- * This constraint holds the measured 3D orientation and the measurement uncertainty/covariance.
+ * This constraint holds the measured 3D orientation and the measurement
+ * uncertainty/covariance.
  */
-class AbsoluteOrientation3DStampedConstraint : public vesta_core::Constraint
-{
+class AbsoluteOrientation3DStampedConstraint : public vesta_core::Constraint {
 public:
-  VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(AbsoluteOrientation3DStampedConstraint);
+  VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(
+      AbsoluteOrientation3DStampedConstraint);
 
   /**
    * @brief Default constructor
@@ -73,30 +72,36 @@ public:
   /**
    * @brief Create a constraint using a measurement/prior of a 3D orientation
    *
-   * @param[in] source      The name of the sensor or motion model that generated this constraint
-   * @param[in] orientation The variable representing the orientation components of the pose
-   * @param[in] mean        The measured/prior orientation as a quaternion (4x1 vector: w, x, y, z)
-   * @param[in] covariance  The measurement/prior covariance (3x3 matrix: qx, qy, qz)
+   * @param[in] source      The name of the sensor or motion model that
+   * generated this constraint
+   * @param[in] orientation The variable representing the orientation components
+   * of the pose
+   * @param[in] mean        The measured/prior orientation as a quaternion (4x1
+   * vector: w, x, y, z)
+   * @param[in] covariance  The measurement/prior covariance (3x3 matrix: qx,
+   * qy, qz)
    */
   AbsoluteOrientation3DStampedConstraint(
-    const std::string& source,
-    const vesta_variables::Orientation3DStamped& orientation,
-    const vesta_core::Vector4d& mean,
-    const vesta_core::Matrix3d& covariance);
+      const std::string &source,
+      const vesta_variables::Orientation3DStamped &orientation,
+      const vesta_core::Vector4d &mean, const vesta_core::Matrix3d &covariance);
 
   /**
    * @brief Create a constraint using a measurement/prior of a 3D orientation
    *
-   * @param[in] source      The name of the sensor or motion model that generated this constraint
-   * @param[in] orientation The variable representing the orientation components of the pose
-   * @param[in] mean        The measured/prior orientation as an Eigen quaternion
-   * @param[in] covariance  The measurement/prior covariance (3x3 matrix: qx, qy, qz)
+   * @param[in] source      The name of the sensor or motion model that
+   * generated this constraint
+   * @param[in] orientation The variable representing the orientation components
+   * of the pose
+   * @param[in] mean        The measured/prior orientation as an Eigen
+   * quaternion
+   * @param[in] covariance  The measurement/prior covariance (3x3 matrix: qx,
+   * qy, qz)
    */
   AbsoluteOrientation3DStampedConstraint(
-    const std::string& source,
-    const vesta_variables::Orientation3DStamped& orientation,
-    const Eigen::Quaterniond& mean,
-    const vesta_core::Matrix3d& covariance);
+      const std::string &source,
+      const vesta_variables::Orientation3DStamped &orientation,
+      const Eigen::Quaterniond &mean, const vesta_core::Matrix3d &covariance);
 
   /**
    * @brief Destructor
@@ -108,14 +113,16 @@ public:
    *
    * Order is (w, x, y, z)
    */
-  const vesta_core::Vector4d& mean() const { return mean_; }
+  const vesta_core::Vector4d &mean() const { return mean_; }
 
   /**
    * @brief Read-only access to the square root information matrix.
    *
    * Order is (x, y, z)
    */
-  const vesta_core::Matrix3d& sqrtInformation() const { return sqrt_information_; }
+  const vesta_core::Matrix3d &sqrtInformation() const {
+    return sqrt_information_;
+  }
 
   /**
    * @brief Compute the measurement covariance matrix.
@@ -125,22 +132,25 @@ public:
   vesta_core::Matrix3d covariance() const;
 
   /**
-   * @brief Print a human-readable description of the constraint to the provided stream.
+   * @brief Print a human-readable description of the constraint to the provided
+   * stream.
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream& stream = std::cout) const override;
+  void print(std::ostream &stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
    *
-   * The function caller will own the new cost function instance. It is the responsibility of the caller to delete
-   * the cost function object when it is no longer needed. If the pointer is provided to a Ceres::Problem object, the
-   * Ceres::Problem object will takes ownership of the pointer and delete it during destruction.
+   * The function caller will own the new cost function instance. It is the
+   * responsibility of the caller to delete the cost function object when it is
+   * no longer needed. If the pointer is provided to a Ceres::Problem object,
+   * the Ceres::Problem object will takes ownership of the pointer and delete it
+   * during destruction.
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction* costFunction() const override;
+  ceres::CostFunction *costFunction() const override;
 
 protected:
   /**
@@ -148,38 +158,42 @@ protected:
    * @param[in] quaternion - The input Eigen quaternion
    * @return The \p quaternion, converted to an Eigen Vector4d
    */
-  static vesta_core::Vector4d toEigen(const Eigen::Quaterniond& quaternion);
+  static vesta_core::Vector4d toEigen(const Eigen::Quaterniond &quaternion);
 
   /**
    * @brief Utility method to convert a flat 1D array to a 3x3 Eigen matrix
    * @param[in] covariance - The input covariance array
    * @return The \p covariance, converted to an Eigen Matrix3d
    */
-  static vesta_core::Matrix3d toEigen(const std::array<double, 9>& covariance);
+  static vesta_core::Matrix3d toEigen(const std::array<double, 9> &covariance);
 
-  vesta_core::Vector4d mean_;  //!< The measured/prior mean vector for this variable
-  vesta_core::Matrix3d sqrt_information_;  //!< The square root information matrix
+  vesta_core::Vector4d
+      mean_; //!< The measured/prior mean vector for this variable
+  vesta_core::Matrix3d
+      sqrt_information_; //!< The square root information matrix
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_core::Constraint>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & mean_;
     archive & sqrt_information_;
   }
 };
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints
 
-BOOST_CLASS_EXPORT_KEY(vesta_constraints::AbsoluteOrientation3DStampedConstraint);
-
+BOOST_CLASS_EXPORT_KEY(
+    vesta_constraints::AbsoluteOrientation3DStampedConstraint);

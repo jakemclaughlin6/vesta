@@ -40,9 +40,7 @@
 #include <sstream>
 #include <string>
 
-
-namespace vesta_core
-{
+namespace vesta_core {
 
 // Define some Eigen Typedefs that use Row-Major order
 using VectorXd = Eigen::Matrix<double, Eigen::Dynamic, 1>;
@@ -58,7 +56,8 @@ using Vector9d = Eigen::Matrix<double, 9, 1>;
 using Vector15d = Eigen::Matrix<double, 15, 1>;
 using Vector16d = Eigen::Matrix<double, 16, 1>;
 
-using MatrixXd = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
+using MatrixXd =
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 using Matrix1d = Eigen::Matrix<double, 1, 1, Eigen::RowMajor>;
 using Matrix2d = Eigen::Matrix<double, 2, 2, Eigen::RowMajor>;
 using Matrix3d = Eigen::Matrix<double, 3, 3, Eigen::RowMajor>;
@@ -72,7 +71,8 @@ using Matrix15d = Eigen::Matrix<double, 15, 15, Eigen::RowMajor>;
 using Matrix16d = Eigen::Matrix<double, 16, 16, Eigen::RowMajor>;
 
 template <typename Scalar, int RowsAtCompileTime, int ColsAtCompileTime>
-using Matrix = Eigen::Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime, Eigen::RowMajor>;
+using Matrix = Eigen::Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime,
+                             Eigen::RowMajor>;
 
 /**
  * @brief Serialize a matrix into an std::string using this format:
@@ -86,8 +86,8 @@ using Matrix = Eigen::Matrix<Scalar, RowsAtCompileTime, ColsAtCompileTime, Eigen
  * @return An std::string with the matrix serialized into it.
  */
 template <typename Derived>
-std::string to_string(const Eigen::DenseBase<Derived>& m, const int precision = 4)
-{
+std::string to_string(const Eigen::DenseBase<Derived> &m,
+                      const int precision = 4) {
   static const Eigen::IOFormat pretty(precision, 0, ", ", "\n", "[", "]");
 
   std::ostringstream oss;
@@ -99,38 +99,39 @@ std::string to_string(const Eigen::DenseBase<Derived>& m, const int precision = 
  * @brief Check if a matrix is symmetric.
  *
  * @param[in] m - Square matrix to check symmetry on
- * @param[in] precision - Precision used to compared the matrix m with its transpose, which is the property used to
- *                        check for symmetry.
+ * @param[in] precision - Precision used to compared the matrix m with its
+ * transpose, which is the property used to check for symmetry.
  * @return True if the matrix m is symmetric; False, otherwise.
  */
 template <typename Derived>
-bool isSymmetric(const Eigen::DenseBase<Derived>& m,
-                 const typename Eigen::DenseBase<Derived>::RealScalar precision =
-                     Eigen::NumTraits<typename Eigen::DenseBase<Derived>::Scalar>::dummy_precision())
-{
+bool isSymmetric(
+    const Eigen::DenseBase<Derived> &m,
+    const typename Eigen::DenseBase<Derived>::RealScalar precision =
+        Eigen::NumTraits<
+            typename Eigen::DenseBase<Derived>::Scalar>::dummy_precision()) {
   // We do not use `isApprox`:
   //
   // return m.isApprox(m.transpose(), precision);
   //
   // because it does not play well when `m` is close to zero.
   //
-  // See: https://eigen.tuxfamily.org/dox/classEigen_1_1DenseBase.html#ae8443357b808cd393be1b51974213f9c
-  const auto& derived = m.derived();
+  // See:
+  // https://eigen.tuxfamily.org/dox/classEigen_1_1DenseBase.html#ae8443357b808cd393be1b51974213f9c
+  const auto &derived = m.derived();
   return (derived - derived.transpose()).cwiseAbs().maxCoeff() < precision;
 }
 
 /**
- * @brief Check if a matrix is Positive Definite (PD), i.e. all eigenvalues are `> 0.0`.
+ * @brief Check if a matrix is Positive Definite (PD), i.e. all eigenvalues are
+ * `> 0.0`.
  *
  * @param[in] m - Square matrix to check PD-ness on.
  * @return True if the matrix m is PD; False, otherwise.
  */
 template <typename Derived>
-bool isPositiveDefinite(const Eigen::DenseBase<Derived>& m)
-{
+bool isPositiveDefinite(const Eigen::DenseBase<Derived> &m) {
   Eigen::SelfAdjointEigenSolver<Derived> solver(m);
   return solver.eigenvalues().minCoeff() > 0.0;
 }
 
-}  // namespace vesta_core
-
+} // namespace vesta_core

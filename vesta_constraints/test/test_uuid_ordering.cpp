@@ -38,24 +38,23 @@
 
 #include <vector>
 
-
 using vesta_constraints::UuidOrdering;
 
-TEST(UuidOrdering, Constructor)
-{
+TEST(UuidOrdering, Constructor) {
   // Default constructor
   EXPECT_NO_THROW(UuidOrdering());
 
   // Iterators
-  std::vector<vesta_core::UUID> uuids{vesta_core::uuid::generate(), vesta_core::uuid::generate()};
+  std::vector<vesta_core::UUID> uuids{vesta_core::uuid::generate(),
+                                      vesta_core::uuid::generate()};
   EXPECT_NO_THROW(UuidOrdering(uuids.begin(), uuids.end()));
 
   // Initializer List
-  EXPECT_NO_THROW(UuidOrdering({vesta_core::uuid::generate(), vesta_core::uuid::generate()}));  // NOLINT
+  EXPECT_NO_THROW(UuidOrdering(
+      {vesta_core::uuid::generate(), vesta_core::uuid::generate()})); // NOLINT
 }
 
-TEST(UuidOrdering, Access)
-{
+TEST(UuidOrdering, Access) {
   auto uuid1 = vesta_core::uuid::generate();
   auto uuid2 = vesta_core::uuid::generate();
   auto uuid3 = vesta_core::uuid::generate();
@@ -82,8 +81,7 @@ TEST(UuidOrdering, Access)
   EXPECT_EQ(3u, order[uuid4]);
 }
 
-TEST(UuidOrdering, PushBack)
-{
+TEST(UuidOrdering, PushBack) {
   auto uuid1 = vesta_core::uuid::generate();
   auto uuid2 = vesta_core::uuid::generate();
   auto uuid3 = vesta_core::uuid::generate();
@@ -99,8 +97,7 @@ TEST(UuidOrdering, PushBack)
   EXPECT_EQ(uuid4, order[3u]);
 }
 
-TEST(UuidOrdering, Size)
-{
+TEST(UuidOrdering, Size) {
   auto order = UuidOrdering();
 
   EXPECT_TRUE(order.empty());
@@ -113,8 +110,7 @@ TEST(UuidOrdering, Size)
   EXPECT_EQ(1u, order.size());
 }
 
-TEST(UuidOrdering, Exists)
-{
+TEST(UuidOrdering, Exists) {
   auto uuid1 = vesta_core::uuid::generate();
   auto uuid2 = vesta_core::uuid::generate();
   auto uuid3 = vesta_core::uuid::generate();
@@ -132,8 +128,7 @@ TEST(UuidOrdering, Exists)
   EXPECT_FALSE(order.exists(uuid4));
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

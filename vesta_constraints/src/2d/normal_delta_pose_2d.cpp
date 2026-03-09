@@ -37,65 +37,63 @@
 #include <Eigen/Core>
 #include <glog/logging.h>
 
+namespace vesta_constraints {
 
-namespace vesta_constraints
-{
-
-NormalDeltaPose2D::NormalDeltaPose2D(const vesta_core::MatrixXd& A, const vesta_core::Vector3d& b) :
-  A_(A),
-  b_(b)
-{
+NormalDeltaPose2D::NormalDeltaPose2D(const vesta_core::MatrixXd &A,
+                                     const vesta_core::Vector3d &b)
+    : A_(A), b_(b) {
   CHECK_GT(A_.rows(), 0);
   CHECK_EQ(A_.cols(), 3);
   set_num_residuals(A_.rows());
 }
 
-bool NormalDeltaPose2D::Evaluate(
-  double const* const* parameters,
-  double* residuals,
-  double** jacobians) const
-{
-  const vesta_core::Matrix2d R1_transpose = vesta_core::rotationMatrix2D(parameters[1][0]).transpose();  // orientation1
+bool NormalDeltaPose2D::Evaluate(double const *const *parameters,
+                                 double *residuals, double **jacobians) const {
+  const vesta_core::Matrix2d R1_transpose =
+      vesta_core::rotationMatrix2D(parameters[1][0])
+          .transpose(); // orientation1
   const vesta_core::Vector2d position_delta =
-      R1_transpose * vesta_core::Vector2d(parameters[2][0] - parameters[0][0],   // position2.x - position1.x
-                                         parameters[2][1] - parameters[0][1]);  // position2.y - position1.y
+      R1_transpose *
+      vesta_core::Vector2d(
+          parameters[2][0] - parameters[0][0],  // position2.x - position1.x
+          parameters[2][1] - parameters[0][1]); // position2.y - position1.y
 
   const vesta_core::Vector3d full_residuals_vector(
       position_delta[0] - b_[0], position_delta[1] - b_[1],
-      vesta_core::wrapAngle2D(parameters[3][0] - parameters[1][0] - b_[2]));  // orientation2 - orientation1
+      vesta_core::wrapAngle2D(parameters[3][0] - parameters[1][0] -
+                              b_[2])); // orientation2 - orientation1
 
-  // Scale the residuals by the square root information matrix to account for the measurement uncertainty.
+  // Scale the residuals by the square root information matrix to account for
+  // the measurement uncertainty.
   Eigen::Map<vesta_core::VectorXd> residuals_vector(residuals, num_residuals());
   residuals_vector = A_ * full_residuals_vector;
 
-  if (jacobians != nullptr)
-  {
+  if (jacobians != nullptr) {
     // Jacobian wrt position1
-    if (jacobians[0] != nullptr)
-    {
-      Eigen::Map<vesta_core::MatrixXd>(jacobians[0], num_residuals(), 2) = -A_.leftCols<2>() * R1_transpose;
+    if (jacobians[0] != nullptr) {
+      Eigen::Map<vesta_core::MatrixXd>(jacobians[0], num_residuals(), 2) =
+          -A_.leftCols<2>() * R1_transpose;
     }
 
     // Jacobian wrt orientation1
-    if (jacobians[1] != nullptr)
-    {
+    if (jacobians[1] != nullptr) {
       Eigen::Map<vesta_core::VectorXd>(jacobians[1], num_residuals()) =
           A_ * vesta_core::Vector3d(position_delta[1], -position_delta[0], -1);
     }
 
     // Jacobian wrt position2
-    if (jacobians[2] != nullptr)
-    {
-      Eigen::Map<vesta_core::MatrixXd>(jacobians[2], num_residuals(), 2) = A_.leftCols<2>() * R1_transpose;
+    if (jacobians[2] != nullptr) {
+      Eigen::Map<vesta_core::MatrixXd>(jacobians[2], num_residuals(), 2) =
+          A_.leftCols<2>() * R1_transpose;
     }
 
     // Jacobian wrt orientation2
-    if (jacobians[3] != nullptr)
-    {
-      Eigen::Map<vesta_core::VectorXd>(jacobians[3], num_residuals()) = A_.col(2);
+    if (jacobians[3] != nullptr) {
+      Eigen::Map<vesta_core::VectorXd>(jacobians[3], num_residuals()) =
+          A_.col(2);
     }
   }
   return true;
 }
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints

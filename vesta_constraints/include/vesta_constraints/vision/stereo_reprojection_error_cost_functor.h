@@ -38,11 +38,10 @@
 #include <vesta_core/fuse_macros.h>
 #include <vesta_core/util.h>
 
-#include <ceres/rotation.h>
 #include <Eigen/Core>
+#include <ceres/rotation.h>
 
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 /**
  * @brief Create a cost function for stereo reprojection error.
@@ -62,36 +61,41 @@ namespace vesta_constraints
  *
  * The projection equations are:
  *   Left camera:  u_l = fx * p[0] / p[2] + cx,  v_l = fy * p[1] / p[2] + cy
- *   Right camera: u_r = fx * (p[0] - baseline) / p[2] + cx,  v_r = fy * p[1] / p[2] + cy
+ *   Right camera: u_r = fx * (p[0] - baseline) / p[2] + cx,  v_r = fy * p[1] /
+ * p[2] + cy
  *
  * where p = R * X + t is the point in the camera frame.
  */
-class StereoReprojectionErrorCostFunctor
-{
+class StereoReprojectionErrorCostFunctor {
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
   /**
    * @brief Construct a cost function instance
    *
-   * @param[in] A The residual weighting matrix (4x4), most likely derived from the square root
-   *              information matrix in order (u_left, v_left, u_right, v_right)
-   * @param[in] b The 4D observation vector in order (u_left, v_left, u_right, v_right)
+   * @param[in] A The residual weighting matrix (4x4), most likely derived from
+   * the square root information matrix in order (u_left, v_left, u_right,
+   * v_right)
+   * @param[in] b The 4D observation vector in order (u_left, v_left, u_right,
+   * v_right)
    */
-  StereoReprojectionErrorCostFunctor(const vesta_core::Matrix4d& A, const vesta_core::Vector4d& b);
+  StereoReprojectionErrorCostFunctor(const vesta_core::Matrix4d &A,
+                                     const vesta_core::Vector4d &b);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
    *
    * @param[in] position     The camera position (3D vector: x, y, z)
    * @param[in] orientation  The camera orientation (quaternion: w, x, y, z)
-   * @param[in] calibration  The stereo camera calibration (5D vector: fx, fy, cx, cy, baseline)
+   * @param[in] calibration  The stereo camera calibration (5D vector: fx, fy,
+   * cx, cy, baseline)
    * @param[in] point        The 3D landmark point (3D vector: x, y, z)
    * @param[out] residual    The computed residuals (4D vector)
    */
   template <typename T>
-  bool operator()(const T* const position, const T* const orientation, const T* const calibration,
-                  const T* const point, T* residual) const;
+  bool operator()(const T *const position, const T *const orientation,
+                  const T *const calibration, const T *const point,
+                  T *residual) const;
 
 private:
   vesta_core::Matrix4d A_;
@@ -99,16 +103,15 @@ private:
 };
 
 inline StereoReprojectionErrorCostFunctor::StereoReprojectionErrorCostFunctor(
-    const vesta_core::Matrix4d& A, const vesta_core::Vector4d& b)
-  : A_(A), b_(b)
-{
-}
+    const vesta_core::Matrix4d &A, const vesta_core::Vector4d &b)
+    : A_(A), b_(b) {}
 
 template <typename T>
-bool StereoReprojectionErrorCostFunctor::operator()(const T* const position, const T* const orientation,
-                                                     const T* const calibration, const T* const point,
-                                                     T* residual) const
-{
+bool StereoReprojectionErrorCostFunctor::operator()(const T *const position,
+                                                    const T *const orientation,
+                                                    const T *const calibration,
+                                                    const T *const point,
+                                                    T *residual) const {
   // Transform point to camera frame: p = R * point + t
   // Rotate point (R * X)
   T p[3];
@@ -120,18 +123,20 @@ bool StereoReprojectionErrorCostFunctor::operator()(const T* const position, con
   p[2] += position[2];
 
   // Extract calibration parameters
-  const T& fx = calibration[0];
-  const T& fy = calibration[1];
-  const T& cx = calibration[2];
-  const T& cy = calibration[3];
-  const T& baseline = calibration[4];
+  const T &fx = calibration[0];
+  const T &fy = calibration[1];
+  const T &cx = calibration[2];
+  const T &cy = calibration[3];
+  const T &baseline = calibration[4];
 
-  // Project to left camera: u_l = fx * p[0] / p[2] + cx, v_l = fy * p[1] / p[2] + cy
+  // Project to left camera: u_l = fx * p[0] / p[2] + cx, v_l = fy * p[1] / p[2]
+  // + cy
   T inv_z = T(1.0) / p[2];
   T u_left = fx * p[0] * inv_z + cx;
   T v_left = fy * p[1] * inv_z + cy;
 
-  // Project to right camera: u_r = fx * (p[0] - baseline) / p[2] + cx, v_r = fy * p[1] / p[2] + cy
+  // Project to right camera: u_r = fx * (p[0] - baseline) / p[2] + cx, v_r = fy
+  // * p[1] / p[2] + cy
   T u_right = fx * (p[0] - baseline) * inv_z + cx;
   T v_right = fy * p[1] * inv_z + cy;
 
@@ -148,5 +153,4 @@ bool StereoReprojectionErrorCostFunctor::operator()(const T* const position, con
   return true;
 }
 
-}  // namespace vesta_constraints
-
+} // namespace vesta_constraints

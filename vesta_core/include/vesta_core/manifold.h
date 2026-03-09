@@ -40,14 +40,13 @@
 #include <boost/serialization/access.hpp>
 #include <ceres/manifold.h>
 
-
-namespace vesta_core
-{
+namespace vesta_core {
 
 /**
  * @brief The Manifold interface definition.
  *
- * This class extends the Ceres Manifold class, adding Boost serialization support.
+ * This class extends the Ceres Manifold class, adding Boost serialization
+ * support.
  *
  * The Ceres Manifold interface requires the following pure virtual methods:
  *  - Plus(x, delta) -> x_plus_delta
@@ -59,10 +58,10 @@ namespace vesta_core
  *
  * If Plus(x1, delta) -> x2, then Minus(x1, x2) -> delta
  *
- * See the Ceres documentation for more details. http://ceres-solver.org/nnls_modeling.html#manifold
+ * See the Ceres documentation for more details.
+ * http://ceres-solver.org/nnls_modeling.html#manifold
  */
-class Manifold : public ceres::Manifold
-{
+class Manifold : public ceres::Manifold {
 public:
   VESTA_SMART_PTR_ALIASES_ONLY(Manifold);
 
@@ -71,16 +70,16 @@ private:
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& /* archive */, const unsigned int /* version */)
-  {
-  }
+  template <class Archive>
+  void serialize(Archive & /* archive */, const unsigned int /* version */) {}
 };
 
-}  // namespace vesta_core
-
+} // namespace vesta_core

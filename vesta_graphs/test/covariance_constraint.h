@@ -49,33 +49,33 @@
 #include <algorithm>
 #include <string>
 
-
 /**
  * @brief Create a cost fuction that implements one of the Ceres unit tests
- * 
+ *
  * UnaryCostFunctions are added to all three variables
- * - https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/covariance_test.cc#L423
- * - https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/covariance_test.cc#L428
- * - https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/covariance_test.cc#L433
+ * -
+ * https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/covariance_test.cc#L423
+ * -
+ * https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/covariance_test.cc#L428
+ * -
+ * https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/covariance_test.cc#L433
  * BinaryCostFunctions are added for (Y,X) and (Z,X)
- * - https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/covariance_test.cc#L441
- * - https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/covariance_test.cc#L451
+ * -
+ * https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/covariance_test.cc#L441
+ * -
+ * https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/covariance_test.cc#L451
  */
-class CovarianceCostFunction : public ceres::CostFunction
-{
+class CovarianceCostFunction : public ceres::CostFunction {
 public:
-  CovarianceCostFunction()
-  {
+  CovarianceCostFunction() {
     set_num_residuals(8);
     mutable_parameter_block_sizes()->push_back(2);
     mutable_parameter_block_sizes()->push_back(3);
     mutable_parameter_block_sizes()->push_back(1);
   }
 
-  bool Evaluate(double const* const* /*parameters*/,
-                double* residuals,
-                double** jacobians) const override
-  {
+  bool Evaluate(double const *const * /*parameters*/, double *residuals,
+                double **jacobians) const override {
     residuals[0] = 1;
     residuals[1] = 1;
     residuals[2] = 1;
@@ -85,51 +85,22 @@ public:
     residuals[6] = 2;
     residuals[7] = 2;
 
-    if (jacobians != NULL)
-    {
-      if (jacobians[0] != NULL)
-      {
-        static const double jacobian0[] =
-        {
-            1.0,  0.0,
-            0.0,  1.0,
-            0.0,  0.0,
-            0.0,  0.0,
-            0.0,  0.0,
-            0.0,  0.0,
-          -5.0, -6.0,
-            3.0, -2.0
-        };
+    if (jacobians != NULL) {
+      if (jacobians[0] != NULL) {
+        static const double jacobian0[] = {1.0,  0.0,  0.0, 1.0, 0.0, 0.0,
+                                           0.0,  0.0,  0.0, 0.0, 0.0, 0.0,
+                                           -5.0, -6.0, 3.0, -2.0};
         std::copy(jacobian0, jacobian0 + 16, jacobians[0]);
       }
-      if (jacobians[1] != NULL)
-      {
-        static const double jacobian1[] =
-        {
-            0.0,  0.0,  0.0,
-            0.0,  0.0,  0.0,
-            2.0,  0.0,  0.0,
-            0.0,  2.0,  0.0,
-            0.0,  0.0,  2.0,
-            0.0,  0.0,  0.0,
-            1.0,  2.0,  3.0,
-            0.0,  0.0,  0.0
-        };
+      if (jacobians[1] != NULL) {
+        static const double jacobian1[] = {
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 2.0, 0.0,
+            0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 0.0, 0.0, 0.0};
         std::copy(jacobian1, jacobian1 + 24, jacobians[1]);
       }
-      if (jacobians[2] != NULL)
-      {
-        static const double jacobian2[] =
-        {
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            5.0,
-            0.0,
-            2.0
-        };
+      if (jacobians[2] != NULL) {
+        static const double jacobian2[] = {0.0, 0.0, 0.0, 0.0,
+                                           0.0, 5.0, 0.0, 2.0};
         std::copy(jacobian2, jacobian2 + 8, jacobians[2]);
       }
     }
@@ -141,41 +112,41 @@ public:
 /**
  * @brief Constraint implementing the covariance cost function
  */
-class CovarianceConstraint : public vesta_core::Constraint
-{
+class CovarianceConstraint : public vesta_core::Constraint {
 public:
   VESTA_CONSTRAINT_DEFINITIONS(CovarianceConstraint);
 
   CovarianceConstraint() = default;
 
-  CovarianceConstraint(
-    const std::string& source,
-    const vesta_core::UUID& variable1_uuid,
-    const vesta_core::UUID& variable2_uuid,
-    const vesta_core::UUID& variable3_uuid) :
-    vesta_core::Constraint(source, {variable1_uuid, variable2_uuid, variable3_uuid})
-  {
-  }
+  CovarianceConstraint(const std::string &source,
+                       const vesta_core::UUID &variable1_uuid,
+                       const vesta_core::UUID &variable2_uuid,
+                       const vesta_core::UUID &variable3_uuid)
+      : vesta_core::Constraint(
+            source, {variable1_uuid, variable2_uuid, variable3_uuid}) {}
 
-  void print(std::ostream& /*stream = std::cout*/) const override {}
-  ceres::CostFunction* costFunction() const override { return new CovarianceCostFunction(); }
+  void print(std::ostream & /*stream = std::cout*/) const override {}
+  ceres::CostFunction *costFunction() const override {
+    return new CovarianceCostFunction();
+  }
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_core::Constraint>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
   }
 };
 
 BOOST_CLASS_EXPORT(CovarianceConstraint);
-

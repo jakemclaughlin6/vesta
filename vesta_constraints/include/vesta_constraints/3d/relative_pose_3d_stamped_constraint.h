@@ -42,28 +42,27 @@
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 
+#include <Eigen/Dense>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
-#include <Eigen/Dense>
 
 #include <ostream>
 #include <string>
 #include <vector>
 
-
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 /**
- * @brief A constraint that represents a measurement on the difference between two 3D poses.
+ * @brief A constraint that represents a measurement on the difference between
+ * two 3D poses.
  *
- * This type of constraint arises in many situations. Many types of incremental odometry measurements (e.g., visual
- * odometry) measure the change in the pose, not the pose directly. This constraint holds the measured 3D pose change
- * and the measurement uncertainty/covariance.
+ * This type of constraint arises in many situations. Many types of incremental
+ * odometry measurements (e.g., visual odometry) measure the change in the pose,
+ * not the pose directly. This constraint holds the measured 3D pose change and
+ * the measurement uncertainty/covariance.
  */
-class RelativePose3DStampedConstraint : public vesta_core::Constraint
-{
+class RelativePose3DStampedConstraint : public vesta_core::Constraint {
 public:
   VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(RelativePose3DStampedConstraint);
 
@@ -75,22 +74,29 @@ public:
   /**
    * @brief Constructor
    *
-   * @param[in] source       The name of the sensor or motion model that generated this constraint
-   * @param[in] position1    The variable representing the position components of the first pose
-   * @param[in] orientation1 The variable representing the orientation components of the first pose
-   * @param[in] position2    The variable representing the position components of the second pose
-   * @param[in] orientation2 The variable representing the orientation components of the second pose
-   * @param[in] delta        The measured change in the pose (7x1 vector: dx, dy, dz, dqw, dqx, dqy, dqz)
-   * @param[in] covariance   The measurement covariance (6x6 matrix: dx, dy, dz, dqx, dqy, dqz)
+   * @param[in] source       The name of the sensor or motion model that
+   * generated this constraint
+   * @param[in] position1    The variable representing the position components
+   * of the first pose
+   * @param[in] orientation1 The variable representing the orientation
+   * components of the first pose
+   * @param[in] position2    The variable representing the position components
+   * of the second pose
+   * @param[in] orientation2 The variable representing the orientation
+   * components of the second pose
+   * @param[in] delta        The measured change in the pose (7x1 vector: dx,
+   * dy, dz, dqw, dqx, dqy, dqz)
+   * @param[in] covariance   The measurement covariance (6x6 matrix: dx, dy, dz,
+   * dqx, dqy, dqz)
    */
   RelativePose3DStampedConstraint(
-    const std::string& source,
-    const vesta_variables::Position3DStamped& position1,
-    const vesta_variables::Orientation3DStamped& orientation1,
-    const vesta_variables::Position3DStamped& position2,
-    const vesta_variables::Orientation3DStamped& orientation2,
-    const vesta_core::Vector7d& delta,
-    const vesta_core::Matrix6d& covariance);
+      const std::string &source,
+      const vesta_variables::Position3DStamped &position1,
+      const vesta_variables::Orientation3DStamped &orientation1,
+      const vesta_variables::Position3DStamped &position2,
+      const vesta_variables::Orientation3DStamped &orientation2,
+      const vesta_core::Vector7d &delta,
+      const vesta_core::Matrix6d &covariance);
 
   /**
    * @brief Destructor
@@ -100,60 +106,71 @@ public:
   /**
    * @brief Read-only access to the measured pose change.
    */
-  const vesta_core::Vector7d& delta() const { return delta_; }
+  const vesta_core::Vector7d &delta() const { return delta_; }
 
   /**
    * @brief Read-only access to the square root information matrix.
    */
-  const vesta_core::Matrix6d& sqrtInformation() const { return sqrt_information_; }
+  const vesta_core::Matrix6d &sqrtInformation() const {
+    return sqrt_information_;
+  }
 
   /**
    * @brief Compute the measurement covariance matrix.
    */
-  vesta_core::Matrix6d covariance() const { return (sqrt_information_.transpose() * sqrt_information_).inverse(); }
+  vesta_core::Matrix6d covariance() const {
+    return (sqrt_information_.transpose() * sqrt_information_).inverse();
+  }
 
   /**
-   * @brief Print a human-readable description of the constraint to the provided stream.
+   * @brief Print a human-readable description of the constraint to the provided
+   * stream.
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream& stream = std::cout) const override;
+  void print(std::ostream &stream = std::cout) const override;
 
   /**
    * @brief Access the cost function for this constraint
    *
-   * The function caller will own the new cost function instance. It is the responsibility of the caller to delete
-   * the cost function object when it is no longer needed. If the pointer is provided to a Ceres::Problem object, the
-   * Ceres::Problem object will takes ownership of the pointer and delete it during destruction.
+   * The function caller will own the new cost function instance. It is the
+   * responsibility of the caller to delete the cost function object when it is
+   * no longer needed. If the pointer is provided to a Ceres::Problem object,
+   * the Ceres::Problem object will takes ownership of the pointer and delete it
+   * during destruction.
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction* costFunction() const override;
+  ceres::CostFunction *costFunction() const override;
 
 protected:
-  vesta_core::Vector7d delta_;  //!< The measured pose change (dx, dy, dz, dqw, dqx, dqy, dqz)
-  vesta_core::Matrix6d sqrt_information_;  //!< The square root information matrix (derived from the covariance matrix)
+  vesta_core::Vector7d
+      delta_; //!< The measured pose change (dx, dy, dz, dqw, dqx, dqy, dqz)
+  vesta_core::Matrix6d
+      sqrt_information_; //!< The square root information matrix (derived from
+                         //!< the covariance matrix)
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_core::Constraint>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & delta_;
     archive & sqrt_information_;
   }
 };
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints
 
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::RelativePose3DStampedConstraint);
-

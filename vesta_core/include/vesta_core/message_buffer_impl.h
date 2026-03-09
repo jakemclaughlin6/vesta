@@ -43,120 +43,119 @@
 #include <stdexcept>
 #include <utility>
 
+namespace vesta_core {
 
-namespace vesta_core
-{
+template <class Message>
+MessageBuffer<Message>::MessageBuffer(const vesta_core::Duration &buffer_length)
+    : buffer_length_(buffer_length) {}
 
-template<class Message>
-MessageBuffer<Message>::MessageBuffer(const vesta_core::Duration& buffer_length) :
-  buffer_length_(buffer_length)
-{
-}
-
-template<class Message>
-void MessageBuffer<Message>::insert(const vesta_core::Timestamp& stamp, const Message& msg)
-{
+template <class Message>
+void MessageBuffer<Message>::insert(const vesta_core::Timestamp &stamp,
+                                    const Message &msg) {
   buffer_.emplace_back(stamp, msg);
   purgeHistory();
 }
 
-template<class Message>
-typename MessageBuffer<Message>::message_range MessageBuffer<Message>::query(
-  const vesta_core::Timestamp& beginning_stamp,
-  const vesta_core::Timestamp& ending_stamp,
-  bool extended_range)
-{
+template <class Message>
+typename MessageBuffer<Message>::message_range
+MessageBuffer<Message>::query(const vesta_core::Timestamp &beginning_stamp,
+                              const vesta_core::Timestamp &ending_stamp,
+                              bool extended_range) {
   // Verify the query is valid
-  if (ending_stamp < beginning_stamp)
-  {
+  if (ending_stamp < beginning_stamp) {
     std::stringstream beginning_time_ss;
     beginning_time_ss << beginning_stamp;
     std::stringstream ending_time_ss;
     ending_time_ss << ending_stamp;
-    throw std::invalid_argument("The beginning_stamp (" + beginning_time_ss.str() + ") must be less than or equal to "
-                                "the ending_stamp (" + ending_time_ss.str() + ").");
+    throw std::invalid_argument("The beginning_stamp (" +
+                                beginning_time_ss.str() +
+                                ") must be less than or equal to "
+                                "the ending_stamp (" +
+                                ending_time_ss.str() + ").");
   }
   // Verify the query is within the bounds of the buffer
-  if (buffer_.empty() || (beginning_stamp < buffer_.front().first) || (ending_stamp > buffer_.back().first))
-  {
+  if (buffer_.empty() || (beginning_stamp < buffer_.front().first) ||
+      (ending_stamp > buffer_.back().first)) {
     std::stringstream requested_time_range_ss;
-    requested_time_range_ss << "(" << beginning_stamp << ", " << ending_stamp << ")";
+    requested_time_range_ss << "(" << beginning_stamp << ", " << ending_stamp
+                            << ")";
     std::stringstream available_time_range_ss;
-    if (buffer_.empty())
-    {
+    if (buffer_.empty()) {
       available_time_range_ss << "(EMPTY)";
+    } else {
+      available_time_range_ss << "(" << buffer_.front().first << ", "
+                              << buffer_.back().first << ")";
     }
-    else
-    {
-      available_time_range_ss << "(" << buffer_.front().first << ", " << buffer_.back().first << ")";
-    }
-    throw std::out_of_range("The requested time range " + requested_time_range_ss.str() + " is outside the available "
-                            "time range " + available_time_range_ss.str() + ".");
+    throw std::out_of_range("The requested time range " +
+                            requested_time_range_ss.str() +
+                            " is outside the available "
+                            "time range " +
+                            available_time_range_ss.str() + ".");
   }
-  // Find the entry that is strictly greater than the requested beginning stamp. If the extended range flag is true,
-  // we will then back up one entry.
-  auto upper_bound_comparison = [](const auto& stamp, const auto& element) -> bool
-  {
+  // Find the entry that is strictly greater than the requested beginning stamp.
+  // If the extended range flag is true, we will then back up one entry.
+  auto upper_bound_comparison = [](const auto &stamp,
+                                   const auto &element) -> bool {
     return (element.first > stamp);
   };
-  auto beginning_iter = std::upper_bound(buffer_.begin(), buffer_.end(), beginning_stamp, upper_bound_comparison);
-  if (extended_range)
-  {
+  auto beginning_iter = std::upper_bound(
+      buffer_.begin(), buffer_.end(), beginning_stamp, upper_bound_comparison);
+  if (extended_range) {
     --beginning_iter;
   }
-  // Find the entry that is greater than or equal to the ending stamp. If the extended range flag is false, we will
-  // back up one entry.
-  auto lower_bound_comparison = [](const auto& element, const auto& stamp) -> bool
-  {
+  // Find the entry that is greater than or equal to the ending stamp. If the
+  // extended range flag is false, we will back up one entry.
+  auto lower_bound_comparison = [](const auto &element,
+                                   const auto &stamp) -> bool {
     return (element.first < stamp);
   };
-  auto ending_iter = std::lower_bound(buffer_.begin(), buffer_.end(), ending_stamp, lower_bound_comparison);
-  if (extended_range && (ending_iter != buffer_.end()))
-  {
+  auto ending_iter = std::lower_bound(buffer_.begin(), buffer_.end(),
+                                      ending_stamp, lower_bound_comparison);
+  if (extended_range && (ending_iter != buffer_.end())) {
     ++ending_iter;
   }
-  // Return the beginning and ending iterators as an iterator range with the correct deference type
+  // Return the beginning and ending iterators as an iterator range with the
+  // correct deference type
   return message_range(beginning_iter, ending_iter);
 }
 
-template<class Message>
-typename MessageBuffer<Message>::stamp_range MessageBuffer<Message>::stamps() const
-{
-  return stamp_range(boost::make_transform_iterator(buffer_.begin(), extractStamp),
-                     boost::make_transform_iterator(buffer_.end(), extractStamp));
+template <class Message>
+typename MessageBuffer<Message>::stamp_range
+MessageBuffer<Message>::stamps() const {
+  return stamp_range(
+      boost::make_transform_iterator(buffer_.begin(), extractStamp),
+      boost::make_transform_iterator(buffer_.end(), extractStamp));
 }
 
-template<class Message>
-void MessageBuffer<Message>::purgeHistory()
-{
-  // Purge any messages that are more than buffer_length_ seconds older than the most recent entry
-  // A setting of vesta_core::Duration::MAX means "keep everything"
-  // And we want to keep at least two entries in buffer at all times, regardless of the stamps.
-  if ((buffer_length_ == vesta_core::Duration::MAX) || (buffer_.size() <= 2))
-  {
+template <class Message> void MessageBuffer<Message>::purgeHistory() {
+  // Purge any messages that are more than buffer_length_ seconds older than the
+  // most recent entry A setting of vesta_core::Duration::MAX means "keep
+  // everything" And we want to keep at least two entries in buffer at all
+  // times, regardless of the stamps.
+  if ((buffer_length_ == vesta_core::Duration::MAX) || (buffer_.size() <= 2)) {
     return;
   }
 
   // Compute the expiration time carefully, as ROS can't handle negative times
-  const auto& ending_stamp = buffer_.back().first;
-  auto expiration_time =
-      ending_stamp.toSec() > buffer_length_.toSec() ? ending_stamp - buffer_length_ : vesta_core::Timestamp(0, 0);
+  const auto &ending_stamp = buffer_.back().first;
+  auto expiration_time = ending_stamp.toSec() > buffer_length_.toSec()
+                             ? ending_stamp - buffer_length_
+                             : vesta_core::Timestamp(0, 0);
   // Remove buffer elements before the expiration time.
   // Be careful to ensure that:
   //  - at least two entries remains at all times
-  //  - the buffer covers *at least* until the expiration time. Longer is acceptable.
-  auto is_greater = [](const auto& stamp, const auto& element) -> bool
-  {
+  //  - the buffer covers *at least* until the expiration time. Longer is
+  //  acceptable.
+  auto is_greater = [](const auto &stamp, const auto &element) -> bool {
     return (element.first > stamp);
   };
-  auto expiration_iter = std::upper_bound(buffer_.begin(), buffer_.end(), expiration_time, is_greater);
-  if (expiration_iter != buffer_.begin())
-  {
+  auto expiration_iter = std::upper_bound(buffer_.begin(), buffer_.end(),
+                                          expiration_time, is_greater);
+  if (expiration_iter != buffer_.begin()) {
     // expiration_iter points to the first element > expiration_time.
     // Back up one entry, to a point that is <= expiration_time
     buffer_.erase(buffer_.begin(), std::prev(expiration_iter));
   }
 }
 
-}  // namespace vesta_core
-
+} // namespace vesta_core

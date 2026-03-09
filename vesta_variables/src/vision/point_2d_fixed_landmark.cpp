@@ -39,13 +39,11 @@
 
 #include <boost/serialization/export.hpp>
 
-namespace vesta_variables
-{
-Point2DFixedLandmark::Point2DFixedLandmark(const uint64_t& landmark_id) :
-  Point2DLandmark(vesta_core::uuid::generate(detail::type(), landmark_id), landmark_id)
-{
-}
+namespace vesta_variables {
+Point2DFixedLandmark::Point2DFixedLandmark(const uint64_t &landmark_id)
+    : Point2DLandmark(vesta_core::uuid::generate(detail::type(), landmark_id),
+                      landmark_id) {}
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::Point2DFixedLandmark);

@@ -44,68 +44,74 @@
 
 #include <Eigen/Core>
 
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 /**
- * @brief Create a prior cost function on the marker position, minimising reprojection error.
+ * @brief Create a prior cost function on the marker position, minimising
+ * reprojection error.
  *
- * The Ceres::NormalPrior cost function only supports a single variable. This is a convenience cost function that
- * applies a prior constraint on the 3D position, orientation and calibration variables at once.
+ * The Ceres::NormalPrior cost function only supports a single variable. This is
+ * a convenience cost function that applies a prior constraint on the 3D
+ * position, orientation and calibration variables at once.
  *
  * The cost function is of the form:
  *
  *   cost(x) = || A * (K * [R_q | p] * [R_{b(3:6)} | b(0:2))] * X - x) ||
  *
- * where, the matrix A and the vector b are fixed, p is the camera position variable, and q is the camera orientation
- * variable, K is the calibration matrix created from the calibration variable, X is the set of marker 3D points,
- * R_b(0:3) is the Rotation matrix from the fixed landmark orentation (b(3:6)), b(0:2) is the fixed landmark position
- * and x is the 2D observations.
+ * where, the matrix A and the vector b are fixed, p is the camera position
+ * variable, and q is the camera orientation variable, K is the calibration
+ * matrix created from the calibration variable, X is the set of marker 3D
+ * points, R_b(0:3) is the Rotation matrix from the fixed landmark orentation
+ * (b(3:6)), b(0:2) is the fixed landmark position and x is the 2D observations.
  *
- * Note that the covariance submatrix for the quaternion is 3x3, representing errors in the orientation local
- * parameterization tangent space. In case the user is interested in implementing a cost function of the form
+ * Note that the covariance submatrix for the quaternion is 3x3, representing
+ * errors in the orientation local parameterization tangent space. In case the
+ * user is interested in implementing a cost function of the form
  *
  *   cost(X) = (X - mu)^T S^{-1} (X - mu)
  *
- * where, mu is a vector and S is a covariance matrix, then, A = S^{-1/2}, i.e the matrix A is the square root
- * information matrix (the inverse of the covariance).
+ * where, mu is a vector and S is a covariance matrix, then, A = S^{-1/2}, i.e
+ * the matrix A is the square root information matrix (the inverse of the
+ * covariance).
  */
-class ReprojectionErrorCostFunctor
-{
+class ReprojectionErrorCostFunctor {
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
   /**
    * @brief Construct a cost function instance
    *
-   * @param[in] A The residual weighting matrix, most likely derived from the square root information
-   *              matrix in order (u, v)
+   * @param[in] A The residual weighting matrix, most likely derived from the
+   *square root information matrix in order (u, v)
    * @param[in] b The 2D pose measurement or prior in order (u, v)
    *
    **/
-  ReprojectionErrorCostFunctor(const vesta_core::Matrix2d& A, const vesta_core::Vector2d& b);
+  ReprojectionErrorCostFunctor(const vesta_core::Matrix2d &A,
+                               const vesta_core::Vector2d &b);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
    */
   template <typename T>
-  bool operator()(const T* const position, const T* const orientation, const T* const calibration, const T* const point,
-                  T* residual) const;
+  bool operator()(const T *const position, const T *const orientation,
+                  const T *const calibration, const T *const point,
+                  T *residual) const;
 
 private:
   vesta_core::Matrix2d A_;
   vesta_core::Vector2d b_;
 };
 
-ReprojectionErrorCostFunctor::ReprojectionErrorCostFunctor(const vesta_core::Matrix2d& A, const vesta_core::Vector2d& b)
-  : A_(A), b_(b)
-{
-}
+ReprojectionErrorCostFunctor::ReprojectionErrorCostFunctor(
+    const vesta_core::Matrix2d &A, const vesta_core::Vector2d &b)
+    : A_(A), b_(b) {}
 
 template <typename T>
-bool ReprojectionErrorCostFunctor::operator()(const T* const position, const T* const orientation,
-                                              const T* const calibration, const T* const point, T* residual) const
-{
+bool ReprojectionErrorCostFunctor::operator()(const T *const position,
+                                              const T *const orientation,
+                                              const T *const calibration,
+                                              const T *const point,
+                                              T *residual) const {
   // Point to Camera CF ( X' = [R|t] X = RX + t )
   // Rotate Point (RX)
   T p[3];
@@ -134,5 +140,4 @@ bool ReprojectionErrorCostFunctor::operator()(const T* const position, const T* 
   return true;
 }
 
-}  // namespace vesta_constraints
-
+} // namespace vesta_constraints

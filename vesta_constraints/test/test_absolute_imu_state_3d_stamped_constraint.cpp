@@ -3,11 +3,11 @@
 #include <vesta_core/eigen_gtest.h>
 #include <vesta_core/serialization.h>
 #include <vesta_core/uuid.h>
+#include <vesta_variables/3d/acceleration_bias_3d_stamped.h>
+#include <vesta_variables/3d/gyroscope_bias_3d_stamped.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 #include <vesta_variables/3d/velocity_linear_3d_stamped.h>
-#include <vesta_variables/3d/gyroscope_bias_3d_stamped.h>
-#include <vesta_variables/3d/acceleration_bias_3d_stamped.h>
 
 #include <ceres/problem.h>
 #include <ceres/solver.h>
@@ -15,16 +15,14 @@
 
 #include <vector>
 
+using vesta_constraints::AbsoluteImuState3DStampedConstraint;
+using vesta_variables::AccelerationBias3DStamped;
+using vesta_variables::GyroscopeBias3DStamped;
 using vesta_variables::Orientation3DStamped;
 using vesta_variables::Position3DStamped;
 using vesta_variables::VelocityLinear3DStamped;
-using vesta_variables::GyroscopeBias3DStamped;
-using vesta_variables::AccelerationBias3DStamped;
-using vesta_constraints::AbsoluteImuState3DStampedConstraint;
 
-
-TEST(AbsoluteImuState3DStampedConstraint, Constructor)
-{
+TEST(AbsoluteImuState3DStampedConstraint, Constructor) {
   auto stamp = vesta_core::Timestamp(1234, 5678);
   auto device_id = vesta_core::uuid::generate("imu_test");
 
@@ -35,21 +33,20 @@ TEST(AbsoluteImuState3DStampedConstraint, Constructor)
   AccelerationBias3DStamped accel_bias(stamp, device_id);
 
   Eigen::Matrix<double, 16, 1> mean;
-  mean << 1.0, 0.0, 0.0, 0.0,  // quaternion (w, x, y, z)
-          1.0, 2.0, 3.0,        // position
-          0.1, 0.2, 0.3,        // velocity
-          0.01, 0.02, 0.03,     // gyro bias
-          0.04, 0.05, 0.06;     // accel bias
+  mean << 1.0, 0.0, 0.0, 0.0, // quaternion (w, x, y, z)
+      1.0, 2.0, 3.0,          // position
+      0.1, 0.2, 0.3,          // velocity
+      0.01, 0.02, 0.03,       // gyro bias
+      0.04, 0.05, 0.06;       // accel bias
 
   Eigen::Matrix<double, 15, 15> cov = Eigen::Matrix<double, 15, 15>::Identity();
 
-  EXPECT_NO_THROW(
-    AbsoluteImuState3DStampedConstraint constraint(
-      "test", orientation, position, velocity, gyro_bias, accel_bias, mean, cov));
+  EXPECT_NO_THROW(AbsoluteImuState3DStampedConstraint constraint(
+      "test", orientation, position, velocity, gyro_bias, accel_bias, mean,
+      cov));
 }
 
-TEST(AbsoluteImuState3DStampedConstraint, Covariance)
-{
+TEST(AbsoluteImuState3DStampedConstraint, Covariance) {
   auto stamp = vesta_core::Timestamp(1234, 5678);
   auto device_id = vesta_core::uuid::generate("imu_test");
 
@@ -60,31 +57,27 @@ TEST(AbsoluteImuState3DStampedConstraint, Covariance)
   AccelerationBias3DStamped accel_bias(stamp, device_id);
 
   Eigen::Matrix<double, 16, 1> mean;
-  mean << 1.0, 0.0, 0.0, 0.0,
-          0.0, 0.0, 0.0,
-          0.0, 0.0, 0.0,
-          0.0, 0.0, 0.0,
-          0.0, 0.0, 0.0;
+  mean << 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0;
 
   // Create a diagonal covariance with distinct values
   Eigen::Matrix<double, 15, 15> cov = Eigen::Matrix<double, 15, 15>::Identity();
-  for (int i = 0; i < 15; ++i)
-  {
+  for (int i = 0; i < 15; ++i) {
     cov(i, i) = static_cast<double>(i + 1);
   }
 
-  AbsoluteImuState3DStampedConstraint constraint(
-    "test", orientation, position, velocity, gyro_bias, accel_bias, mean, cov);
+  AbsoluteImuState3DStampedConstraint constraint("test", orientation, position,
+                                                 velocity, gyro_bias,
+                                                 accel_bias, mean, cov);
 
   // Verify round-trip: covariance -> sqrt_information -> covariance
   Eigen::Matrix<double, 15, 15> recovered_cov = constraint.covariance();
   EXPECT_MATRIX_NEAR(cov, recovered_cov, 1e-9);
 }
 
-TEST(AbsoluteImuState3DStampedConstraint, Optimization)
-{
-  // Create variables with perturbed initial values, add absolute constraint with known mean,
-  // optimize with Ceres, verify variables converge to mean.
+TEST(AbsoluteImuState3DStampedConstraint, Optimization) {
+  // Create variables with perturbed initial values, add absolute constraint
+  // with known mean, optimize with Ceres, verify variables converge to mean.
   auto stamp = vesta_core::Timestamp(1, 0);
   auto device_id = vesta_core::uuid::generate("imu_opt");
 
@@ -116,39 +109,40 @@ TEST(AbsoluteImuState3DStampedConstraint, Optimization)
 
   // Define the mean (target values)
   Eigen::Matrix<double, 16, 1> mean;
-  mean << 1.0, 0.0, 0.0, 0.0,  // identity quaternion
-          1.0, 2.0, 3.0,        // position
-          0.0, 0.0, 0.0,        // velocity
-          0.0, 0.0, 0.0,        // gyro bias
-          0.0, 0.0, 0.0;        // accel bias
+  mean << 1.0, 0.0, 0.0, 0.0, // identity quaternion
+      1.0, 2.0, 3.0,          // position
+      0.0, 0.0, 0.0,          // velocity
+      0.0, 0.0, 0.0,          // gyro bias
+      0.0, 0.0, 0.0;          // accel bias
 
   Eigen::Matrix<double, 15, 15> cov = Eigen::Matrix<double, 15, 15>::Identity();
 
   auto constraint = AbsoluteImuState3DStampedConstraint::make_shared(
-    "test", *orientation, *position, *velocity, *gyro_bias, *accel_bias, mean, cov);
+      "test", *orientation, *position, *velocity, *gyro_bias, *accel_bias, mean,
+      cov);
 
   // Build the problem
   ceres::Problem::Options problem_options;
   problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
 
-  problem.AddParameterBlock(orientation->data(), orientation->size(), orientation->manifold());
-  problem.AddParameterBlock(position->data(), position->size(), position->manifold());
+  problem.AddParameterBlock(orientation->data(), orientation->size(),
+                            orientation->manifold());
+  problem.AddParameterBlock(position->data(), position->size(),
+                            position->manifold());
   problem.AddParameterBlock(velocity->data(), velocity->size());
   problem.AddParameterBlock(gyro_bias->data(), gyro_bias->size());
   problem.AddParameterBlock(accel_bias->data(), accel_bias->size());
 
-  std::vector<double*> parameter_blocks;
+  std::vector<double *> parameter_blocks;
   parameter_blocks.push_back(orientation->data());
   parameter_blocks.push_back(position->data());
   parameter_blocks.push_back(velocity->data());
   parameter_blocks.push_back(gyro_bias->data());
   parameter_blocks.push_back(accel_bias->data());
 
-  problem.AddResidualBlock(
-    constraint->costFunction(),
-    constraint->lossFunction(),
-    parameter_blocks);
+  problem.AddResidualBlock(constraint->costFunction(),
+                           constraint->lossFunction(), parameter_blocks);
 
   // Run the solver
   ceres::Solver::Options options;
@@ -178,8 +172,7 @@ TEST(AbsoluteImuState3DStampedConstraint, Optimization)
   EXPECT_NEAR(0.0, accel_bias->z(), 1e-3);
 }
 
-TEST(AbsoluteImuState3DStampedConstraint, Serialization)
-{
+TEST(AbsoluteImuState3DStampedConstraint, Serialization) {
   auto stamp = vesta_core::Timestamp(1234, 5678);
   auto device_id = vesta_core::uuid::generate("imu_ser");
 
@@ -190,16 +183,14 @@ TEST(AbsoluteImuState3DStampedConstraint, Serialization)
   AccelerationBias3DStamped accel_bias(stamp, device_id);
 
   Eigen::Matrix<double, 16, 1> mean;
-  mean << 1.0, 0.0, 0.0, 0.0,
-          1.0, 2.0, 3.0,
-          0.1, 0.2, 0.3,
-          0.01, 0.02, 0.03,
-          0.04, 0.05, 0.06;
+  mean << 1.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 0.1, 0.2, 0.3, 0.01, 0.02, 0.03,
+      0.04, 0.05, 0.06;
 
   Eigen::Matrix<double, 15, 15> cov = Eigen::Matrix<double, 15, 15>::Identity();
 
-  AbsoluteImuState3DStampedConstraint expected(
-    "test", orientation, position, velocity, gyro_bias, accel_bias, mean, cov);
+  AbsoluteImuState3DStampedConstraint expected("test", orientation, position,
+                                               velocity, gyro_bias, accel_bias,
+                                               mean, cov);
 
   // Serialize
   std::stringstream stream;
@@ -222,8 +213,7 @@ TEST(AbsoluteImuState3DStampedConstraint, Serialization)
   EXPECT_MATRIX_EQ(expected.sqrtInformation(), actual.sqrtInformation());
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

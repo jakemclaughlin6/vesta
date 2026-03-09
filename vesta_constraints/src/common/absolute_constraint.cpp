@@ -33,15 +33,19 @@
  */
 #include <vesta_constraints/common/absolute_constraint.h>
 
-
 #include <boost/serialization/export.hpp>
 
-
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::AbsoluteAccelerationAngular2DStampedConstraint);
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::AbsoluteAccelerationLinear2DStampedConstraint);
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::AbsoluteOrientation2DStampedConstraint);
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::AbsolutePosition2DStampedConstraint);
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::AbsolutePosition3DStampedConstraint);
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::AbsoluteVelocityAngular2DStampedConstraint);
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::AbsoluteVelocityLinear2DStampedConstraint);
-
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::AbsoluteAccelerationAngular2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::AbsoluteAccelerationLinear2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::AbsoluteOrientation2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::AbsolutePosition2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::AbsolutePosition3DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::AbsoluteVelocityAngular2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::AbsoluteVelocityLinear2DStampedConstraint);

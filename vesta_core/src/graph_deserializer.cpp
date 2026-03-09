@@ -40,12 +40,10 @@
 #include <stdexcept>
 #include <vector>
 
+namespace vesta_core {
 
-namespace vesta_core
-{
-
-void serializeGraph(const vesta_core::Graph& graph, std::vector<unsigned char>& data)
-{
+void serializeGraph(const vesta_core::Graph &graph,
+                    std::vector<unsigned char> &data) {
   data.clear();
   boost::iostreams::stream<vesta_core::MessageBufferStreamSink> stream(data);
   {
@@ -54,23 +52,23 @@ void serializeGraph(const vesta_core::Graph& graph, std::vector<unsigned char>& 
   }
 }
 
-vesta_core::Graph::UniquePtr deserializeGraph(const std::vector<unsigned char>& data,
-                                             const std::string& /*plugin_name*/)
-{
-  // Boost.Serialization with BOOST_CLASS_EXPORT handles polymorphic deserialization.
-  // The plugin_name parameter is retained for API compatibility but is not used;
-  // the archive contains the type information needed for deserialization.
-  vesta_core::Graph* raw_graph = nullptr;
+vesta_core::Graph::UniquePtr
+deserializeGraph(const std::vector<unsigned char> &data,
+                 const std::string & /*plugin_name*/) {
+  // Boost.Serialization with BOOST_CLASS_EXPORT handles polymorphic
+  // deserialization. The plugin_name parameter is retained for API
+  // compatibility but is not used; the archive contains the type information
+  // needed for deserialization.
+  vesta_core::Graph *raw_graph = nullptr;
   boost::iostreams::stream<vesta_core::MessageBufferStreamSource> stream(data);
   {
     BinaryInputArchive archive(stream);
     archive >> raw_graph;
   }
-  if (!raw_graph)
-  {
+  if (!raw_graph) {
     throw std::runtime_error("Failed to deserialize graph from byte buffer");
   }
   return vesta_core::Graph::UniquePtr(raw_graph);
 }
 
-}  // namespace vesta_core
+} // namespace vesta_core

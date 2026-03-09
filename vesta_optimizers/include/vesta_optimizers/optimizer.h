@@ -34,14 +34,13 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <vesta_core/graph.h>
-#include <vesta_core/transaction.h>
 #include <ceres/solver.h>
 #include <memory>
 #include <string>
+#include <vesta_core/graph.h>
+#include <vesta_core/transaction.h>
 
-namespace vesta_optimizers
-{
+namespace vesta_optimizers {
 
 /**
  * @brief A simple abstract base class for vesta optimizers
@@ -51,11 +50,11 @@ namespace vesta_optimizers
  *  - The optimizer computes the optimal variable values via optimize()
  *  - The optimizer provides access to the optimal variable values via graph()
  *
- * This is a pure library interface with no ROS dependencies, no internal threads,
- * and no plugin loading. The client is responsible for calling optimize() when desired.
+ * This is a pure library interface with no ROS dependencies, no internal
+ * threads, and no plugin loading. The client is responsible for calling
+ * optimize() when desired.
  */
-class Optimizer
-{
+class Optimizer {
 public:
   virtual ~Optimizer() = default;
 
@@ -65,13 +64,15 @@ public:
    * @param[in] sensor_name The name of the sensor that produced the Transaction
    * @param[in] transaction The populated Transaction object
    */
-  virtual void addTransaction(const std::string& sensor_name,
-                              vesta_core::Transaction::SharedPtr transaction) = 0;
+  virtual void
+  addTransaction(const std::string &sensor_name,
+                 vesta_core::Transaction::SharedPtr transaction) = 0;
 
   /**
    * @brief Run the optimization
    *
-   * Processes any pending transactions, applies them to the graph, and runs the Ceres solver.
+   * Processes any pending transactions, applies them to the graph, and runs the
+   * Ceres solver.
    *
    * @return The Ceres solver summary
    */
@@ -87,8 +88,7 @@ public:
    *
    * @return A const reference to the graph
    */
-  virtual const vesta_core::Graph& graph() const = 0;
+  virtual const vesta_core::Graph &graph() const = 0;
 };
 
-}  // namespace vesta_optimizers
-
+} // namespace vesta_optimizers

@@ -36,38 +36,42 @@
 
 #include <ceres/sized_cost_function.h>
 
-
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 /**
- * @brief Implements a cost function that models a direct measurement or prior on a 2D orientation variable
+ * @brief Implements a cost function that models a direct measurement or prior
+ * on a 2D orientation variable
  *
  * The cost function is of the form:
  *
  *   cost(x) = ||A(x - b)||^2
  *
- * where, the matrix A and the vector b are fixed and x is the 2D orientation variable.
- * In case the user is interested in implementing a cost function of the form
+ * where, the matrix A and the vector b are fixed and x is the 2D orientation
+ * variable. In case the user is interested in implementing a cost function of
+ * the form
  *
  *   cost(x) = (x - mu)^T S^{-1} (x - mu)
  *
- * where, mu is a vector and S is a covariance matrix, then, A = S^{-1/2}, i.e the matrix A is the square root
- * information matrix (the inverse of the covariance). This is a specialization of the generic "normal prior" provided
- * by the Ceres library that handles the 2*pi roll-over that occurs with rotations.
+ * where, mu is a vector and S is a covariance matrix, then, A = S^{-1/2}, i.e
+ * the matrix A is the square root information matrix (the inverse of the
+ * covariance). This is a specialization of the generic "normal prior" provided
+ * by the Ceres library that handles the 2*pi roll-over that occurs with
+ * rotations.
  */
-class NormalPriorOrientation2D : public ceres::SizedCostFunction<1, 1>
-{
+class NormalPriorOrientation2D : public ceres::SizedCostFunction<1, 1> {
 public:
   /**
    * @brief Constructor
    *
-   * The number of rows in vector b must be the same as the number of columns of matrix A.
+   * The number of rows in vector b must be the same as the number of columns of
+   * matrix A.
    *
-   * @param[in] A The residual weighting matrix, most likely the square root information matrix
-   * @param[in] b The measured difference between variable x0 and variable x1. It is assumed that these are the same
-   *              type of variable. At a minimum, they must have the same dimensions and the per-element subtraction
-   *              operator must be valid.
+   * @param[in] A The residual weighting matrix, most likely the square root
+   * information matrix
+   * @param[in] b The measured difference between variable x0 and variable x1.
+   * It is assumed that these are the same type of variable. At a minimum, they
+   * must have the same dimensions and the per-element subtraction operator must
+   * be valid.
    */
   NormalPriorOrientation2D(const double A, const double b);
 
@@ -77,18 +81,16 @@ public:
   virtual ~NormalPriorOrientation2D() = default;
 
   /**
-   * @brief Compute the cost values/residuals, and optionally the Jacobians, using the provided variable/parameter
-   *        values
+   * @brief Compute the cost values/residuals, and optionally the Jacobians,
+   * using the provided variable/parameter values
    */
-  virtual bool Evaluate(
-    double const* const* parameters,
-    double* residuals,
-    double** jacobians) const;
+  virtual bool Evaluate(double const *const *parameters, double *residuals,
+                        double **jacobians) const;
 
 private:
-  double A_;  //!< The residual weighting matrix, most likely the square root information matrix
-  double b_;  //!< The measured value of the 2D orientation
+  double A_; //!< The residual weighting matrix, most likely the square root
+             //!< information matrix
+  double b_; //!< The measured value of the 2D orientation
 };
 
-}  // namespace vesta_constraints
-
+} // namespace vesta_constraints

@@ -39,47 +39,43 @@
 #include <iterator>
 #include <vector>
 
-
 using vesta_constraints::VariableConstraints;
 
-TEST(VariableConstraints, Size)
-{
+TEST(VariableConstraints, Size) {
   auto vars = VariableConstraints();
 
   EXPECT_TRUE(vars.empty());
   EXPECT_EQ(0u, vars.size());
 
-  vars.insert(0u, {0u, 1u});  // NOLINT
-  vars.insert(1u, {0u, 1u});  // NOLINT
-  vars.insert(2u, {0u, 1u});  // NOLINT
+  vars.insert(0u, {0u, 1u}); // NOLINT
+  vars.insert(1u, {0u, 1u}); // NOLINT
+  vars.insert(2u, {0u, 1u}); // NOLINT
 
   EXPECT_FALSE(vars.empty());
   EXPECT_EQ(6u, vars.size());
 }
 
-TEST(VariableConstraints, NextVariableIndex)
-{
+TEST(VariableConstraints, NextVariableIndex) {
   auto vars = VariableConstraints();
   EXPECT_EQ(0u, vars.nextVariableIndex());
 
-  vars.insert(0u, {9u, 10u});  // NOLINT
+  vars.insert(0u, {9u, 10u}); // NOLINT
 
   EXPECT_EQ(11u, vars.nextVariableIndex());
 }
 
-TEST(VariableConstraints, GetConstraints)
-{
+TEST(VariableConstraints, GetConstraints) {
   auto vars = VariableConstraints();
 
-  vars.insert(0u, {0u, 1u, 2u});  // NOLINT
-  vars.insert(1u, {0u, 2u});      // NOLINT
-  vars.insert(2u, {1u, 2u});      // NOLINT
-  vars.insert(3u, {2u, 3u});      // NOLINT
+  vars.insert(0u, {0u, 1u, 2u}); // NOLINT
+  vars.insert(1u, {0u, 2u});     // NOLINT
+  vars.insert(2u, {1u, 2u});     // NOLINT
+  vars.insert(3u, {2u, 3u});     // NOLINT
 
-  auto expected0 = std::vector<size_t>{0u, 1u};          // NOLINT
-  auto expected1 = std::vector<size_t>{0u, 2u};          // NOLINT
-  auto expected2 = std::vector<size_t>{0u, 1u, 2u, 3u};  // NOLINT
-  auto expected3 = std::vector<size_t>{3u};              // NOLINT
+  auto expected0 = std::vector<size_t>{0u, 1u};         // NOLINT
+  auto expected1 = std::vector<size_t>{0u, 2u};         // NOLINT
+  auto expected2 = std::vector<size_t>{0u, 1u, 2u, 3u}; // NOLINT
+  auto expected3 = std::vector<size_t>{3u};             // NOLINT
 
   std::vector<size_t> actual0;
   vars.getConstraints(0u, std::back_inserter(actual0));
@@ -114,14 +110,17 @@ TEST(VariableConstraints, GetConstraints)
   auto actual3_iter = actual3.begin();
   actual3_iter = vars.getConstraints(3u, actual3_iter);
 
-  EXPECT_EQ(static_cast<std::ptrdiff_t>(expected0.size()), std::distance(actual0.begin(), actual0_iter));
-  EXPECT_EQ(static_cast<std::ptrdiff_t>(expected1.size()), std::distance(actual1.begin(), actual1_iter));
-  EXPECT_EQ(static_cast<std::ptrdiff_t>(expected2.size()), std::distance(actual2.begin(), actual2_iter));
-  EXPECT_EQ(static_cast<std::ptrdiff_t>(expected3.size()), std::distance(actual3.begin(), actual3_iter));
+  EXPECT_EQ(static_cast<std::ptrdiff_t>(expected0.size()),
+            std::distance(actual0.begin(), actual0_iter));
+  EXPECT_EQ(static_cast<std::ptrdiff_t>(expected1.size()),
+            std::distance(actual1.begin(), actual1_iter));
+  EXPECT_EQ(static_cast<std::ptrdiff_t>(expected2.size()),
+            std::distance(actual2.begin(), actual2_iter));
+  EXPECT_EQ(static_cast<std::ptrdiff_t>(expected3.size()),
+            std::distance(actual3.begin(), actual3_iter));
 }
 
-TEST(VariableConstraints, InsertOrphanVariable)
-{
+TEST(VariableConstraints, InsertOrphanVariable) {
   auto vars = VariableConstraints();
 
   vars.insert(0u);
@@ -132,8 +131,7 @@ TEST(VariableConstraints, InsertOrphanVariable)
   EXPECT_TRUE(actual.empty());
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

@@ -34,12 +34,12 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <vesta_core/uuid.h>
 #include <vesta_core/serialization.h>
+#include <vesta_core/timestamp.h>
+#include <vesta_core/uuid.h>
 #include <vesta_core/variable.h>
 #include <vesta_variables/common/fixed_size_variable.h>
 #include <vesta_variables/common/stamped.h>
-#include <vesta_core/timestamp.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -47,31 +47,25 @@
 
 #include <ostream>
 
-
-namespace vesta_variables
-{
+namespace vesta_variables {
 
 /**
- * @brief Variable representing a 3D angular acceleration (aroll, apitch, ayaw) at a specific time, with a specific
- * piece of hardware.
+ * @brief Variable representing a 3D angular acceleration (aroll, apitch, ayaw)
+ * at a specific time, with a specific piece of hardware.
  *
- * This is commonly used to represent a robot's acceleration. The UUID of this class is static after construction.
- * As such, the timestamp and device id cannot be modified. The value of the acceleration can be modified.
+ * This is commonly used to represent a robot's acceleration. The UUID of this
+ * class is static after construction. As such, the timestamp and device id
+ * cannot be modified. The value of the acceleration can be modified.
  */
-class AccelerationAngular3DStamped : public FixedSizeVariable<3>, public Stamped
-{
+class AccelerationAngular3DStamped : public FixedSizeVariable<3>,
+                                     public Stamped {
 public:
   VESTA_VARIABLE_DEFINITIONS(AccelerationAngular3DStamped);
 
   /**
    * @brief Can be used to directly index variables in the data array
    */
-  enum : size_t
-  {
-    ROLL = 0,
-    PITCH = 1,
-    YAW = 2
-  };
+  enum : size_t { ROLL = 0, PITCH = 1, YAW = 2 };
 
   /**
    * @brief Default constructor
@@ -82,68 +76,71 @@ public:
    * @brief Construct a 3D angular acceleration at a specific point in time.
    *
    * @param[in] stamp     The timestamp attached to this angular acceleration.
-   * @param[in] device_id An optional device id, for use when variables originate from multiple robots or devices
+   * @param[in] device_id An optional device id, for use when variables
+   * originate from multiple robots or devices
    */
   explicit AccelerationAngular3DStamped(
-    const vesta_core::Timestamp& stamp,
-    const vesta_core::UUID& device_id = vesta_core::uuid::NIL);
+      const vesta_core::Timestamp &stamp,
+      const vesta_core::UUID &device_id = vesta_core::uuid::NIL);
 
   /**
    * @brief Read-write access to the roll (X-axis) angular acceleration.
    */
-  double& roll() { return data_[ROLL]; }
+  double &roll() { return data_[ROLL]; }
 
   /**
    * @brief Read-only access to the roll (X-axis) angular acceleration.
    */
-  const double& roll() const { return data_[ROLL]; }
+  const double &roll() const { return data_[ROLL]; }
 
   /**
    * @brief Read-write access to the pitch (Y-axis) angular acceleration.
    */
-  double& pitch() { return data_[PITCH]; }
+  double &pitch() { return data_[PITCH]; }
 
   /**
    * @brief Read-only access to the pitch (Y-axis) angular acceleration.
    */
-  const double& pitch() const { return data_[PITCH]; }
+  const double &pitch() const { return data_[PITCH]; }
 
   /**
    * @brief Read-write access to the yaw (Z-axis) angular acceleration.
    */
-  double& yaw() { return data_[YAW]; }
+  double &yaw() { return data_[YAW]; }
 
   /**
    * @brief Read-only access to the yaw (Z-axis) angular acceleration.
    */
-  const double& yaw() const { return data_[YAW]; }
+  const double &yaw() const { return data_[YAW]; }
 
   /**
-   * @brief Print a human-readable description of the variable to the provided stream.
+   * @brief Print a human-readable description of the variable to the provided
+   * stream.
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream& stream = std::cout) const override;
+  void print(std::ostream &stream = std::cout) const override;
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
-    archive & boost::serialization::base_object<Stamped>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
+    archive &boost::serialization::base_object<Stamped>(*this);
   }
 };
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_KEY(vesta_variables::AccelerationAngular3DStamped);
-

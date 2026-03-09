@@ -8,16 +8,14 @@
 
 #include <map>
 
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 // Gravity constant
 inline constexpr double kGravityNominal = 9.80665;
 inline const Eigen::Vector3d kGravityWorld{0.0, 0.0, -kGravityNominal};
 
 // Error state locations in the 15x15 covariance
-enum ErrorStateIndex : int
-{
+enum ErrorStateIndex : int {
   ES_Q = 0,   // orientation (3)
   ES_P = 3,   // position (3)
   ES_V = 6,   // velocity (3)
@@ -26,29 +24,31 @@ enum ErrorStateIndex : int
   ES_SIZE = 15
 };
 
-struct ImuData
-{
+struct ImuData {
   ImuData() = default;
-  ImuData(const vesta_core::Timestamp& stamp, const Eigen::Vector3d& angular_velocity, const Eigen::Vector3d& linear_acceleration)
-    : stamp(stamp), angular_velocity(angular_velocity), linear_acceleration(linear_acceleration) {}
+  ImuData(const vesta_core::Timestamp &stamp,
+          const Eigen::Vector3d &angular_velocity,
+          const Eigen::Vector3d &linear_acceleration)
+      : stamp(stamp), angular_velocity(angular_velocity),
+        linear_acceleration(linear_acceleration) {}
 
   vesta_core::Timestamp stamp;
-  Eigen::Vector3d angular_velocity{Eigen::Vector3d::Zero()};  // rad/s
-  Eigen::Vector3d linear_acceleration{Eigen::Vector3d::Zero()};  // m/s^2
+  Eigen::Vector3d angular_velocity{Eigen::Vector3d::Zero()};    // rad/s
+  Eigen::Vector3d linear_acceleration{Eigen::Vector3d::Zero()}; // m/s^2
 };
 
-struct PreintegrationDelta
-{
+struct PreintegrationDelta {
   double dt{0.0};
   Eigen::Quaterniond q{Eigen::Quaterniond::Identity()};
   Eigen::Vector3d p{Eigen::Vector3d::Zero()};
   Eigen::Vector3d v{Eigen::Vector3d::Zero()};
-  Eigen::Matrix<double, ES_SIZE, ES_SIZE> covariance{Eigen::Matrix<double, ES_SIZE, ES_SIZE>::Zero()};
-  Eigen::Matrix<double, ES_SIZE, ES_SIZE> sqrt_information{Eigen::Matrix<double, ES_SIZE, ES_SIZE>::Zero()};
+  Eigen::Matrix<double, ES_SIZE, ES_SIZE> covariance{
+      Eigen::Matrix<double, ES_SIZE, ES_SIZE>::Zero()};
+  Eigen::Matrix<double, ES_SIZE, ES_SIZE> sqrt_information{
+      Eigen::Matrix<double, ES_SIZE, ES_SIZE>::Zero()};
 };
 
-struct PreintegrationJacobian
-{
+struct PreintegrationJacobian {
   Eigen::Matrix3d dq_dbg{Eigen::Matrix3d::Zero()};
   Eigen::Matrix3d dp_dbg{Eigen::Matrix3d::Zero()};
   Eigen::Matrix3d dp_dba{Eigen::Matrix3d::Zero()};
@@ -56,22 +56,20 @@ struct PreintegrationJacobian
   Eigen::Matrix3d dv_dba{Eigen::Matrix3d::Zero()};
 };
 
-class ImuPreintegrator
-{
+class ImuPreintegrator {
 public:
   ImuPreintegrator() = default;
 
   void reset();
-  void clearBefore(const vesta_core::Timestamp& t);
+  void clearBefore(const vesta_core::Timestamp &t);
 
-  void increment(double dt, const ImuData& data,
-                 const Eigen::Vector3d& bg, const Eigen::Vector3d& ba,
-                 bool compute_jacobian, bool compute_covariance);
+  void increment(double dt, const ImuData &data, const Eigen::Vector3d &bg,
+                 const Eigen::Vector3d &ba, bool compute_jacobian,
+                 bool compute_covariance);
 
-  bool integrate(const vesta_core::Timestamp& t,
-                 const Eigen::Vector3d& bg, const Eigen::Vector3d& ba,
-                 bool compute_jacobian, bool compute_covariance,
-                 bool compute_information);
+  bool integrate(const vesta_core::Timestamp &t, const Eigen::Vector3d &bg,
+                 const Eigen::Vector3d &ba, bool compute_jacobian,
+                 bool compute_covariance, bool compute_information);
 
   void computeSqrtInformation();
 
@@ -90,4 +88,4 @@ public:
   double invalid_sqrt_info_weight{1e-4};
 };
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints

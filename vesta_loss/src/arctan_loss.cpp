@@ -37,25 +37,19 @@
 
 #include <ostream>
 
+namespace vesta_loss {
 
-namespace vesta_loss
-{
+ArctanLoss::ArctanLoss(const double a) : a_(a) {}
 
-ArctanLoss::ArctanLoss(const double a) : a_(a)
-{
-}
-
-void ArctanLoss::print(std::ostream& stream) const
-{
+void ArctanLoss::print(std::ostream &stream) const {
   stream << type() << "\n"
          << "  a: " << a_ << "\n";
 }
 
-ceres::LossFunction* ArctanLoss::lossFunction() const
-{
+ceres::LossFunction *ArctanLoss::lossFunction() const {
   return new ceres::ArctanLoss(a_);
 }
 
-}  // namespace vesta_loss
+} // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::ArctanLoss);

@@ -41,21 +41,16 @@
 
 #include <ostream>
 
-namespace vesta_variables
-{
-Point3DLandmark::Point3DLandmark(const vesta_core::UUID& uuid, const uint64_t& landmark_id) :
-  FixedSizeVariable(uuid),
-  id_(landmark_id)
-{
-}
+namespace vesta_variables {
+Point3DLandmark::Point3DLandmark(const vesta_core::UUID &uuid,
+                                 const uint64_t &landmark_id)
+    : FixedSizeVariable(uuid), id_(landmark_id) {}
 
-Point3DLandmark::Point3DLandmark(const uint64_t& landmark_id) :
-    Point3DLandmark(vesta_core::uuid::generate(detail::type(), landmark_id), landmark_id)
-{
-}
+Point3DLandmark::Point3DLandmark(const uint64_t &landmark_id)
+    : Point3DLandmark(vesta_core::uuid::generate(detail::type(), landmark_id),
+                      landmark_id) {}
 
-void Point3DLandmark::print(std::ostream& stream) const
-{
+void Point3DLandmark::print(std::ostream &stream) const {
   stream << type() << ":\n"
          << "  uuid: " << uuid() << "\n"
          << "  size: " << size() << "\n"
@@ -66,6 +61,6 @@ void Point3DLandmark::print(std::ostream& stream) const
          << "  - z: " << z() << "\n";
 }
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::Point3DLandmark);

@@ -5,26 +5,26 @@
 
 #include <cmath>
 
-using vesta_constraints::ImuPreintegrator;
 using vesta_constraints::ImuData;
+using vesta_constraints::ImuPreintegrator;
 using vesta_constraints::kGravityNominal;
 
-TEST(ImuPreintegrator, ZeroMotion)
-{
-  // Feed IMU data with zero angular velocity and gravity-compensating acceleration.
-  // After integration, delta should be approximately identity rotation, zero velocity, zero position.
+TEST(ImuPreintegrator, ZeroMotion) {
+  // Feed IMU data with zero angular velocity and gravity-compensating
+  // acceleration. After integration, delta should be approximately identity
+  // rotation, zero velocity, zero position.
   ImuPreintegrator preintegrator;
 
   const double dt = 0.01;
-  const int num_steps = 100;  // 1 second total
+  const int num_steps = 100; // 1 second total
   const Eigen::Vector3d zero_gyro = Eigen::Vector3d::Zero();
   const Eigen::Vector3d gravity_compensating_accel(0.0, 0.0, kGravityNominal);
 
   // Insert IMU data into the buffer
-  for (int i = 0; i <= num_steps; ++i)
-  {
+  for (int i = 0; i <= num_steps; ++i) {
     int64_t ns = static_cast<int64_t>(i * dt * 1e9);
-    ImuData imu(vesta_core::Timestamp(ns), zero_gyro, gravity_compensating_accel);
+    ImuData imu(vesta_core::Timestamp(ns), zero_gyro,
+                gravity_compensating_accel);
     preintegrator.data.emplace(imu.stamp, imu);
   }
 
@@ -32,8 +32,8 @@ TEST(ImuPreintegrator, ZeroMotion)
   Eigen::Vector3d bg = Eigen::Vector3d::Zero();
   Eigen::Vector3d ba = Eigen::Vector3d::Zero();
   bool success = preintegrator.integrate(
-      vesta_core::Timestamp(static_cast<int64_t>(1.0 * 1e9)),
-      bg, ba, true, true, true);
+      vesta_core::Timestamp(static_cast<int64_t>(1.0 * 1e9)), bg, ba, true,
+      true, true);
   ASSERT_TRUE(success);
 
   // Check delta time
@@ -56,11 +56,11 @@ TEST(ImuPreintegrator, ZeroMotion)
   // delta.p should be approximately [0, 0, 0.5*g*dt^2] = [0, 0, 4.903]
   EXPECT_NEAR(0.0, preintegrator.delta.p.x(), 1e-4);
   EXPECT_NEAR(0.0, preintegrator.delta.p.y(), 1e-4);
-  EXPECT_NEAR(0.5 * kGravityNominal * 1.0 * 1.0, preintegrator.delta.p.z(), 1e-2);
+  EXPECT_NEAR(0.5 * kGravityNominal * 1.0 * 1.0, preintegrator.delta.p.z(),
+              1e-2);
 }
 
-TEST(ImuPreintegrator, ConstantVelocity)
-{
+TEST(ImuPreintegrator, ConstantVelocity) {
   // Feed IMU data with zero angular velocity, acceleration = [0,0,g] + [1,0,0].
   // Integrate for 1 second with dt=0.01.
   // Check that: delta.v ~ [1,0,0], delta.p ~ [0.5,0,0]
@@ -71,8 +71,7 @@ TEST(ImuPreintegrator, ConstantVelocity)
   const Eigen::Vector3d zero_gyro = Eigen::Vector3d::Zero();
   const Eigen::Vector3d accel(1.0, 0.0, kGravityNominal);
 
-  for (int i = 0; i <= num_steps; ++i)
-  {
+  for (int i = 0; i <= num_steps; ++i) {
     int64_t ns = static_cast<int64_t>(i * dt * 1e9);
     ImuData imu(vesta_core::Timestamp(ns), zero_gyro, accel);
     preintegrator.data.emplace(imu.stamp, imu);
@@ -81,8 +80,8 @@ TEST(ImuPreintegrator, ConstantVelocity)
   Eigen::Vector3d bg = Eigen::Vector3d::Zero();
   Eigen::Vector3d ba = Eigen::Vector3d::Zero();
   bool success = preintegrator.integrate(
-      vesta_core::Timestamp(static_cast<int64_t>(1.0 * 1e9)),
-      bg, ba, true, true, true);
+      vesta_core::Timestamp(static_cast<int64_t>(1.0 * 1e9)), bg, ba, true,
+      true, true);
   ASSERT_TRUE(success);
 
   EXPECT_NEAR(1.0, preintegrator.delta.dt, 1e-9);
@@ -97,7 +96,8 @@ TEST(ImuPreintegrator, ConstantVelocity)
   // delta.p ~ [0.5, 0, 0.5*g] after 1 second
   EXPECT_NEAR(0.5, preintegrator.delta.p.x(), 1e-3);
   EXPECT_NEAR(0.0, preintegrator.delta.p.y(), 1e-3);
-  EXPECT_NEAR(0.5 * kGravityNominal * 1.0 * 1.0, preintegrator.delta.p.z(), 1e-2);
+  EXPECT_NEAR(0.5 * kGravityNominal * 1.0 * 1.0, preintegrator.delta.p.z(),
+              1e-2);
 
   // Rotation should still be identity
   EXPECT_NEAR(1.0, preintegrator.delta.q.w(), 1e-6);
@@ -106,10 +106,10 @@ TEST(ImuPreintegrator, ConstantVelocity)
   EXPECT_NEAR(0.0, preintegrator.delta.q.z(), 1e-6);
 }
 
-TEST(ImuPreintegrator, ConstantRotation)
-{
-  // Feed IMU data with constant angular velocity [0,0,0.1] rad/s, gravity-compensating acceleration.
-  // After 1 second, check rotation angle ~ 0.1 rad about z-axis.
+TEST(ImuPreintegrator, ConstantRotation) {
+  // Feed IMU data with constant angular velocity [0,0,0.1] rad/s,
+  // gravity-compensating acceleration. After 1 second, check rotation angle ~
+  // 0.1 rad about z-axis.
   ImuPreintegrator preintegrator;
 
   const double dt = 0.01;
@@ -117,8 +117,7 @@ TEST(ImuPreintegrator, ConstantRotation)
   const Eigen::Vector3d gyro(0.0, 0.0, 0.1);
   const Eigen::Vector3d gravity_compensating_accel(0.0, 0.0, kGravityNominal);
 
-  for (int i = 0; i <= num_steps; ++i)
-  {
+  for (int i = 0; i <= num_steps; ++i) {
     int64_t ns = static_cast<int64_t>(i * dt * 1e9);
     ImuData imu(vesta_core::Timestamp(ns), gyro, gravity_compensating_accel);
     preintegrator.data.emplace(imu.stamp, imu);
@@ -127,8 +126,8 @@ TEST(ImuPreintegrator, ConstantRotation)
   Eigen::Vector3d bg = Eigen::Vector3d::Zero();
   Eigen::Vector3d ba = Eigen::Vector3d::Zero();
   bool success = preintegrator.integrate(
-      vesta_core::Timestamp(static_cast<int64_t>(1.0 * 1e9)),
-      bg, ba, true, true, true);
+      vesta_core::Timestamp(static_cast<int64_t>(1.0 * 1e9)), bg, ba, true,
+      true, true);
   ASSERT_TRUE(success);
 
   // Extract the rotation angle from the quaternion
@@ -145,8 +144,7 @@ TEST(ImuPreintegrator, ConstantRotation)
   EXPECT_NEAR(1.0, std::abs(axis.z()), 1e-3);
 }
 
-TEST(ImuPreintegrator, CovarianceGrowth)
-{
+TEST(ImuPreintegrator, CovarianceGrowth) {
   // Verify covariance grows over time (norm increases with more IMU data).
   ImuPreintegrator preintegrator;
 
@@ -155,10 +153,10 @@ TEST(ImuPreintegrator, CovarianceGrowth)
   const Eigen::Vector3d zero_gyro = Eigen::Vector3d::Zero();
   const Eigen::Vector3d gravity_compensating_accel(0.0, 0.0, kGravityNominal);
 
-  for (int i = 0; i <= num_steps; ++i)
-  {
+  for (int i = 0; i <= num_steps; ++i) {
     int64_t ns = static_cast<int64_t>(i * dt * 1e9);
-    ImuData imu(vesta_core::Timestamp(ns), zero_gyro, gravity_compensating_accel);
+    ImuData imu(vesta_core::Timestamp(ns), zero_gyro,
+                gravity_compensating_accel);
     preintegrator.data.emplace(imu.stamp, imu);
   }
 
@@ -167,20 +165,20 @@ TEST(ImuPreintegrator, CovarianceGrowth)
 
   // Integrate for 0.5 seconds
   preintegrator.integrate(
-      vesta_core::Timestamp(static_cast<int64_t>(0.5 * 1e9)),
-      bg, ba, false, true, false);
+      vesta_core::Timestamp(static_cast<int64_t>(0.5 * 1e9)), bg, ba, false,
+      true, false);
   double norm_half = preintegrator.delta.covariance.norm();
 
   // Integrate for 1.0 seconds
   preintegrator.integrate(
-      vesta_core::Timestamp(static_cast<int64_t>(1.0 * 1e9)),
-      bg, ba, false, true, false);
+      vesta_core::Timestamp(static_cast<int64_t>(1.0 * 1e9)), bg, ba, false,
+      true, false);
   double norm_full = preintegrator.delta.covariance.norm();
 
   // Integrate for 2.0 seconds
   preintegrator.integrate(
-      vesta_core::Timestamp(static_cast<int64_t>(2.0 * 1e9)),
-      bg, ba, false, true, false);
+      vesta_core::Timestamp(static_cast<int64_t>(2.0 * 1e9)), bg, ba, false,
+      true, false);
   double norm_double = preintegrator.delta.covariance.norm();
 
   // Covariance norm should increase with time
@@ -188,8 +186,7 @@ TEST(ImuPreintegrator, CovarianceGrowth)
   EXPECT_GT(norm_double, norm_full);
 }
 
-TEST(ImuPreintegrator, ResetClearsState)
-{
+TEST(ImuPreintegrator, ResetClearsState) {
   // Verify reset() zeros everything.
   ImuPreintegrator preintegrator;
 
@@ -198,8 +195,7 @@ TEST(ImuPreintegrator, ResetClearsState)
   const Eigen::Vector3d gyro(0.1, 0.2, 0.3);
   const Eigen::Vector3d accel(1.0, 2.0, kGravityNominal);
 
-  for (int i = 0; i <= num_steps; ++i)
-  {
+  for (int i = 0; i <= num_steps; ++i) {
     int64_t ns = static_cast<int64_t>(i * dt * 1e9);
     ImuData imu(vesta_core::Timestamp(ns), gyro, accel);
     preintegrator.data.emplace(imu.stamp, imu);
@@ -209,8 +205,8 @@ TEST(ImuPreintegrator, ResetClearsState)
   Eigen::Vector3d ba = Eigen::Vector3d::Zero();
 
   preintegrator.integrate(
-      vesta_core::Timestamp(static_cast<int64_t>(0.5 * 1e9)),
-      bg, ba, true, true, true);
+      vesta_core::Timestamp(static_cast<int64_t>(0.5 * 1e9)), bg, ba, true,
+      true, true);
 
   // Verify state is non-zero before reset
   EXPECT_GT(preintegrator.delta.dt, 0.0);
@@ -239,8 +235,7 @@ TEST(ImuPreintegrator, ResetClearsState)
   EXPECT_DOUBLE_EQ(0.0, preintegrator.jacobian.dv_dba.norm());
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

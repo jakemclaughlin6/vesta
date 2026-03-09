@@ -34,14 +34,12 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <ceres/jet.h>
 #include <Eigen/Core>
+#include <ceres/jet.h>
 
 #include <cmath>
 
-
-namespace vesta_core
-{
+namespace vesta_core {
 
 /**
  * @brief Returns the Euler pitch angle from a quaternion
@@ -53,17 +51,14 @@ namespace vesta_core
  * @return      The quaternion's Euler pitch angle component
  */
 template <typename T>
-static inline T getPitch(const T w, const T x, const T y, const T z)
-{
-  // Adapted from https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+static inline T getPitch(const T w, const T x, const T y, const T z) {
+  // Adapted from
+  // https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
   const T sin_pitch = T(2.0) * (w * y - z * x);
 
-  if (ceres::abs(sin_pitch) >= T(1.0))
-  {
+  if (ceres::abs(sin_pitch) >= T(1.0)) {
     return (sin_pitch >= T(0.0) ? T(1.0) : T(-1.0)) * T(M_PI / 2.0);
-  }
-  else
-  {
+  } else {
     return ceres::asin(sin_pitch);
   }
 }
@@ -78,9 +73,9 @@ static inline T getPitch(const T w, const T x, const T y, const T z)
  * @return      The quaternion's Euler roll angle component
  */
 template <typename T>
-static inline T getRoll(const T w, const T x, const T y, const T z)
-{
-  // Adapted from https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+static inline T getRoll(const T w, const T x, const T y, const T z) {
+  // Adapted from
+  // https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
   const T sin_roll = T(2.0) * (w * x + y * z);
   const T cos_roll = T(1.0) - (T(2.0) * (x * x + y * y));
   return ceres::atan2(sin_roll, cos_roll);
@@ -98,9 +93,9 @@ static inline T getRoll(const T w, const T x, const T y, const T z)
  * @return      The quaternion's Euler yaw angle component
  */
 template <typename T>
-static inline T getYaw(const T w, const T x, const T y, const T z)
-{
-  // Adapted from https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+static inline T getYaw(const T w, const T x, const T y, const T z) {
+  // Adapted from
+  // https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
   const T sin_yaw = T(2.0) * (w * z + x * y);
   const T cos_yaw = T(1.0) - (T(2.0) * (y * y + z * z));
   return ceres::atan2(sin_yaw, cos_yaw);
@@ -109,12 +104,12 @@ static inline T getYaw(const T w, const T x, const T y, const T z)
 /**
  * @brief Wrap a 2D angle to the standard [-Pi, +Pi) range.
  *
- * @param[in/out] angle Input angle to be wrapped to the [-Pi, +Pi) range. Angle is updated by this function.
+ * @param[in/out] angle Input angle to be wrapped to the [-Pi, +Pi) range. Angle
+ * is updated by this function.
  */
-template <typename T>
-void wrapAngle2D(T& angle)
-{
-  // Define some necessary variations of PI with the correct type (double or Jet)
+template <typename T> void wrapAngle2D(T &angle) {
+  // Define some necessary variations of PI with the correct type (double or
+  // Jet)
   static const T PI = T(M_PI);
   static const T TAU = T(2 * M_PI);
   // Handle the 1*Tau roll-over (https://tauday.com/tau-manifesto)
@@ -128,9 +123,7 @@ void wrapAngle2D(T& angle)
  * @param[in] angle Input angle to be wrapped to the (-Pi, +Pi] range.
  * @return The equivalent wrapped angle
  */
-template <typename T>
-T wrapAngle2D(const T& angle)
-{
+template <typename T> T wrapAngle2D(const T &angle) {
   T wrapped = angle;
   wrapAngle2D(wrapped);
   return wrapped;
@@ -143,8 +136,7 @@ T wrapAngle2D(const T& angle)
  * @return          The equivalent 2x2 rotation matrix
  */
 template <typename T>
-Eigen::Matrix<T, 2, 2, Eigen::RowMajor> rotationMatrix2D(const T angle)
-{
+Eigen::Matrix<T, 2, 2, Eigen::RowMajor> rotationMatrix2D(const T angle) {
   const T cos_angle = ceres::cos(angle);
   const T sin_angle = ceres::sin(angle);
   Eigen::Matrix<T, 2, 2, Eigen::RowMajor> rotation;
@@ -152,5 +144,4 @@ Eigen::Matrix<T, 2, 2, Eigen::RowMajor> rotationMatrix2D(const T angle)
   return rotation;
 }
 
-}  // namespace vesta_core
-
+} // namespace vesta_core

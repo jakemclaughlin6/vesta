@@ -35,40 +35,37 @@
 
 #include <vesta_constraints/3d/normal_prior_orientation_3d_euler_cost_functor.h>
 
+#include <Eigen/Dense>
 #include <boost/serialization/export.hpp>
 #include <ceres/autodiff_cost_function.h>
-#include <Eigen/Dense>
 
 #include <string>
 #include <vector>
 
+namespace vesta_constraints {
 
-namespace vesta_constraints
-{
-
-AbsoluteOrientation3DStampedEulerConstraint::AbsoluteOrientation3DStampedEulerConstraint(
-  const std::string& source,
-  const vesta_variables::Orientation3DStamped& orientation,
-  const vesta_core::VectorXd& mean,
-  const vesta_core::MatrixXd& covariance,
-  const std::vector<Euler> &axes) :
-    vesta_core::Constraint(source, {orientation.uuid()}),  // NOLINT(whitespace/braces)
-    mean_(mean),
-    sqrt_information_(covariance.inverse().llt().matrixU()),
-    axes_(axes)
-{
+AbsoluteOrientation3DStampedEulerConstraint::
+    AbsoluteOrientation3DStampedEulerConstraint(
+        const std::string &source,
+        const vesta_variables::Orientation3DStamped &orientation,
+        const vesta_core::VectorXd &mean,
+        const vesta_core::MatrixXd &covariance, const std::vector<Euler> &axes)
+    : vesta_core::Constraint(source,
+                             {orientation.uuid()}), // NOLINT(whitespace/braces)
+      mean_(mean), sqrt_information_(covariance.inverse().llt().matrixU()),
+      axes_(axes) {
   assert(covariance.rows() == static_cast<int>(axes.size()));
   assert(covariance.cols() == static_cast<int>(axes.size()));
   assert(mean.rows() == static_cast<int>(axes.size()));
 }
 
-vesta_core::MatrixXd AbsoluteOrientation3DStampedEulerConstraint::covariance() const
-{
+vesta_core::MatrixXd
+AbsoluteOrientation3DStampedEulerConstraint::covariance() const {
   return (sqrt_information_.transpose() * sqrt_information_).inverse();
 }
 
-void AbsoluteOrientation3DStampedEulerConstraint::print(std::ostream& stream) const
-{
+void AbsoluteOrientation3DStampedEulerConstraint::print(
+    std::ostream &stream) const {
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
@@ -76,19 +73,22 @@ void AbsoluteOrientation3DStampedEulerConstraint::print(std::ostream& stream) co
          << "  mean: " << mean().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 
-  if (loss())
-  {
+  if (loss()) {
     stream << "  loss: ";
     loss()->print(stream);
   }
 }
 
-ceres::CostFunction* AbsoluteOrientation3DStampedEulerConstraint::costFunction() const
-{
-  return new ceres::AutoDiffCostFunction<NormalPriorOrientation3DEulerCostFunctor, ceres::DYNAMIC, 4>(
-    new NormalPriorOrientation3DEulerCostFunctor(sqrt_information_, mean_, axes_), axes_.size());
+ceres::CostFunction *
+AbsoluteOrientation3DStampedEulerConstraint::costFunction() const {
+  return new ceres::AutoDiffCostFunction<
+      NormalPriorOrientation3DEulerCostFunctor, ceres::DYNAMIC, 4>(
+      new NormalPriorOrientation3DEulerCostFunctor(sqrt_information_, mean_,
+                                                   axes_),
+      axes_.size());
 }
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints
 
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::AbsoluteOrientation3DStampedEulerConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::AbsoluteOrientation3DStampedEulerConstraint);

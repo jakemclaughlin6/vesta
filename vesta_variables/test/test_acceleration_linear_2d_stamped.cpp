@@ -32,9 +32,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <vesta_core/serialization.h>
+#include <vesta_core/timestamp.h>
 #include <vesta_variables/2d/acceleration_linear_2d_stamped.h>
 #include <vesta_variables/common/stamped.h>
-#include <vesta_core/timestamp.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <ceres/problem.h>
@@ -46,48 +46,61 @@
 
 using vesta_variables::AccelerationLinear2DStamped;
 
-
-TEST(AccelerationLinear2DStamped, Type)
-{
-  AccelerationLinear2DStamped variable(vesta_core::Timestamp(12345678, 910111213));
+TEST(AccelerationLinear2DStamped, Type) {
+  AccelerationLinear2DStamped variable(
+      vesta_core::Timestamp(12345678, 910111213));
   EXPECT_EQ("vesta_variables::AccelerationLinear2DStamped", variable.type());
 }
 
-TEST(AccelerationLinear2DStamped, UUID)
-{
+TEST(AccelerationLinear2DStamped, UUID) {
   // Verify two accelerations at the same timestamp produce the same UUID
   {
-    AccelerationLinear2DStamped variable1(vesta_core::Timestamp(12345678, 910111213));
-    AccelerationLinear2DStamped variable2(vesta_core::Timestamp(12345678, 910111213));
+    AccelerationLinear2DStamped variable1(
+        vesta_core::Timestamp(12345678, 910111213));
+    AccelerationLinear2DStamped variable2(
+        vesta_core::Timestamp(12345678, 910111213));
     EXPECT_EQ(variable1.uuid(), variable2.uuid());
 
-    AccelerationLinear2DStamped variable3(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("c3po"));
-    AccelerationLinear2DStamped variable4(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("c3po"));
+    AccelerationLinear2DStamped variable3(
+        vesta_core::Timestamp(12345678, 910111213),
+        vesta_core::uuid::generate("c3po"));
+    AccelerationLinear2DStamped variable4(
+        vesta_core::Timestamp(12345678, 910111213),
+        vesta_core::uuid::generate("c3po"));
     EXPECT_EQ(variable3.uuid(), variable4.uuid());
   }
 
   // Verify two accelerations at different timestamps produce different UUIDs
   {
-    AccelerationLinear2DStamped variable1(vesta_core::Timestamp(12345678, 910111213));
-    AccelerationLinear2DStamped variable2(vesta_core::Timestamp(12345678, 910111214));
-    AccelerationLinear2DStamped variable3(vesta_core::Timestamp(12345679, 910111213));
+    AccelerationLinear2DStamped variable1(
+        vesta_core::Timestamp(12345678, 910111213));
+    AccelerationLinear2DStamped variable2(
+        vesta_core::Timestamp(12345678, 910111214));
+    AccelerationLinear2DStamped variable3(
+        vesta_core::Timestamp(12345679, 910111213));
     EXPECT_NE(variable1.uuid(), variable2.uuid());
     EXPECT_NE(variable1.uuid(), variable3.uuid());
     EXPECT_NE(variable2.uuid(), variable3.uuid());
   }
 
-  // Verify two accelerations with different hardware IDs produce different UUIDs
+  // Verify two accelerations with different hardware IDs produce different
+  // UUIDs
   {
-    AccelerationLinear2DStamped variable1(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("r2d2"));
-    AccelerationLinear2DStamped variable2(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("bb8"));
+    AccelerationLinear2DStamped variable1(
+        vesta_core::Timestamp(12345678, 910111213),
+        vesta_core::uuid::generate("r2d2"));
+    AccelerationLinear2DStamped variable2(
+        vesta_core::Timestamp(12345678, 910111213),
+        vesta_core::uuid::generate("bb8"));
     EXPECT_NE(variable1.uuid(), variable2.uuid());
   }
 }
 
-TEST(AccelerationLinear2DStamped, Stamped)
-{
-  vesta_core::Variable::SharedPtr base = AccelerationLinear2DStamped::make_shared(vesta_core::Timestamp(12345678, 910111213),
-                                                                                 vesta_core::uuid::generate("mo"));
+TEST(AccelerationLinear2DStamped, Stamped) {
+  vesta_core::Variable::SharedPtr base =
+      AccelerationLinear2DStamped::make_shared(
+          vesta_core::Timestamp(12345678, 910111213),
+          vesta_core::uuid::generate("mo"));
   auto derived = std::dynamic_pointer_cast<AccelerationLinear2DStamped>(base);
   ASSERT_TRUE(static_cast<bool>(derived));
   EXPECT_EQ(vesta_core::Timestamp(12345678, 910111213), derived->stamp());
@@ -99,40 +112,35 @@ TEST(AccelerationLinear2DStamped, Stamped)
   EXPECT_EQ(vesta_core::uuid::generate("mo"), stamped->deviceId());
 }
 
-struct CostFunctor
-{
+struct CostFunctor {
   CostFunctor() {}
 
-  template <typename T> bool operator()(const T* const x, T* residual) const
-  {
+  template <typename T> bool operator()(const T *const x, T *residual) const {
     residual[0] = x[0] - T(3.0);
     residual[1] = x[1] + T(8.0);
     return true;
   }
 };
 
-TEST(AccelerationLinear2DStamped, Optimization)
-{
+TEST(AccelerationLinear2DStamped, Optimization) {
   // Create a AccelerationLinear2DStamped
-  AccelerationLinear2DStamped acceleration(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("hal9000"));
+  AccelerationLinear2DStamped acceleration(
+      vesta_core::Timestamp(12345678, 910111213),
+      vesta_core::uuid::generate("hal9000"));
   acceleration.x() = 1.5;
   acceleration.y() = -3.0;
 
   // Create a simple a constraint
-  ceres::CostFunction* cost_function = new ceres::AutoDiffCostFunction<CostFunctor, 2, 2>(new CostFunctor());
+  ceres::CostFunction *cost_function =
+      new ceres::AutoDiffCostFunction<CostFunctor, 2, 2>(new CostFunctor());
 
   // Build the problem.
   ceres::Problem problem;
-  problem.AddParameterBlock(
-    acceleration.data(),
-    acceleration.size(),
-    acceleration.manifold());
-  std::vector<double*> parameter_blocks;
+  problem.AddParameterBlock(acceleration.data(), acceleration.size(),
+                            acceleration.manifold());
+  std::vector<double *> parameter_blocks;
   parameter_blocks.push_back(acceleration.data());
-  problem.AddResidualBlock(
-    cost_function,
-    nullptr,
-    parameter_blocks);
+  problem.AddResidualBlock(cost_function, nullptr, parameter_blocks);
 
   // Run the solver
   ceres::Solver::Options options;
@@ -144,10 +152,11 @@ TEST(AccelerationLinear2DStamped, Optimization)
   EXPECT_NEAR(-8.0, acceleration.y(), 1.0e-5);
 }
 
-TEST(AccelerationLinear2DStamped, Serialization)
-{
+TEST(AccelerationLinear2DStamped, Serialization) {
   // Create a AccelerationLinear2DStamped
-  AccelerationLinear2DStamped expected(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("hal9000"));
+  AccelerationLinear2DStamped expected(
+      vesta_core::Timestamp(12345678, 910111213),
+      vesta_core::uuid::generate("hal9000"));
   expected.x() = 1.5;
   expected.y() = -3.0;
 
@@ -172,8 +181,7 @@ TEST(AccelerationLinear2DStamped, Serialization)
   EXPECT_EQ(expected.y(), actual.y());
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

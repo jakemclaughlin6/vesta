@@ -37,27 +37,20 @@
 
 #include <ostream>
 
+namespace vesta_loss {
 
-namespace vesta_loss
-{
+TolerantLoss::TolerantLoss(const double a, const double b) : a_(a), b_(b) {}
 
-TolerantLoss::TolerantLoss(const double a, const double b)
-  : a_(a), b_(b)
-{
-}
-
-void TolerantLoss::print(std::ostream& stream) const
-{
+void TolerantLoss::print(std::ostream &stream) const {
   stream << type() << "\n"
          << "  a: " << a_ << "\n"
          << "  b: " << b_ << "\n";
 }
 
-ceres::LossFunction* TolerantLoss::lossFunction() const
-{
+ceres::LossFunction *TolerantLoss::lossFunction() const {
   return new ceres::TolerantLoss(a_, b_);
 }
 
-}  // namespace vesta_loss
+} // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::TolerantLoss);

@@ -42,51 +42,57 @@
 #include <deque>
 #include <utility>
 
-
-namespace vesta_core
-{
+namespace vesta_core {
 
 /**
- * @brief A utility class that maintains a history of received messages, and allows a range of messages to be easily
- * queried by timestamp.
+ * @brief A utility class that maintains a history of received messages, and
+ * allows a range of messages to be easily queried by timestamp.
  *
- * For motion models that rely on integrating multiple measurements together to form the requested constraint, this
- * message buffer allows the received messages within a given time range to be easily extracted. It is then a matter
- * of processing the messages to form the constraint.
+ * For motion models that rely on integrating multiple measurements together to
+ * form the requested constraint, this message buffer allows the received
+ * messages within a given time range to be easily extracted. It is then a
+ * matter of processing the messages to form the constraint.
  *
  * It is assumed that all messages are received sequentially.
  */
-template <typename Message>
-class MessageBuffer
-{
+template <typename Message> class MessageBuffer {
 public:
   VESTA_SMART_PTR_DEFINITIONS(MessageBuffer<Message>);
 
   /**
    * @brief A range of messages
    *
-   * An object representing a range defined by two iterators. It has begin() and end() methods (which means it can
-   * be used in range-based for loops), an empty() method, and a front() method for directly accessing the first
-   * member. When dereferenced, an iterator returns a std::pair<vesta_core::Timestamp, MESSAGE>&.
+   * An object representing a range defined by two iterators. It has begin() and
+   * end() methods (which means it can be used in range-based for loops), an
+   * empty() method, and a front() method for directly accessing the first
+   * member. When dereferenced, an iterator returns a
+   * std::pair<vesta_core::Timestamp, MESSAGE>&.
    */
-  using message_range = boost::any_range<const std::pair<vesta_core::Timestamp, Message>, boost::forward_traversal_tag>;
+  using message_range =
+      boost::any_range<const std::pair<vesta_core::Timestamp, Message>,
+                       boost::forward_traversal_tag>;
 
   /**
    * @brief A range of timestamps
    *
-   * An object representing a range defined by two iterators. It has begin() and end() methods (which means it can
-   * be used in range-based for loops), an empty() method, and a front() method for directly accessing the first
-   * member. When dereferenced, an iterator returns a const vesta_core::Timestamp&.
+   * An object representing a range defined by two iterators. It has begin() and
+   * end() methods (which means it can be used in range-based for loops), an
+   * empty() method, and a front() method for directly accessing the first
+   * member. When dereferenced, an iterator returns a const
+   * vesta_core::Timestamp&.
    */
-  using stamp_range = boost::any_range<const vesta_core::Timestamp, boost::forward_traversal_tag>;
+  using stamp_range = boost::any_range<const vesta_core::Timestamp,
+                                       boost::forward_traversal_tag>;
 
   /**
    * Constructor
    *
-   * @param[in] buffer_length The length of the message buffer history. If queries arrive involving timestamps
-   *                          that are older than the buffer length, an exception will be thrown.
+   * @param[in] buffer_length The length of the message buffer history. If
+   * queries arrive involving timestamps that are older than the buffer length,
+   * an exception will be thrown.
    */
-  explicit MessageBuffer(const vesta_core::Duration& buffer_length = vesta_core::Duration::MAX);
+  explicit MessageBuffer(
+      const vesta_core::Duration &buffer_length = vesta_core::Duration::MAX);
 
   /**
    * @brief Destructor
@@ -96,79 +102,83 @@ public:
   /**
    * @brief Read-only access to the buffer length
    */
-  const vesta_core::Duration& bufferLength() const
-  {
-    return buffer_length_;
-  }
+  const vesta_core::Duration &bufferLength() const { return buffer_length_; }
 
   /**
    * @brief Write access to the buffer length
    */
-  void bufferLength(const vesta_core::Duration& buffer_length)
-  {
+  void bufferLength(const vesta_core::Duration &buffer_length) {
     buffer_length_ = buffer_length;
   }
 
   /**
    * @brief Insert a message to the buffer, using the provided timestamp
    *
-   * The provided timestamp is assigned to the message and used to sort the messages in the buffer.
+   * The provided timestamp is assigned to the message and used to sort the
+   * messages in the buffer.
    *
    * @param[in] stamp The stamp to assign to the message
    * @param[in] msg   A message
    */
-  void insert(const vesta_core::Timestamp& stamp, const Message& msg);
+  void insert(const vesta_core::Timestamp &stamp, const Message &msg);
 
   /**
    * @brief Query the buffer for the set of messages between two timestamps
    *
    * The "edge behavior" is controlled by the \p extended_range flag.
    *
-   * @param[in] beginning_stamp The beginning timestamp of the constraint. \p beginning_stamp must be less than or
-   *                            equal to \p ending_stamp.
-   * @param[in] ending_stamp    The ending timestamp of the constraint. \p ending_stamp must be greater than or
-   *                            or equal to \p beginning_stamp.
-   * @param[in] extended_range  A flag indicating if the message range should be extended to include one message
-   *                            with a stamp less than or equal to the \p beginning_stamp and one message with a
-   *                            stamp greater than or equal to the \p ending_stamp. If false, the returned range
-   *                            only includes messages with stamps greater than \p beginning_stamp and less than
-   *                            \p ending_stamp.
-   * @return                    An iterator range containing all of the messages between the specified stamps.
+   * @param[in] beginning_stamp The beginning timestamp of the constraint. \p
+   * beginning_stamp must be less than or equal to \p ending_stamp.
+   * @param[in] ending_stamp    The ending timestamp of the constraint. \p
+   * ending_stamp must be greater than or or equal to \p beginning_stamp.
+   * @param[in] extended_range  A flag indicating if the message range should be
+   * extended to include one message with a stamp less than or equal to the \p
+   * beginning_stamp and one message with a stamp greater than or equal to the
+   * \p ending_stamp. If false, the returned range only includes messages with
+   * stamps greater than \p beginning_stamp and less than \p ending_stamp.
+   * @return                    An iterator range containing all of the messages
+   * between the specified stamps.
    */
-  message_range query(const vesta_core::Timestamp& beginning_stamp, const vesta_core::Timestamp& ending_stamp, bool extended_range = true);
+  message_range query(const vesta_core::Timestamp &beginning_stamp,
+                      const vesta_core::Timestamp &ending_stamp,
+                      bool extended_range = true);
 
   /**
    * @brief Read-only access to the current set of timestamps
    *
-   * @return An iterator range containing all known timestamps in ascending order
+   * @return An iterator range containing all known timestamps in ascending
+   * order
    */
   stamp_range stamps() const;
 
 protected:
   using Buffer = std::deque<std::pair<vesta_core::Timestamp, Message>>;
-  Buffer buffer_;  //!< The container of received messages, sorted by timestamp
-  vesta_core::Duration buffer_length_;  //!< The length of the motion model history. Segments older than \p buffer_length_
-                                 //!< will be removed from the motion model history
+  Buffer buffer_; //!< The container of received messages, sorted by timestamp
+  vesta_core::Duration
+      buffer_length_; //!< The length of the motion model history. Segments
+                      //!< older than \p buffer_length_ will be removed from the
+                      //!< motion model history
 
   /**
-   * @brief Helper function used with boost::transform_iterators to convert the internal Buffer value type
-   * into a const vesta_core::Timestamp& iterator compatible with stamp_range
+   * @brief Helper function used with boost::transform_iterators to convert the
+   * internal Buffer value type into a const vesta_core::Timestamp& iterator
+   * compatible with stamp_range
    */
-  static const vesta_core::Timestamp& extractStamp(const typename Buffer::value_type& element)
-  {
+  static const vesta_core::Timestamp &
+  extractStamp(const typename Buffer::value_type &element) {
     return element.first;
   }
 
   /**
-   * @brief Remove any motion model segments that are older than \p buffer_length_
+   * @brief Remove any motion model segments that are older than \p
+   * buffer_length_
    *
-   * The span of the buffer will be *at least* the requested buffer length, but it may be longer depending on the
-   * specific stamps of received messages.
+   * The span of the buffer will be *at least* the requested buffer length, but
+   * it may be longer depending on the specific stamps of received messages.
    */
   void purgeHistory();
 };
 
-}  // namespace vesta_core
+} // namespace vesta_core
 
 #include <vesta_core/message_buffer_impl.h>
-

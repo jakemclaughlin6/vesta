@@ -41,23 +41,21 @@
 #include <string>
 #include <vector>
 
-
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 RelativePose2DStampedConstraint::RelativePose2DStampedConstraint(
-  const std::string& source,
-  const vesta_variables::Position2DStamped& position1,
-  const vesta_variables::Orientation2DStamped& orientation1,
-  const vesta_variables::Position2DStamped& position2,
-  const vesta_variables::Orientation2DStamped& orientation2,
-  const vesta_core::VectorXd& partial_delta,
-  const vesta_core::MatrixXd& partial_covariance,
-  const std::vector<size_t>& linear_indices,
-  const std::vector<size_t>& angular_indices) :
-    vesta_core::Constraint(
-      source,
-      {position1.uuid(), orientation1.uuid(), position2.uuid(), orientation2.uuid()})  // NOLINT(whitespace/braces)
+    const std::string &source,
+    const vesta_variables::Position2DStamped &position1,
+    const vesta_variables::Orientation2DStamped &orientation1,
+    const vesta_variables::Position2DStamped &position2,
+    const vesta_variables::Orientation2DStamped &orientation2,
+    const vesta_core::VectorXd &partial_delta,
+    const vesta_core::MatrixXd &partial_covariance,
+    const std::vector<size_t> &linear_indices,
+    const std::vector<size_t> &angular_indices)
+    : vesta_core::Constraint(
+          source, {position1.uuid(), orientation1.uuid(), position2.uuid(),
+                   orientation2.uuid()}) // NOLINT(whitespace/braces)
 {
   size_t total_variable_size = position1.size() + orientation1.size();
   size_t total_indices = linear_indices.size() + angular_indices.size();
@@ -67,48 +65,50 @@ RelativePose2DStampedConstraint::RelativePose2DStampedConstraint(
   assert(partial_covariance.cols() == static_cast<int>(total_indices));
 
   // Compute the sqrt information of the provided cov matrix
-  vesta_core::MatrixXd partial_sqrt_information = partial_covariance.inverse().llt().matrixU();
+  vesta_core::MatrixXd partial_sqrt_information =
+      partial_covariance.inverse().llt().matrixU();
 
-  // Assemble a mean vector and sqrt information matrix from the provided values, but in proper variable order
-  // What are we doing here?
-  // The constraint equation is defined as: cost(x) = ||A * (x - b)||^2
-  // If we are measuring a subset of dimensions, we only want to produce costs for the measured dimensions.
-  // But the variable vectors will be full sized. We can make this all work out by creating a non-square A
-  // matrix, where each row computes a cost for one measured dimensions, and the columns are in the order
-  // defined by the variable.
+  // Assemble a mean vector and sqrt information matrix from the provided
+  // values, but in proper variable order What are we doing here? The constraint
+  // equation is defined as: cost(x) = ||A * (x - b)||^2 If we are measuring a
+  // subset of dimensions, we only want to produce costs for the measured
+  // dimensions. But the variable vectors will be full sized. We can make this
+  // all work out by creating a non-square A matrix, where each row computes a
+  // cost for one measured dimensions, and the columns are in the order defined
+  // by the variable.
   delta_ = vesta_core::Vector3d::Zero();
-  sqrt_information_ = vesta_core::MatrixXd::Zero(total_indices, total_variable_size);
+  sqrt_information_ =
+      vesta_core::MatrixXd::Zero(total_indices, total_variable_size);
 
-  for (size_t i = 0; i < linear_indices.size(); ++i)
-  {
+  for (size_t i = 0; i < linear_indices.size(); ++i) {
     delta_(linear_indices[i]) = partial_delta(i);
     sqrt_information_.col(linear_indices[i]) = partial_sqrt_information.col(i);
   }
 
-  for (size_t i = linear_indices.size(); i < total_indices; ++i)
-  {
-    size_t final_index = position1.size() + angular_indices[i - linear_indices.size()];
+  for (size_t i = linear_indices.size(); i < total_indices; ++i) {
+    size_t final_index =
+        position1.size() + angular_indices[i - linear_indices.size()];
     delta_(final_index) = partial_delta(i);
     sqrt_information_.col(final_index) = partial_sqrt_information.col(i);
   }
 }
 
-vesta_core::Matrix3d RelativePose2DStampedConstraint::covariance() const
-{
+vesta_core::Matrix3d RelativePose2DStampedConstraint::covariance() const {
   // We want to compute:
   // cov = (sqrt_info' * sqrt_info)^-1
   // With some linear algebra, we can swap the transpose and the inverse.
   // cov = (sqrt_info^-1) * (sqrt_info^-1)'
-  // But sqrt_info _may_ not be square. So we need to compute the pseudoinverse instead.
-  // Eigen doesn't have a pseudoinverse function (for probably very legitimate reasons).
-  // So we set the right hand side to identity, then solve using one of Eigen's many decompositions.
-  auto I = vesta_core::MatrixXd::Identity(sqrt_information_.rows(), sqrt_information_.cols());
+  // But sqrt_info _may_ not be square. So we need to compute the pseudoinverse
+  // instead. Eigen doesn't have a pseudoinverse function (for probably very
+  // legitimate reasons). So we set the right hand side to identity, then solve
+  // using one of Eigen's many decompositions.
+  auto I = vesta_core::MatrixXd::Identity(sqrt_information_.rows(),
+                                          sqrt_information_.cols());
   vesta_core::MatrixXd pinv = sqrt_information_.colPivHouseholderQr().solve(I);
   return pinv * pinv.transpose();
 }
 
-void RelativePose2DStampedConstraint::print(std::ostream& stream) const
-{
+void RelativePose2DStampedConstraint::print(std::ostream &stream) const {
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
@@ -119,18 +119,17 @@ void RelativePose2DStampedConstraint::print(std::ostream& stream) const
          << "  delta: " << delta().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 
-  if (loss())
-  {
+  if (loss()) {
     stream << "  loss: ";
     loss()->print(stream);
   }
 }
 
-ceres::CostFunction* RelativePose2DStampedConstraint::costFunction() const
-{
+ceres::CostFunction *RelativePose2DStampedConstraint::costFunction() const {
   return new NormalDeltaPose2D(sqrt_information_, delta_);
 }
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints
 
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::RelativePose2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::RelativePose2DStampedConstraint);

@@ -34,85 +34,83 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <vesta_constraints/common/normal_delta.h>
 #include <vesta_constraints/2d/normal_delta_orientation_2d.h>
+#include <vesta_constraints/common/normal_delta.h>
 
 #include <Eigen/Dense>
 
 #include <string>
 #include <vector>
 
+namespace vesta_constraints {
 
-namespace vesta_constraints
-{
-
-template<class Variable>
+template <class Variable>
 RelativeConstraint<Variable>::RelativeConstraint(
-  const std::string& source,
-  const Variable& variable1,
-  const Variable& variable2,
-  const vesta_core::VectorXd& delta,
-  const vesta_core::MatrixXd& covariance) :
-    vesta_core::Constraint(source, {variable1.uuid(), variable2.uuid()}),  // NOLINT(whitespace/braces)
-    delta_(delta),
-    sqrt_information_(covariance.inverse().llt().matrixU())
-{
+    const std::string &source, const Variable &variable1,
+    const Variable &variable2, const vesta_core::VectorXd &delta,
+    const vesta_core::MatrixXd &covariance)
+    : vesta_core::Constraint(
+          source,
+          {variable1.uuid(), variable2.uuid()}), // NOLINT(whitespace/braces)
+      delta_(delta), sqrt_information_(covariance.inverse().llt().matrixU()) {
   assert(variable1.size() == variable2.size());
   assert(delta.rows() == static_cast<int>(variable1.size()));
   assert(covariance.rows() == static_cast<int>(variable1.size()));
   assert(covariance.cols() == static_cast<int>(variable1.size()));
 }
 
-template<class Variable>
+template <class Variable>
 RelativeConstraint<Variable>::RelativeConstraint(
-  const std::string& source,
-  const Variable& variable1,
-  const Variable& variable2,
-  const vesta_core::VectorXd& partial_delta,
-  const vesta_core::MatrixXd& partial_covariance,
-  const std::vector<size_t>& indices) :
-    vesta_core::Constraint(source, {variable1.uuid(), variable2.uuid()})  // NOLINT(whitespace/braces)
+    const std::string &source, const Variable &variable1,
+    const Variable &variable2, const vesta_core::VectorXd &partial_delta,
+    const vesta_core::MatrixXd &partial_covariance,
+    const std::vector<size_t> &indices)
+    : vesta_core::Constraint(
+          source,
+          {variable1.uuid(), variable2.uuid()}) // NOLINT(whitespace/braces)
 {
   assert(variable1.size() == variable2.size());
   assert(partial_delta.rows() == static_cast<int>(indices.size()));
   assert(partial_covariance.rows() == static_cast<int>(indices.size()));
   assert(partial_covariance.cols() == static_cast<int>(indices.size()));
   // Compute the sqrt information of the provided cov matrix
-  vesta_core::MatrixXd partial_sqrt_information = partial_covariance.inverse().llt().matrixU();
-  // Assemble a mean vector and sqrt information matrix from the provided values, but in proper Variable order
-  // What are we doing here?
-  // The constraint equation is defined as: cost(x) = ||A * (x1 - x0 - b)||^2
-  // If we are measuring a subset of dimensions, we only want to produce costs for the measured dimensions.
-  // But the variable vectors will be full sized. We can make this all work out by creating a non-square A
-  // matrix, where each row computes a cost for one measured dimensions, and the columns are in the order
-  // defined by the variable.
+  vesta_core::MatrixXd partial_sqrt_information =
+      partial_covariance.inverse().llt().matrixU();
+  // Assemble a mean vector and sqrt information matrix from the provided
+  // values, but in proper Variable order What are we doing here? The constraint
+  // equation is defined as: cost(x) = ||A * (x1 - x0 - b)||^2 If we are
+  // measuring a subset of dimensions, we only want to produce costs for the
+  // measured dimensions. But the variable vectors will be full sized. We can
+  // make this all work out by creating a non-square A matrix, where each row
+  // computes a cost for one measured dimensions, and the columns are in the
+  // order defined by the variable.
   delta_ = vesta_core::VectorXd::Zero(variable1.size());
-  sqrt_information_ = vesta_core::MatrixXd::Zero(indices.size(), variable1.size());
-  for (size_t i = 0; i < indices.size(); ++i)
-  {
+  sqrt_information_ =
+      vesta_core::MatrixXd::Zero(indices.size(), variable1.size());
+  for (size_t i = 0; i < indices.size(); ++i) {
     delta_(indices[i]) = partial_delta(i);
     sqrt_information_.col(indices[i]) = partial_sqrt_information.col(i);
   }
 }
 
-template<class Variable>
-vesta_core::MatrixXd RelativeConstraint<Variable>::covariance() const
-{
+template <class Variable>
+vesta_core::MatrixXd RelativeConstraint<Variable>::covariance() const {
   // We want to compute:
   // cov = (sqrt_info' * sqrt_info)^-1
   // With some linear algebra, we can swap the transpose and the inverse.
   // cov = (sqrt_info^-1) * (sqrt_info^-1)'
-  // But sqrt_info _may_ not be square. So we need to compute the pseudoinverse instead.
-  // Eigen doesn't have a pseudoinverse function (for probably very legitimate reasons).
-  // So we set the right hand side to identity, then solve using one of Eigen's many decompositions.
-  auto I = vesta_core::MatrixXd::Identity(sqrt_information_.rows(), sqrt_information_.cols());
+  // But sqrt_info _may_ not be square. So we need to compute the pseudoinverse
+  // instead. Eigen doesn't have a pseudoinverse function (for probably very
+  // legitimate reasons). So we set the right hand side to identity, then solve
+  // using one of Eigen's many decompositions.
+  auto I = vesta_core::MatrixXd::Identity(sqrt_information_.rows(),
+                                          sqrt_information_.cols());
   vesta_core::MatrixXd pinv = sqrt_information_.colPivHouseholderQr().solve(I);
   return pinv * pinv.transpose();
 }
 
-template<class Variable>
-void RelativeConstraint<Variable>::print(std::ostream& stream) const
-{
+template <class Variable>
+void RelativeConstraint<Variable>::print(std::ostream &stream) const {
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
@@ -121,70 +119,70 @@ void RelativeConstraint<Variable>::print(std::ostream& stream) const
          << "  delta: " << delta().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 
-  if (loss())
-  {
+  if (loss()) {
     stream << "  loss: ";
     loss()->print(stream);
   }
 }
 
-template<class Variable>
-ceres::CostFunction* RelativeConstraint<Variable>::costFunction() const
-{
+template <class Variable>
+ceres::CostFunction *RelativeConstraint<Variable>::costFunction() const {
   // Create a Gaussian/Normal Delta constraint
   return new vesta_constraints::NormalDelta(sqrt_information_, delta_);
 }
 
 // Specialization for Orientation2D
-template<>
-inline ceres::CostFunction* RelativeConstraint<vesta_variables::Orientation2DStamped>::costFunction() const
-{
+template <>
+inline ceres::CostFunction *
+RelativeConstraint<vesta_variables::Orientation2DStamped>::costFunction()
+    const {
   // Create a Gaussian/Normal Delta constraint
   return new NormalDeltaOrientation2D(sqrt_information_(0, 0), delta_(0));
 }
 
-// Specialize the type() method to return the name that is registered with the plugins
-template<>
-inline std::string RelativeConstraint<vesta_variables::AccelerationAngular2DStamped>::type() const
-{
+// Specialize the type() method to return the name that is registered with the
+// plugins
+template <>
+inline std::string
+RelativeConstraint<vesta_variables::AccelerationAngular2DStamped>::type()
+    const {
   return "vesta_constraints::RelativeAccelerationAngular2DStampedConstraint";
 }
 
-template<>
-inline std::string RelativeConstraint<vesta_variables::AccelerationLinear2DStamped>::type() const
-{
+template <>
+inline std::string
+RelativeConstraint<vesta_variables::AccelerationLinear2DStamped>::type() const {
   return "vesta_constraints::RelativeAccelerationLinear2DStampedConstraint";
 }
 
-template<>
-inline std::string RelativeConstraint<vesta_variables::Orientation2DStamped>::type() const
-{
+template <>
+inline std::string
+RelativeConstraint<vesta_variables::Orientation2DStamped>::type() const {
   return "vesta_constraints::RelativeOrientation2DStampedConstraint";
 }
 
-template<>
-inline std::string RelativeConstraint<vesta_variables::Position2DStamped>::type() const
-{
+template <>
+inline std::string
+RelativeConstraint<vesta_variables::Position2DStamped>::type() const {
   return "vesta_constraints::RelativePosition2DStampedConstraint";
 }
 
-template<>
-inline std::string RelativeConstraint<vesta_variables::Position3DStamped>::type() const
-{
+template <>
+inline std::string
+RelativeConstraint<vesta_variables::Position3DStamped>::type() const {
   return "vesta_constraints::RelativePosition3DStampedConstraint";
 }
 
-template<>
-inline std::string RelativeConstraint<vesta_variables::VelocityAngular2DStamped>::type() const
-{
+template <>
+inline std::string
+RelativeConstraint<vesta_variables::VelocityAngular2DStamped>::type() const {
   return "vesta_constraints::RelativeVelocityAngular2DStampedConstraint";
 }
 
-template<>
-inline std::string RelativeConstraint<vesta_variables::VelocityLinear2DStamped>::type() const
-{
+template <>
+inline std::string
+RelativeConstraint<vesta_variables::VelocityLinear2DStamped>::type() const {
   return "vesta_constraints::RelativeVelocityLinear2DStampedConstraint";
 }
 
-}  // namespace vesta_constraints
-
+} // namespace vesta_constraints

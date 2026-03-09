@@ -34,8 +34,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <vesta_core/loss.h>
 #include <vesta_core/fuse_macros.h>
+#include <vesta_core/loss.h>
 #include <vesta_core/serialization.h>
 #include <vesta_core/type_name.h>
 #include <vesta_core/uuid.h>
@@ -53,7 +53,6 @@
 #include <utility>
 #include <vector>
 
-
 /**
  * @brief Implementation of the clone() member function for derived classes
  *
@@ -67,14 +66,14 @@
  * }
  * @endcode
  */
-#define VESTA_CONSTRAINT_CLONE_DEFINITION(...) \
-  vesta_core::Constraint::UniquePtr clone() const override \
-  { \
-    return __VA_ARGS__::make_unique(*this); \
+#define VESTA_CONSTRAINT_CLONE_DEFINITION(...)                                 \
+  vesta_core::Constraint::UniquePtr clone() const override {                   \
+    return __VA_ARGS__::make_unique(*this);                                    \
   }
 
 /**
- * @brief Implementation of the serialize() and deserialize() member functions for derived classes
+ * @brief Implementation of the serialize() and deserialize() member functions
+ * for derived classes
  *
  * Usage:
  * @code{.cpp}
@@ -86,28 +85,26 @@
  * }
  * @endcode
  */
-#define VESTA_CONSTRAINT_SERIALIZE_DEFINITION(...) \
-  void serialize(vesta_core::BinaryOutputArchive& archive) const override \
-  { \
-    archive << *this; \
-  }  /* NOLINT */ \
-  void serialize(vesta_core::TextOutputArchive& archive) const override \
-  { \
-    archive << *this; \
-  }  /* NOLINT */ \
-  void deserialize(vesta_core::BinaryInputArchive& archive) override \
-  { \
-    archive >> *this; \
-  }  /* NOLINT */ \
-  void deserialize(vesta_core::TextInputArchive& archive) override \
-  { \
-    archive >> *this; \
+#define VESTA_CONSTRAINT_SERIALIZE_DEFINITION(...)                             \
+  void serialize(vesta_core::BinaryOutputArchive &archive) const override {    \
+    archive << *this;                                                          \
+  } /* NOLINT */                                                               \
+  void serialize(vesta_core::TextOutputArchive &archive) const override {      \
+    archive << *this;                                                          \
+  } /* NOLINT */                                                               \
+  void deserialize(vesta_core::BinaryInputArchive &archive) override {         \
+    archive >> *this;                                                          \
+  } /* NOLINT */                                                               \
+  void deserialize(vesta_core::TextInputArchive &archive) override {           \
+    archive >> *this;                                                          \
   }
 
 /**
- * @brief Implements the type() member function using the suggested implementation
+ * @brief Implements the type() member function using the suggested
+ * implementation
  *
- * Also creates a static detail::type() function that may be used without an object instance
+ * Also creates a static detail::type() function that may be used without an
+ * object instance
  *
  * Usage:
  * @code{.cpp}
@@ -119,21 +116,17 @@
  * }
  * @endcode
  */
-#define VESTA_CONSTRAINT_TYPE_DEFINITION(...) \
-  struct detail \
-  { \
-    static std::string type() \
-    { \
-      return vesta_core::typeName<__VA_ARGS__>(); \
-    }  /* NOLINT */ \
-  };  /* NOLINT */ \
-  std::string type() const override \
-  { \
-    return detail::type(); \
-  }
+#define VESTA_CONSTRAINT_TYPE_DEFINITION(...)                                  \
+  struct detail {                                                              \
+    static std::string type() {                                                \
+      return vesta_core::typeName<__VA_ARGS__>();                              \
+    } /* NOLINT */                                                             \
+  }; /* NOLINT */                                                              \
+  std::string type() const override { return detail::type(); }
 
 /**
- * @brief Convenience function that creates the required pointer aliases, clone() method, and type() method
+ * @brief Convenience function that creates the required pointer aliases,
+ * clone() method, and type() method
  *
  * Usage:
  * @code{.cpp}
@@ -145,15 +138,16 @@
  * }
  * @endcode
  */
-#define VESTA_CONSTRAINT_DEFINITIONS(...) \
-  VESTA_SMART_PTR_DEFINITIONS(__VA_ARGS__) \
-  VESTA_CONSTRAINT_TYPE_DEFINITION(__VA_ARGS__) \
-  VESTA_CONSTRAINT_CLONE_DEFINITION(__VA_ARGS__) \
+#define VESTA_CONSTRAINT_DEFINITIONS(...)                                      \
+  VESTA_SMART_PTR_DEFINITIONS(__VA_ARGS__)                                     \
+  VESTA_CONSTRAINT_TYPE_DEFINITION(__VA_ARGS__)                                \
+  VESTA_CONSTRAINT_CLONE_DEFINITION(__VA_ARGS__)                               \
   VESTA_CONSTRAINT_SERIALIZE_DEFINITION(__VA_ARGS__)
 
 /**
- * @brief Convenience function that creates the required pointer aliases, clone() method, and type() method
- *        for derived Constraint classes that have fixed-sized Eigen member objects.
+ * @brief Convenience function that creates the required pointer aliases,
+ * clone() method, and type() method for derived Constraint classes that have
+ * fixed-sized Eigen member objects.
  *
  * Usage:
  * @code{.cpp}
@@ -165,34 +159,36 @@
  * }
  * @endcode
  */
-#define VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(...) \
-  VESTA_SMART_PTR_DEFINITIONS_WITH_EIGEN(__VA_ARGS__) \
-  VESTA_CONSTRAINT_TYPE_DEFINITION(__VA_ARGS__) \
-  VESTA_CONSTRAINT_CLONE_DEFINITION(__VA_ARGS__) \
+#define VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(...)                           \
+  VESTA_SMART_PTR_DEFINITIONS_WITH_EIGEN(__VA_ARGS__)                          \
+  VESTA_CONSTRAINT_TYPE_DEFINITION(__VA_ARGS__)                                \
+  VESTA_CONSTRAINT_CLONE_DEFINITION(__VA_ARGS__)                               \
   VESTA_CONSTRAINT_SERIALIZE_DEFINITION(__VA_ARGS__)
 
-
-namespace vesta_core
-{
+namespace vesta_core {
 
 /**
  * @brief The Constraint interface definition.
  *
- * A Constraint defines a cost function that is connected to one or more variables. This base class defines the
- * required interface of all Constraint objects, and holds the ordered list of involved variable UUIDs. All other
+ * A Constraint defines a cost function that is connected to one or more
+ * variables. This base class defines the required interface of all Constraint
+ * objects, and holds the ordered list of involved variable UUIDs. All other
  * functionality is left to the derived classes to implement.
  *
- * Most importantly, the implementation of the cost function is left to the derived classes, allowing arbitrarily
- * complex sensor models to be implemented outside of the core vesta packages. The cost function must be a valid
- * ceres::CostFunction object. Ceres provides many nice features to make implementing the cost function easier,
- * including an automatic differentiation system. Please see the Ceres documentation for details on creating valid
- * ceres::CostFunction objects (http://ceres-solver.org/nnls_modeling.html). In addition to the cost function itself,
- * an optional loss function may be provided. Loss functions provide a mechanism for reducing the impact of outlier
- * measurements on the final optimization results. Again, see the Ceres documentation for details
+ * Most importantly, the implementation of the cost function is left to the
+ * derived classes, allowing arbitrarily complex sensor models to be implemented
+ * outside of the core vesta packages. The cost function must be a valid
+ * ceres::CostFunction object. Ceres provides many nice features to make
+ * implementing the cost function easier, including an automatic differentiation
+ * system. Please see the Ceres documentation for details on creating valid
+ * ceres::CostFunction objects (http://ceres-solver.org/nnls_modeling.html). In
+ * addition to the cost function itself, an optional loss function may be
+ * provided. Loss functions provide a mechanism for reducing the impact of
+ * outlier measurements on the final optimization results. Again, see the Ceres
+ * documentation for details
  * (http://ceres-solver.org/nnls_modeling.html#lossfunction).
  */
-class Constraint
-{
+class Constraint {
 public:
   VESTA_SMART_PTR_ALIASES_ONLY(Constraint);
 
@@ -204,22 +200,26 @@ public:
   /**
    * @brief Constructor
    *
-   * Accepts an arbitrary number of variable UUIDs directly. It can be called like:
+   * Accepts an arbitrary number of variable UUIDs directly. It can be called
+   * like:
    * @code{.cpp}
    * Constraint("source", {uuid1, uuid2, uuid3});
    * @endcode
    *
    * @param[in] variable_uuid_list The list of involved variable UUIDs
    */
-  Constraint(const std::string& source, std::initializer_list<UUID> variable_uuid_list);
+  Constraint(const std::string &source,
+             std::initializer_list<UUID> variable_uuid_list);
 
   /**
    * @brief Constructor
    *
-   * Accepts an arbitrary number of variable UUIDs stored in a container using iterators.
+   * Accepts an arbitrary number of variable UUIDs stored in a container using
+   * iterators.
    */
-  template<typename VariableUuidIterator>
-  Constraint(const std::string& source, VariableUuidIterator first, VariableUuidIterator last);
+  template <typename VariableUuidIterator>
+  Constraint(const std::string &source, VariableUuidIterator first,
+             VariableUuidIterator last);
 
   /**
    * @brief Destructor
@@ -229,8 +229,8 @@ public:
   /**
    * @brief Returns a unique name for this constraint type.
    *
-   * The constraint type string must be unique for each class. As such, the fully-qualified class name is an excellent
-   * choice for the type string.
+   * The constraint type string must be unique for each class. As such, the
+   * fully-qualified class name is an excellent choice for the type string.
    */
   virtual std::string type() const = 0;
 
@@ -239,66 +239,65 @@ public:
    *
    * Each constraint will generate a unique, random UUID during construction.
    */
-  const UUID& uuid() const { return uuid_; }
+  const UUID &uuid() const { return uuid_; }
 
   /**
-   * @brief Returns the name of the sensor or motion model that generated this constraint
+   * @brief Returns the name of the sensor or motion model that generated this
+   * constraint
    */
-  const std::string& source() const { return source_; }
+  const std::string &source() const { return source_; }
 
   /**
-   * @brief Print a human-readable description of the constraint to the provided stream.
+   * @brief Print a human-readable description of the constraint to the provided
+   * stream.
    *
    * @param  stream The stream to write to. Defaults to stdout.
    */
-  virtual void print(std::ostream& stream = std::cout) const = 0;
+  virtual void print(std::ostream &stream = std::cout) const = 0;
 
   /**
    * @brief Create a new Ceres cost function and return a raw pointer to it.
    *
-   * The Ceres interface requires a raw pointer. Ceres will take ownership of the pointer and promises to properly
-   * delete the cost function when it is done. Additionally, vesta promises that the Constraint object will outlive any
-   * generated cost functions (i.e. the Ceres objects will be destroyed before the Constraint objects). This guarantee
-   * may allow optimizations for the creation of the cost function objects.
+   * The Ceres interface requires a raw pointer. Ceres will take ownership of
+   * the pointer and promises to properly delete the cost function when it is
+   * done. Additionally, vesta promises that the Constraint object will outlive
+   * any generated cost functions (i.e. the Ceres objects will be destroyed
+   * before the Constraint objects). This guarantee may allow optimizations for
+   * the creation of the cost function objects.
    *
    * @return A base pointer to an instance of a derived ceres::CostFunction.
    */
-  virtual ceres::CostFunction* costFunction() const = 0;
+  virtual ceres::CostFunction *costFunction() const = 0;
 
   /**
    * @brief Read-only access to the loss.
    *
-   * The loss interfaces wraps a ceres::LossFunction that can be accessed directly with lossFunction().
+   * The loss interfaces wraps a ceres::LossFunction that can be accessed
+   * directly with lossFunction().
    *
    * @return A base shared pointer to an instance of a derived Loss.
    */
-  Loss::SharedPtr loss() const
-  {
-    return loss_;
-  }
+  Loss::SharedPtr loss() const { return loss_; }
 
   /**
    * @brief Set the constraint loss function
    *
    * @param[in] loss - The loss function
    */
-  void loss(Loss::SharedPtr loss)
-  {
-    loss_ = std::move(loss);
-  }
+  void loss(Loss::SharedPtr loss) { loss_ = std::move(loss); }
 
   /**
    * @brief Read-only access to the Ceres loss function.
    *
    * @return A base pointer to an instance of a derived ceres::LossFunction.
    */
-  ceres::LossFunction* lossFunction() const
-  {
+  ceres::LossFunction *lossFunction() const {
     return loss_ ? loss_->lossFunction() : nullptr;
   }
 
   /**
-   * @brief Perform a deep copy of the Constraint and return a unique pointer to the copy
+   * @brief Perform a deep copy of the Constraint and return a unique pointer to
+   * the copy
    *
    * This can/should be implemented as follows in all derived classes:
    * @code{.cpp}
@@ -310,9 +309,10 @@ public:
   virtual Constraint::UniquePtr clone() const = 0;
 
   /**
-   * @brief Read-only access to the ordered list of variable UUIDs involved in this constraint
+   * @brief Read-only access to the ordered list of variable UUIDs involved in
+   * this constraint
    */
-  const std::vector<UUID>& variables() const { return variables_; }
+  const std::vector<UUID> &variables() const { return variables_; }
 
   /**
    * @brief Serialize this Constraint into the provided binary archive
@@ -324,7 +324,8 @@ public:
    *
    * @param[out] archive - The archive to serialize this constraint into
    */
-  virtual void serialize(vesta_core::BinaryOutputArchive& /* archive */) const = 0;
+  virtual void
+  serialize(vesta_core::BinaryOutputArchive & /* archive */) const = 0;
 
   /**
    * @brief Serialize this Constraint into the provided text archive
@@ -336,10 +337,12 @@ public:
    *
    * @param[out] archive - The archive to serialize this constraint into
    */
-  virtual void serialize(vesta_core::TextOutputArchive& /* archive */) const = 0;
+  virtual void
+  serialize(vesta_core::TextOutputArchive & /* archive */) const = 0;
 
   /**
-   * @brief Deserialize data from the provided binary archive into this Constraint
+   * @brief Deserialize data from the provided binary archive into this
+   * Constraint
    *
    * This can/should be implemented as follows in all derived classes:
    * @code{.cpp}
@@ -348,7 +351,7 @@ public:
    *
    * @param[in] archive - The archive holding serialized Constraint data
    */
-  virtual void deserialize(vesta_core::BinaryInputArchive& /* archive */) = 0;
+  virtual void deserialize(vesta_core::BinaryInputArchive & /* archive */) = 0;
 
   /**
    * @brief Deserialize data from the provided text archive into this Constraint
@@ -360,30 +363,35 @@ public:
    *
    * @param[in] archive - The archive holding serialized Constraint data
    */
-  virtual void deserialize(vesta_core::TextInputArchive& /* archive */) = 0;
+  virtual void deserialize(vesta_core::TextInputArchive & /* archive */) = 0;
 
 private:
-  std::string source_;  //!< The name of the sensor or motion model that generated this constraint
-  UUID uuid_;  //!< The unique ID associated with this constraint
-  std::vector<UUID> variables_;  //!< The ordered set of variables involved with this constraint
-  std::shared_ptr<Loss> loss_{ nullptr };  //!< The loss function
+  std::string source_; //!< The name of the sensor or motion model that
+                       //!< generated this constraint
+  UUID uuid_;          //!< The unique ID associated with this constraint
+  std::vector<UUID> variables_; //!< The ordered set of variables involved with
+                                //!< this constraint
+  std::shared_ptr<Loss> loss_{nullptr}; //!< The loss function
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * This method, or a combination of save() and load() methods, must be implemented by all derived classes. See
-   * documentation on Boost Serialization for information on how to implement the serialize() method.
+   * This method, or a combination of save() and load() methods, must be
+   * implemented by all derived classes. See documentation on Boost
+   * Serialization for information on how to implement the serialize() method.
    * https://www.boost.org/doc/libs/1_70_0/libs/serialization/doc/
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
     archive & source_;
     archive & uuid_;
     archive & variables_;
@@ -394,16 +402,11 @@ private:
 /**
  * Stream operator implementation used for all derived Constraint classes.
  */
-std::ostream& operator <<(std::ostream& stream, const Constraint& constraint);
+std::ostream &operator<<(std::ostream &stream, const Constraint &constraint);
 
+template <typename VariableUuidIterator>
+Constraint::Constraint(const std::string &source, VariableUuidIterator first,
+                       VariableUuidIterator last)
+    : source_(source), uuid_(uuid::generate()), variables_(first, last) {}
 
-template<typename VariableUuidIterator>
-Constraint::Constraint(const std::string& source, VariableUuidIterator first, VariableUuidIterator last) :
-  source_(source),
-  uuid_(uuid::generate()),
-  variables_(first, last)
-{
-}
-
-}  // namespace vesta_core
-
+} // namespace vesta_core

@@ -36,12 +36,12 @@
 
 #include <vesta_core/manifold.h>
 #include <vesta_core/serialization.h>
+#include <vesta_core/timestamp.h>
 #include <vesta_core/util.h>
 #include <vesta_core/uuid.h>
 #include <vesta_core/variable.h>
 #include <vesta_variables/common/fixed_size_variable.h>
 #include <vesta_variables/common/stamped.h>
-#include <vesta_core/timestamp.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -50,75 +50,64 @@
 
 #include <ostream>
 
-
-namespace vesta_variables
-{
+namespace vesta_variables {
 
 /**
  * @brief A Manifold class for 3D Orientations.
  *
- * 3D orientations add and subtract nonlinearly. Additionally, the typcial 3D orientation representation is a
- * quaternion, which has 4 degrees of freedom to parameterize a 3D space. This manifold uses the
- * Rodrigues/angle-axis formulas to combine 3D rotations, along with the appropriate "analytic" derivatives.
+ * 3D orientations add and subtract nonlinearly. Additionally, the typcial 3D
+ * orientation representation is a quaternion, which has 4 degrees of freedom to
+ * parameterize a 3D space. This manifold uses the Rodrigues/angle-axis formulas
+ * to combine 3D rotations, along with the appropriate "analytic" derivatives.
  */
-class Orientation3DManifold : public vesta_core::Manifold
-{
+class Orientation3DManifold : public vesta_core::Manifold {
 public:
   /**
    * @brief Create the inverse quaternion
    *
    * ceres/rotation.h is missing this function for some reason.
    */
-  template<typename T> inline
-  static void QuaternionInverse(const T in[4], T out[4])
-  {
+  template <typename T>
+  inline static void QuaternionInverse(const T in[4], T out[4]) {
     out[0] = in[0];
     out[1] = -in[1];
     out[2] = -in[2];
     out[3] = -in[3];
   }
 
-  int AmbientSize() const override
-  {
-    return 4;
-  }
+  int AmbientSize() const override { return 4; }
 
-  int TangentSize() const override
-  {
-    return 3;
-  }
+  int TangentSize() const override { return 3; }
 
-  bool Plus(
-    const double* x,
-    const double* delta,
-    double* x_plus_delta) const override
-  {
+  bool Plus(const double *x, const double *delta,
+            double *x_plus_delta) const override {
     double q_delta[4];
     ceres::AngleAxisToQuaternion(delta, q_delta);
     ceres::QuaternionProduct(x, q_delta, x_plus_delta);
     return true;
-}
+  }
 
-  bool PlusJacobian(
-    const double* x,
-    double* jacobian) const override
-  {
+  bool PlusJacobian(const double *x, double *jacobian) const override {
     double x0 = x[0] / 2;
     double x1 = x[1] / 2;
     double x2 = x[2] / 2;
     double x3 = x[3] / 2;
-    jacobian[0] = -x1; jacobian[1]  = -x2; jacobian[2]  = -x3;  // NOLINT
-    jacobian[3] =  x0; jacobian[4]  = -x3; jacobian[5]  =  x2;  // NOLINT
-    jacobian[6] =  x3; jacobian[7]  =  x0; jacobian[8]  = -x1;  // NOLINT
-    jacobian[9] = -x2; jacobian[10] =  x1; jacobian[11] =  x0;  // NOLINT
+    jacobian[0] = -x1;
+    jacobian[1] = -x2;
+    jacobian[2] = -x3; // NOLINT
+    jacobian[3] = x0;
+    jacobian[4] = -x3;
+    jacobian[5] = x2; // NOLINT
+    jacobian[6] = x3;
+    jacobian[7] = x0;
+    jacobian[8] = -x1; // NOLINT
+    jacobian[9] = -x2;
+    jacobian[10] = x1;
+    jacobian[11] = x0; // NOLINT
     return true;
   }
 
-  bool Minus(
-    const double* x1,
-    const double* x2,
-    double* delta) const override
-  {
+  bool Minus(const double *x1, const double *x2, double *delta) const override {
     double x1_inverse[4];
     QuaternionInverse(x1, x1_inverse);
     double q_delta[4];
@@ -127,17 +116,23 @@ public:
     return true;
   }
 
-  bool MinusJacobian(
-    const double* x,
-    double* jacobian) const override
-  {
+  bool MinusJacobian(const double *x, double *jacobian) const override {
     double x0 = x[0] * 2;
     double x1 = x[1] * 2;
     double x2 = x[2] * 2;
     double x3 = x[3] * 2;
-    jacobian[0] = -x1; jacobian[1]  =  x0; jacobian[2]  =  x3;  jacobian[3]  = -x2;  // NOLINT
-    jacobian[4] = -x2; jacobian[5]  = -x3; jacobian[6]  =  x0;  jacobian[7]  =  x1;  // NOLINT
-    jacobian[8] = -x3; jacobian[9]  =  x2; jacobian[10] = -x1;  jacobian[11] =  x0;  // NOLINT
+    jacobian[0] = -x1;
+    jacobian[1] = x0;
+    jacobian[2] = x3;
+    jacobian[3] = -x2; // NOLINT
+    jacobian[4] = -x2;
+    jacobian[5] = -x3;
+    jacobian[6] = x0;
+    jacobian[7] = x1; // NOLINT
+    jacobian[8] = -x3;
+    jacobian[9] = x2;
+    jacobian[10] = -x1;
+    jacobian[11] = x0; // NOLINT
     return true;
   }
 
@@ -146,39 +141,41 @@ private:
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_core::Manifold>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Manifold>(*this);
   }
 };
 
 /**
- * @brief Variable representing a 3D orientation as a quaternion at a specific time and for a specific piece of
- * hardware (e.g., robot)
+ * @brief Variable representing a 3D orientation as a quaternion at a specific
+ * time and for a specific piece of hardware (e.g., robot)
  *
- * This is commonly used to represent a robot orientation in single or multi-robot systems. The UUID of this class is
- * static after construction. As such, the timestamp and device ID cannot be modified. The value of the orientation
- * can be modified.
- * 
- * The internal representation for this is different from the typical ROS representation, as w is the first component.
- * This is necessary to use the Ceres local parameterization for quaternions.
+ * This is commonly used to represent a robot orientation in single or
+ * multi-robot systems. The UUID of this class is static after construction. As
+ * such, the timestamp and device ID cannot be modified. The value of the
+ * orientation can be modified.
+ *
+ * The internal representation for this is different from the typical ROS
+ * representation, as w is the first component. This is necessary to use the
+ * Ceres local parameterization for quaternions.
  */
-class Orientation3DStamped : public FixedSizeVariable<4>, public Stamped
-{
+class Orientation3DStamped : public FixedSizeVariable<4>, public Stamped {
 public:
   VESTA_VARIABLE_DEFINITIONS(Orientation3DStamped);
 
   /**
    * @brief Can be used to directly index variables in the quaternion
    */
-  enum : size_t
-  {
+  enum : size_t {
     W = 0,
     X = 1,
     Y = 2,
@@ -186,14 +183,10 @@ public:
   };
 
   /**
-   * @brief Can be used to reference Euler angles, but NOT as indices in the \p data_ member
+   * @brief Can be used to reference Euler angles, but NOT as indices in the \p
+   * data_ member
    */
-  enum class Euler : size_t
-  {
-    ROLL = 4,
-    PITCH = 5,
-    YAW = 6
-  };
+  enum class Euler : size_t { ROLL = 4, PITCH = 5, YAW = 6 };
 
   /**
    * @brief Default constructor
@@ -204,49 +197,52 @@ public:
    * @brief Construct a 3D orientation at a specific point in time.
    *
    * @param[in] stamp     The timestamp attached to this velocity.
-   * @param[in] device_id An optional device id, for use when variables originate from multiple robots or devices
+   * @param[in] device_id An optional device id, for use when variables
+   * originate from multiple robots or devices
    */
-  explicit Orientation3DStamped(const vesta_core::Timestamp& stamp, const vesta_core::UUID& device_id = vesta_core::uuid::NIL);
+  explicit Orientation3DStamped(
+      const vesta_core::Timestamp &stamp,
+      const vesta_core::UUID &device_id = vesta_core::uuid::NIL);
 
   /**
    * @brief Read-write access to the quaternion w component
    */
-  double& w() { return data_[W]; }
+  double &w() { return data_[W]; }
 
   /**
    * @brief Read-only access to the quaternion w component
    */
-  const double& w() const { return data_[W]; }
+  const double &w() const { return data_[W]; }
 
   /**
    * @brief Read-write access to the quaternion x component
    */
-  double& x() { return data_[X]; }
+  double &x() { return data_[X]; }
 
   /**
    * @brief Read-only access to the quaternion x component
    */
-  const double& x() const { return data_[X]; }
+  const double &x() const { return data_[X]; }
 
   /**
    * @brief Read-write access to the quaternion y component
    */
-  double& y() { return data_[Y]; }
+  double &y() { return data_[Y]; }
 
   /**
    * @brief Read-only access to the quaternion y component
    */
-  const double& y() const { return data_[Y]; }
+  const double &y() const { return data_[Y]; }
 
   /**
    * @brief Read-write access to the quaternion z component
    */
-  double& z() { return data_[Z]; }
+  double &z() { return data_[Z]; }
 
   /**
    * @brief Read-only access to the quaternion z component
    */
-  const double& z() const { return data_[Z]; }
+  const double &z() const { return data_[Z]; }
 
   /**
    * @brief Read-only access to quaternion's Euler roll angle component
@@ -264,47 +260,50 @@ public:
   double yaw() { return vesta_core::getYaw(w(), x(), y(), z()); }
 
   /**
-   * @brief Print a human-readable description of the variable to the provided stream.
+   * @brief Print a human-readable description of the variable to the provided
+   * stream.
    *
    * @param  stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream& stream = std::cout) const override;
+  void print(std::ostream &stream = std::cout) const override;
 
   /**
    * @brief Returns the number of elements of the tangent space.
    *
-   * While a quaternion has 4 parameters, a 3D rotation only has 3 degrees of freedom. Hence, the tangent
-   * space is only size 3.
+   * While a quaternion has 4 parameters, a 3D rotation only has 3 degrees of
+   * freedom. Hence, the tangent space is only size 3.
    */
   size_t tangentSize() const override { return 3u; }
 
   /**
    * @brief Provides a Ceres manifold for the quaternion
    *
-   * @return A pointer to a manifold object that indicates how to "add" increments to the quaternion
+   * @return A pointer to a manifold object that indicates how to "add"
+   * increments to the quaternion
    */
-  vesta_core::Manifold* manifold() const override;
+  vesta_core::Manifold *manifold() const override;
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
-    archive & boost::serialization::base_object<Stamped>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
+    archive &boost::serialization::base_object<Stamped>(*this);
   }
 };
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_KEY(vesta_variables::Orientation3DManifold);
 BOOST_CLASS_EXPORT_KEY(vesta_variables::Orientation3DStamped);
-

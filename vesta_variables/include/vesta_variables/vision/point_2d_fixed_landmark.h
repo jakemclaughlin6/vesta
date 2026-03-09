@@ -42,18 +42,18 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
 
-namespace vesta_variables
-{
+namespace vesta_variables {
 /**
  * @brief Variable representing a 2D point landmark that exists across time.
  *
- * This is commonly used to represent locations of visual features. This class differs from the Point2DLandmark in that
- * the value of the landmark is held constant during optimization. This is appropriate if the landmark positions are
- * known or were previously estimated to sufficient accuracy. The UUID of this class is constant after construction and
- * dependent on a user input database id. As such, the database id cannot be altered after construction.
+ * This is commonly used to represent locations of visual features. This class
+ * differs from the Point2DLandmark in that the value of the landmark is held
+ * constant during optimization. This is appropriate if the landmark positions
+ * are known or were previously estimated to sufficient accuracy. The UUID of
+ * this class is constant after construction and dependent on a user input
+ * database id. As such, the database id cannot be altered after construction.
  */
-class Point2DFixedLandmark : public Point2DLandmark
-{
+class Point2DFixedLandmark : public Point2DLandmark {
 public:
   VESTA_VARIABLE_DEFINITIONS(Point2DFixedLandmark);
 
@@ -67,10 +67,11 @@ public:
    *
    * @param[in] landmark_id  The id associated to a landmark
    */
-  explicit Point2DFixedLandmark(const uint64_t& landmark_id);
+  explicit Point2DFixedLandmark(const uint64_t &landmark_id);
 
   /**
-   * @brief Specifies if the value of the variable should not be changed during optimization
+   * @brief Specifies if the value of the variable should not be changed during
+   * optimization
    */
   bool holdConstant() const override { return true; }
 
@@ -88,13 +89,11 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive& boost::serialization::base_object<Point2DLandmark>(*this);
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<Point2DLandmark>(*this);
   }
 };
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_KEY(vesta_variables::Point2DFixedLandmark);
-

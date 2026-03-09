@@ -39,27 +39,22 @@
 
 #include <ostream>
 
+namespace vesta_loss {
 
-namespace vesta_loss
-{
+TukeyLoss::TukeyLoss(const double a) : a_(a) {}
 
-TukeyLoss::TukeyLoss(const double a) : a_(a)
-{
-}
-
-void TukeyLoss::print(std::ostream& stream) const
-{
+void TukeyLoss::print(std::ostream &stream) const {
   stream << type() << "\n"
          << "  a: " << a_ << "\n";
 }
 
-ceres::LossFunction* TukeyLoss::lossFunction() const
-{
+ceres::LossFunction *TukeyLoss::lossFunction() const {
 #if CERES_VERSION_AT_LEAST(2, 0, 0)
   return new ceres::TukeyLoss(a_);
 #else
-  // The Tukey loss function is incorrectly implemented in Ceres before the 2.* version because it must be multiplied by
-  // 2, so instead of dividing by 6 it should have divided by 3 in:
+  // The Tukey loss function is incorrectly implemented in Ceres before the 2.*
+  // version because it must be multiplied by 2, so instead of dividing by 6 it
+  // should have divided by 3 in:
   //
   //   https://github.com/ceres-solver/ceres-solver/blob/4362a2169966e0839425209/include/ceres/loss_function.h#L281-L282
   //
@@ -71,11 +66,12 @@ ceres::LossFunction* TukeyLoss::lossFunction() const
   //
   //   https://github.com/ceres-solver/ceres-solver/commit/6da364713f5b78#diff-7f75c0abfe2c5756f744aa61097ca1c2L281-R283
   //
-  // There is an easy workaround for this. We combine TukeyLoss with ScaledLoss, using a scaled factor of 2.
+  // There is an easy workaround for this. We combine TukeyLoss with ScaledLoss,
+  // using a scaled factor of 2.
   return new ceres::ScaledLoss(new ceres::TukeyLoss(a_), 2.0, Ownership);
 #endif
 }
 
-}  // namespace vesta_loss
+} // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::TukeyLoss);

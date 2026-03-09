@@ -41,17 +41,15 @@
 #include <cstdint>
 #include <ostream>
 
-namespace vesta_core
-{
+namespace vesta_core {
 
 /**
  * @brief A simple timestamp type that replaces ros::Time
  *
- * Represents time as nanoseconds since epoch. Provides conversion to/from seconds
- * and interoperability with std::chrono.
+ * Represents time as nanoseconds since epoch. Provides conversion to/from
+ * seconds and interoperability with std::chrono.
  */
-struct Timestamp
-{
+struct Timestamp {
   int64_t nanoseconds{0};
 
   Timestamp() = default;
@@ -59,47 +57,43 @@ struct Timestamp
   explicit Timestamp(int64_t ns) : nanoseconds(ns) {}
 
   /**
-   * @brief Construct from seconds and nanoseconds (matching ros::Time(sec, nsec) pattern)
+   * @brief Construct from seconds and nanoseconds (matching ros::Time(sec,
+   * nsec) pattern)
    */
   Timestamp(uint32_t sec, uint32_t nsec)
-    : nanoseconds(static_cast<int64_t>(sec) * 1000000000LL + static_cast<int64_t>(nsec))
-  {}
+      : nanoseconds(static_cast<int64_t>(sec) * 1000000000LL +
+                    static_cast<int64_t>(nsec)) {}
 
   /**
    * @brief Get the current time
    */
-  static Timestamp now()
-  {
+  static Timestamp now() {
     auto now = std::chrono::system_clock::now();
-    auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch());
+    auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        now.time_since_epoch());
     return Timestamp(ns.count());
   }
 
   /**
    * @brief Create a Timestamp from a floating-point seconds value
    */
-  static Timestamp fromSec(double sec)
-  {
+  static Timestamp fromSec(double sec) {
     return Timestamp(static_cast<int64_t>(sec * 1e9));
   }
 
   /**
    * @brief Convert to a floating-point seconds value
    */
-  double toSec() const
-  {
-    return static_cast<double>(nanoseconds) / 1e9;
-  }
+  double toSec() const { return static_cast<double>(nanoseconds) / 1e9; }
 
   /**
    * @brief Check if the timestamp is zero (uninitialized)
    */
   bool isZero() const { return nanoseconds == 0; }
 
-  auto operator<=>(const Timestamp&) const = default;
+  auto operator<=>(const Timestamp &) const = default;
 
-  friend std::ostream& operator<<(std::ostream& os, const Timestamp& t)
-  {
+  friend std::ostream &operator<<(std::ostream &os, const Timestamp &t) {
     os << t.toSec();
     return os;
   }
@@ -107,9 +101,8 @@ struct Timestamp
 private:
   friend class boost::serialization::access;
 
-  template<class Archive>
-  void serialize(Archive& ar, const unsigned int /* version */)
-  {
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int /* version */) {
     ar & nanoseconds;
   }
 };
@@ -117,11 +110,10 @@ private:
 /**
  * @brief A simple duration type that replaces ros::Duration
  *
- * Represents a time duration as nanoseconds. Provides conversion to/from seconds
- * and interoperability with std::chrono.
+ * Represents a time duration as nanoseconds. Provides conversion to/from
+ * seconds and interoperability with std::chrono.
  */
-struct Duration
-{
+struct Duration {
   int64_t nanoseconds{0};
 
   Duration() = default;
@@ -132,24 +124,20 @@ struct Duration
    * @brief Construct from seconds and nanoseconds
    */
   Duration(int32_t sec, int32_t nsec)
-    : nanoseconds(static_cast<int64_t>(sec) * 1000000000LL + static_cast<int64_t>(nsec))
-  {}
+      : nanoseconds(static_cast<int64_t>(sec) * 1000000000LL +
+                    static_cast<int64_t>(nsec)) {}
 
   /**
    * @brief Create a Duration from a floating-point seconds value
    */
-  static Duration fromSec(double sec)
-  {
+  static Duration fromSec(double sec) {
     return Duration(static_cast<int64_t>(sec * 1e9));
   }
 
   /**
    * @brief Convert to a floating-point seconds value
    */
-  double toSec() const
-  {
-    return static_cast<double>(nanoseconds) / 1e9;
-  }
+  double toSec() const { return static_cast<double>(nanoseconds) / 1e9; }
 
   /**
    * @brief Check if the duration is zero
@@ -161,10 +149,9 @@ struct Duration
    */
   static const Duration MAX;
 
-  auto operator<=>(const Duration&) const = default;
+  auto operator<=>(const Duration &) const = default;
 
-  friend std::ostream& operator<<(std::ostream& os, const Duration& d)
-  {
+  friend std::ostream &operator<<(std::ostream &os, const Duration &d) {
     os << d.toSec();
     return os;
   }
@@ -172,9 +159,8 @@ struct Duration
 private:
   friend class boost::serialization::access;
 
-  template<class Archive>
-  void serialize(Archive& ar, const unsigned int /* version */)
-  {
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int /* version */) {
     ar & nanoseconds;
   }
 };
@@ -182,30 +168,24 @@ private:
 /**
  * @brief Arithmetic operators for Timestamp and Duration
  */
-inline Timestamp operator+(const Timestamp& t, const Duration& d)
-{
+inline Timestamp operator+(const Timestamp &t, const Duration &d) {
   return Timestamp(t.nanoseconds + d.nanoseconds);
 }
 
-inline Timestamp operator-(const Timestamp& t, const Duration& d)
-{
+inline Timestamp operator-(const Timestamp &t, const Duration &d) {
   return Timestamp(t.nanoseconds - d.nanoseconds);
 }
 
-inline Duration operator-(const Timestamp& a, const Timestamp& b)
-{
+inline Duration operator-(const Timestamp &a, const Timestamp &b) {
   return Duration(a.nanoseconds - b.nanoseconds);
 }
 
-inline Duration operator+(const Duration& a, const Duration& b)
-{
+inline Duration operator+(const Duration &a, const Duration &b) {
   return Duration(a.nanoseconds + b.nanoseconds);
 }
 
-inline Duration operator-(const Duration& a, const Duration& b)
-{
+inline Duration operator-(const Duration &a, const Duration &b) {
   return Duration(a.nanoseconds - b.nanoseconds);
 }
 
-}  // namespace vesta_core
-
+} // namespace vesta_core

@@ -39,28 +39,27 @@
 #include <vesta_core/variable.h>
 
 #include <boost/serialization/access.hpp>
-#include <boost/serialization/base_object.hpp>
 #include <boost/serialization/array.hpp>
+#include <boost/serialization/base_object.hpp>
 
 #include <array>
 
-
-namespace vesta_variables
-{
+namespace vesta_variables {
 
 /**
  * @brief A Variable base class for fixed-sized variables
  *
- * The FixedSizeVariable class implements a statically sized array to hold the scalar values. The size of the variable
- * is provided as the template argument \p N when creating a derived class. The FixedSizeVariable class implements the
- * Variable::data() accessor methods, and provides access to the scalar values as a std::array. This allows easier
- * manipulation in C++ (iterators, range-based for loops, etc.). The FixedSizeVariable class is designed for variables
- * where the size of the state vector is known at compile time...which should be almost all variable types. The
- * dimension of typical variable types (points, poses, calibration parameters) are all known at design/compile time.
+ * The FixedSizeVariable class implements a statically sized array to hold the
+ * scalar values. The size of the variable is provided as the template argument
+ * \p N when creating a derived class. The FixedSizeVariable class implements
+ * the Variable::data() accessor methods, and provides access to the scalar
+ * values as a std::array. This allows easier manipulation in C++ (iterators,
+ * range-based for loops, etc.). The FixedSizeVariable class is designed for
+ * variables where the size of the state vector is known at compile time...which
+ * should be almost all variable types. The dimension of typical variable types
+ * (points, poses, calibration parameters) are all known at design/compile time.
  */
-template <size_t N>
-class FixedSizeVariable : public vesta_core::Variable
-{
+template <size_t N> class FixedSizeVariable : public vesta_core::Variable {
 public:
   VESTA_SMART_PTR_ALIASES_ONLY(FixedSizeVariable<N>);
 
@@ -77,9 +76,8 @@ public:
   /**
    * @brief Constructor
    */
-  explicit FixedSizeVariable(const vesta_core::UUID& uuid) :
-    vesta_core::Variable(uuid),
-    data_{}  // zero-initialize the data array
+  explicit FixedSizeVariable(const vesta_core::UUID &uuid)
+      : vesta_core::Variable(uuid), data_{} // zero-initialize the data array
   {}
 
   /**
@@ -90,52 +88,54 @@ public:
   /**
    * @brief Returns the number of elements of this variable.
    *
-   * The number of scalar values contained by this variable type is defined by the class template parameter \p N.
+   * The number of scalar values contained by this variable type is defined by
+   * the class template parameter \p N.
    */
   size_t size() const override { return N; }
 
   /**
    * @brief Read-only access to the variable data
    */
-  const double* data() const override { return data_.data(); }
+  const double *data() const override { return data_.data(); }
 
   /**
    * @brief Read-write access to the variable data
    */
-  double* data() override { return data_.data(); }
+  double *data() override { return data_.data(); }
 
   /**
    * @brief Read-only access to the variable data as a std::array
    */
-  const std::array<double, N>& array() const { return data_; }
+  const std::array<double, N> &array() const { return data_; }
 
   /**
    * @brief Read-write access to the variable data as a std::array
    */
-  std::array<double, N>& array() { return data_; }
+  std::array<double, N> &array() { return data_; }
 
 protected:
-  std::array<double, N> data_;  //!< Fixed-sized, contiguous memory for holding the variable data members
+  std::array<double, N> data_; //!< Fixed-sized, contiguous memory for holding
+                               //!< the variable data members
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_core::Variable>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Variable>(*this);
     archive & data_;
   }
 };
 
 // Define the constant that was declared above
-template <size_t N>
-constexpr size_t FixedSizeVariable<N>::SIZE;
-}  // namespace vesta_variables
-
+template <size_t N> constexpr size_t FixedSizeVariable<N>::SIZE;
+} // namespace vesta_variables

@@ -38,25 +38,19 @@
 
 #include <ostream>
 
+namespace vesta_loss {
 
-namespace vesta_loss
-{
+DCSLoss::DCSLoss(const double a) : a_(a) {}
 
-DCSLoss::DCSLoss(const double a) : a_(a)
-{
-}
-
-void DCSLoss::print(std::ostream& stream) const
-{
+void DCSLoss::print(std::ostream &stream) const {
   stream << type() << "\n"
          << "  a: " << a_ << "\n";
 }
 
-ceres::LossFunction* DCSLoss::lossFunction() const
-{
+ceres::LossFunction *DCSLoss::lossFunction() const {
   return new ceres::DCSLoss(a_);
 }
 
-}  // namespace vesta_loss
+} // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::DCSLoss);

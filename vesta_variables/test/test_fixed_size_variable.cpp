@@ -39,67 +39,63 @@
 #include <boost/serialization/base_object.hpp>
 #include <gtest/gtest.h>
 
-
-class TestVariable : public vesta_variables::FixedSizeVariable<2>
-{
+class TestVariable : public vesta_variables::FixedSizeVariable<2> {
 public:
   VESTA_VARIABLE_DEFINITIONS(TestVariable);
 
-  TestVariable() :
-    vesta_variables::FixedSizeVariable<2>(vesta_core::uuid::generate())
-  {}
+  TestVariable()
+      : vesta_variables::FixedSizeVariable<2>(vesta_core::uuid::generate()) {}
   virtual ~TestVariable() = default;
 
-  void print(std::ostream& /*stream = std::cout*/) const override {}
+  void print(std::ostream & /*stream = std::cout*/) const override {}
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_variables::FixedSizeVariable<2>>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<
+        vesta_variables::FixedSizeVariable<2>>(*this);
   }
 };
 
-
-TEST(FixedSizeVariable, Size)
-{
+TEST(FixedSizeVariable, Size) {
   // Verify the expected size is returned
   TestVariable variable;
-  EXPECT_EQ(2u, variable.size());  // base class interface
-  EXPECT_EQ(2u, TestVariable::SIZE);  // static member variable
+  EXPECT_EQ(2u, variable.size());    // base class interface
+  EXPECT_EQ(2u, TestVariable::SIZE); // static member variable
 }
 
-TEST(FixedSizeVariable, Data)
-{
+TEST(FixedSizeVariable, Data) {
   // Verify access to the data methods
   TestVariable variable;
   EXPECT_NO_THROW(variable.data()[0] = 1.0);
   EXPECT_NO_THROW(variable.data()[1] = 2.0);
-  const TestVariable& const_variable = variable;
+  const TestVariable &const_variable = variable;
   bool success = true;
   EXPECT_NO_THROW(success = success && const_variable.data()[0] == 1.0);
   EXPECT_NO_THROW(success = success && const_variable.data()[1] == 2.0);
   EXPECT_TRUE(success);
 }
 
-TEST(FixedSizeVariable, Array)
-{
+TEST(FixedSizeVariable, Array) {
   // Verify access to the array
   TestVariable variable;
   EXPECT_NO_THROW(variable.array()[0] = 1.0);
   EXPECT_NO_THROW(variable.array().at(1) = 2.0);
   EXPECT_NO_THROW(variable.array().front() = 3.0);
   EXPECT_NO_THROW(variable.array().back() = 4.0);
-  const TestVariable& const_variable = variable;
+  const TestVariable &const_variable = variable;
   bool success = true;
   EXPECT_NO_THROW(success = success && const_variable.array()[0] == 3.0);
   EXPECT_NO_THROW(success = success && const_variable.array().at(1) == 4.0);
@@ -108,8 +104,7 @@ TEST(FixedSizeVariable, Array)
   EXPECT_TRUE(success);
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

@@ -39,60 +39,71 @@
 #include <gtest/gtest.h>
 #include <vesta_core/eigen_gtest.h>
 
-#include <ceres/autodiff_cost_function.h>
 #include <Eigen/Dense>
+#include <ceres/autodiff_cost_function.h>
 
 #include <array>
 #include <string>
 
 /**
- * @brief Test fixture that initializes a full pose 2d delta and sqrt information matrix.
+ * @brief Test fixture that initializes a full pose 2d delta and sqrt
+ * information matrix.
  */
-class NormalDeltaPose2DTestFixture : public ::testing::Test
-{
+class NormalDeltaPose2DTestFixture : public ::testing::Test {
 public:
-  //!< The automatic differentiation cost function type for the pose 2d cost functor
-  using AutoDiffNormalDeltaPose2D =
-      ceres::AutoDiffCostFunction<vesta_constraints::NormalDeltaPose2DCostFunctor, ceres::DYNAMIC, 2, 1, 2, 1>;
+  //!< The automatic differentiation cost function type for the pose 2d cost
+  //!< functor
+  using AutoDiffNormalDeltaPose2D = ceres::AutoDiffCostFunction<
+      vesta_constraints::NormalDeltaPose2DCostFunctor, ceres::DYNAMIC, 2, 1, 2,
+      1>;
 
   /**
    * @brief Constructor
    */
-  NormalDeltaPose2DTestFixture()
-  {
+  NormalDeltaPose2DTestFixture() {
     full_sqrt_information = covariance.inverse().llt().matrixU();
   }
 
   const vesta_core::Matrix3d covariance =
-      vesta_core::Vector3d(2e-3, 1e-3, 1e-2).asDiagonal();  //!< The full pose 2d covariance for the x, y and yaw
-                                                           //!< components
-  Eigen::Matrix3d full_sqrt_information;  //!< The full pose 2d sqrt information matrix for the x, y and yaw components
-  const Eigen::Vector3d full_delta{ 1.0, 2.0, 3.0 };  //!< The full pose 2d delta components: x, y and yaw
+      vesta_core::Vector3d(2e-3, 1e-3, 1e-2)
+          .asDiagonal(); //!< The full pose 2d covariance for the x, y and yaw
+                         //!< components
+  Eigen::Matrix3d
+      full_sqrt_information; //!< The full pose 2d sqrt information matrix for
+                             //!< the x, y and yaw components
+  const Eigen::Vector3d full_delta{
+      1.0, 2.0, 3.0}; //!< The full pose 2d delta components: x, y and yaw
 };
 
-TEST_F(NormalDeltaPose2DTestFixture, AnalyticAndAutoDiffCostFunctionsAreEqualForFullResiduals)
-{
+TEST_F(NormalDeltaPose2DTestFixture,
+       AnalyticAndAutoDiffCostFunctionsAreEqualForFullResiduals) {
   // Create cost function
-  const vesta_constraints::NormalDeltaPose2D cost_function{ full_sqrt_information, full_delta };
+  const vesta_constraints::NormalDeltaPose2D cost_function{
+      full_sqrt_information, full_delta};
 
   // Create automatic differentiation cost function
   const auto num_residuals = full_sqrt_information.rows();
 
   AutoDiffNormalDeltaPose2D autodiff_cost_function(
-      new vesta_constraints::NormalDeltaPose2DCostFunctor(full_sqrt_information, full_delta), num_residuals);
+      new vesta_constraints::NormalDeltaPose2DCostFunctor(full_sqrt_information,
+                                                          full_delta),
+      num_residuals);
 
-  // Compare the expected, automatic differentiation, cost function and the actual one
+  // Compare the expected, automatic differentiation, cost function and the
+  // actual one
   ExpectCostFunctionsAreEqual(autodiff_cost_function, cost_function);
 }
 
-TEST_F(NormalDeltaPose2DTestFixture, AnalyticAndAutoDiffCostFunctionsAreEqualForTwoResiduals)
-{
-  // Create cost function for each possible pair of two residuals, the ones in each possible pair of rows
+TEST_F(NormalDeltaPose2DTestFixture,
+       AnalyticAndAutoDiffCostFunctionsAreEqualForTwoResiduals) {
+  // Create cost function for each possible pair of two residuals, the ones in
+  // each possible pair of rows
   using IndicesPair = std::array<int, 2>;
-  std::array<IndicesPair, 3> indices_pairs = { IndicesPair{ 0, 1 }, IndicesPair{ 0, 2 }, IndicesPair{ 1, 2 } };
-  for (const auto& indices_pair : indices_pairs)
-  {
-    // It is a shame we need Eigen 3.4+ in order to use the slicing and indexing API documented in:
+  std::array<IndicesPair, 3> indices_pairs = {
+      IndicesPair{0, 1}, IndicesPair{0, 2}, IndicesPair{1, 2}};
+  for (const auto &indices_pair : indices_pairs) {
+    // It is a shame we need Eigen 3.4+ in order to use the slicing and indexing
+    // API documented in:
     //
     //   https://eigen.tuxfamily.org/dox-devel/group__TutorialSlicingIndexing.html
     //
@@ -101,46 +112,51 @@ TEST_F(NormalDeltaPose2DTestFixture, AnalyticAndAutoDiffCostFunctionsAreEqualFor
     //   const vesta_core::Matrix<double, 2, 3> partial_sqrt_information =
     //       full_sqrt_information(indices_pair, Eigen::all);
     vesta_core::Matrix<double, 2, 3> partial_sqrt_information;
-    for (size_t i = 0; i < indices_pair.size(); ++i)
-    {
-      partial_sqrt_information.row(i) = full_sqrt_information.row(indices_pair[i]);
+    for (size_t i = 0; i < indices_pair.size(); ++i) {
+      partial_sqrt_information.row(i) =
+          full_sqrt_information.row(indices_pair[i]);
     }
 
-    const vesta_constraints::NormalDeltaPose2D cost_function{ partial_sqrt_information, full_delta };
+    const vesta_constraints::NormalDeltaPose2D cost_function{
+        partial_sqrt_information, full_delta};
 
     // Create automatic differentiation cost function
     const auto num_residuals = partial_sqrt_information.rows();
 
     AutoDiffNormalDeltaPose2D autodiff_cost_function(
-        new vesta_constraints::NormalDeltaPose2DCostFunctor(partial_sqrt_information, full_delta), num_residuals);
+        new vesta_constraints::NormalDeltaPose2DCostFunctor(
+            partial_sqrt_information, full_delta),
+        num_residuals);
 
     ExpectCostFunctionsAreEqual(autodiff_cost_function, cost_function);
   }
 }
 
-TEST_F(NormalDeltaPose2DTestFixture, AnalyticAndAutoDiffCostFunctionsAreEqualForOneResidual)
-{
+TEST_F(NormalDeltaPose2DTestFixture,
+       AnalyticAndAutoDiffCostFunctionsAreEqualForOneResidual) {
   // Create cost function for one residual, the one in each row
-  for (size_t i = 0; i < 3; ++i)
-  {
+  for (size_t i = 0; i < 3; ++i) {
     SCOPED_TRACE("Residual " + std::to_string(i));
 
-    const vesta_core::Matrix<double, 1, 3> partial_sqrt_information = full_sqrt_information.row(i);
+    const vesta_core::Matrix<double, 1, 3> partial_sqrt_information =
+        full_sqrt_information.row(i);
 
-    const vesta_constraints::NormalDeltaPose2D cost_function{ partial_sqrt_information, full_delta };
+    const vesta_constraints::NormalDeltaPose2D cost_function{
+        partial_sqrt_information, full_delta};
 
     // Create automatic differentiation cost function
     const auto num_residuals = partial_sqrt_information.rows();
 
     AutoDiffNormalDeltaPose2D autodiff_cost_function(
-        new vesta_constraints::NormalDeltaPose2DCostFunctor(partial_sqrt_information, full_delta), num_residuals);
+        new vesta_constraints::NormalDeltaPose2DCostFunctor(
+            partial_sqrt_information, full_delta),
+        num_residuals);
 
     ExpectCostFunctionsAreEqual(autodiff_cost_function, cost_function);
   }
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

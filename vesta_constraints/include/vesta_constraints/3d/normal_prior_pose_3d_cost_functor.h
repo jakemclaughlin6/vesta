@@ -41,49 +41,54 @@
 
 #include <Eigen/Core>
 
-
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 /**
- * @brief Create a prior cost function on both the 3D position and orientation variables at once.
+ * @brief Create a prior cost function on both the 3D position and orientation
+ * variables at once.
  *
- * The Ceres::NormalPrior cost function only supports a single variable. This is a convenience cost function that
- * applies a prior constraint on both the 3D position and orientation variables at once.
+ * The Ceres::NormalPrior cost function only supports a single variable. This is
+ * a convenience cost function that applies a prior constraint on both the 3D
+ * position and orientation variables at once.
  *
  * The cost function is of the form:
  *
  *   cost(x) = || A * [  p - b(0:2)               ] ||^2
  *             ||     [  AngleAxis(b(3:6)^-1 * q) ] ||
  *
- * where, the matrix A and the vector b are fixed, p is the position variable, and q is the orientation variable.
- * Note that the covariance submatrix for the quaternion is 3x3, representing errors in the orientation local
- * parameterization tangent space. In case the user is interested in implementing a cost function of the form
+ * where, the matrix A and the vector b are fixed, p is the position variable,
+ * and q is the orientation variable. Note that the covariance submatrix for the
+ * quaternion is 3x3, representing errors in the orientation local
+ * parameterization tangent space. In case the user is interested in
+ * implementing a cost function of the form
  *
  *   cost(X) = (X - mu)^T S^{-1} (X - mu)
  *
- * where, mu is a vector and S is a covariance matrix, then, A = S^{-1/2}, i.e the matrix A is the square root
- * information matrix (the inverse of the covariance).
+ * where, mu is a vector and S is a covariance matrix, then, A = S^{-1/2}, i.e
+ * the matrix A is the square root information matrix (the inverse of the
+ * covariance).
  */
-class NormalPriorPose3DCostFunctor
-{
+class NormalPriorPose3DCostFunctor {
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
   /**
    * @brief Construct a cost function instance
    *
-   * @param[in] A The residual weighting matrix, most likely the square root information matrix in order
-   *              (x, y, z, qx, qy, qz)
-   * @param[in] b The 3D pose measurement or prior in order (x, y, z, qw, qx, qy, qz)
+   * @param[in] A The residual weighting matrix, most likely the square root
+   * information matrix in order (x, y, z, qx, qy, qz)
+   * @param[in] b The 3D pose measurement or prior in order (x, y, z, qw, qx,
+   * qy, qz)
    */
-  NormalPriorPose3DCostFunctor(const vesta_core::Matrix6d& A, const vesta_core::Vector7d& b);
+  NormalPriorPose3DCostFunctor(const vesta_core::Matrix6d &A,
+                               const vesta_core::Vector7d &b);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
    */
   template <typename T>
-  bool operator()(const T* const position, const T* const orientation, T* residual) const;
+  bool operator()(const T *const position, const T *const orientation,
+                  T *residual) const;
 
 private:
   vesta_core::Matrix6d A_;
@@ -92,16 +97,17 @@ private:
   NormalPriorOrientation3DCostFunctor orientation_functor_;
 };
 
-NormalPriorPose3DCostFunctor::NormalPriorPose3DCostFunctor(const vesta_core::Matrix6d& A, const vesta_core::Vector7d& b) :
-  A_(A),
-  b_(b),
-  orientation_functor_(vesta_core::Matrix3d::Identity(), b_.tail<4>())  // Delta will not be scaled
-{
-}
+NormalPriorPose3DCostFunctor::NormalPriorPose3DCostFunctor(
+    const vesta_core::Matrix6d &A, const vesta_core::Vector7d &b)
+    : A_(A), b_(b),
+      orientation_functor_(vesta_core::Matrix3d::Identity(),
+                           b_.tail<4>()) // Delta will not be scaled
+{}
 
 template <typename T>
-bool NormalPriorPose3DCostFunctor::operator()(const T* const position, const T* const orientation, T* residual) const
-{
+bool NormalPriorPose3DCostFunctor::operator()(const T *const position,
+                                              const T *const orientation,
+                                              T *residual) const {
   // Compute the position error
   residual[0] = position[0] - T(b_(0));
   residual[1] = position[1] - T(b_(1));
@@ -118,5 +124,4 @@ bool NormalPriorPose3DCostFunctor::operator()(const T* const position, const T* 
   return true;
 }
 
-}  // namespace vesta_constraints
-
+} // namespace vesta_constraints

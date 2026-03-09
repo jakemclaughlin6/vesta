@@ -56,11 +56,12 @@ using vesta_variables::Orientation3DStamped;
 using vesta_variables::PinholeCameraFixed;
 using vesta_variables::Position3DStamped;
 
-TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Constructor)
-{
+TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Constructor) {
   // Construct a constraint just to make sure it compiles.
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
+                                      vesta_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(
+      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
   PinholeCameraFixed calibration_variable(0);
 
   double marker_size = 1.0;
@@ -68,24 +69,27 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Constructor)
   vesta_core::Vector7d mean;
   mean << 1.0, 2.0, 3.0, 1.0, 0.0, 0.0, 0.0;
 
-  // Generated PD matrix using Octave: R = rand(6, 6); A = R * R' (use format long g to get the required precision)
+  // Generated PD matrix using Octave: R = rand(6, 6); A = R * R' (use format
+  // long g to get the required precision)
   vesta_core::Matrix2d cov;
-  cov << 0.25, 0.0,  // NOLINT
-      0.0, 0.25;     // NOLINT
+  cov << 0.25, 0.0, // NOLINT
+      0.0, 0.25;    // NOLINT
 
   // 2D observations (arbitrary)
   Eigen::Matrix<double, 4, 2, Eigen::RowMajor> obs;
   obs << 320, 240, 320, 240, 320, 240, 320, 240;
 
   EXPECT_NO_THROW(Fixed3DLandmarkSimpleCovarianceConstraint constraint(
-      "test", position_variable, orientation_variable, calibration_variable, marker_size, obs, mean, cov));
+      "test", position_variable, orientation_variable, calibration_variable,
+      marker_size, obs, mean, cov));
 }
 
-TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Covariance)
-{
+TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Covariance) {
   // Verify the covariance <--> sqrt information conversions are correct
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("mo"));
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("mo"));
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
+                                      vesta_core::uuid::generate("mo"));
+  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678),
+                                            vesta_core::uuid::generate("mo"));
   PinholeCameraFixed calibration_variable(0);
 
   double marker_size = 1.0;
@@ -93,22 +97,25 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Covariance)
   vesta_core::Vector7d mean;
   mean << 1.0, 2.0, 3.0, 1.0, 0.0, 0.0, 0.0;
 
-  // Generated PD matrix using Octiave: R = rand(6, 6); A = R * R' (use format long g to get the required precision)
+  // Generated PD matrix using Octiave: R = rand(6, 6); A = R * R' (use format
+  // long g to get the required precision)
   vesta_core::Matrix2d cov;
-  cov << 0.25, 0.0,  // NOLINT
-      0.0, 0.25;     // NOLINT
+  cov << 0.25, 0.0, // NOLINT
+      0.0, 0.25;    // NOLINT
 
   // 2D observations (arbitrary)
   Eigen::Matrix<double, 4, 2, Eigen::RowMajor> obs;
   obs << 320, 240, 320, 240, 320, 240, 320, 240;
 
-  Fixed3DLandmarkSimpleCovarianceConstraint constraint("test", position_variable, orientation_variable,
-                                                       calibration_variable, marker_size, obs, mean, cov);
+  Fixed3DLandmarkSimpleCovarianceConstraint constraint(
+      "test", position_variable, orientation_variable, calibration_variable,
+      marker_size, obs, mean, cov);
 
-  // Define the expected matrices (used Octave to compute sqrt_info: 'chol(inv(A))')
+  // Define the expected matrices (used Octave to compute sqrt_info:
+  // 'chol(inv(A))')
   vesta_core::Matrix2d expected_sqrt_info;
-  expected_sqrt_info << 2.0, 0.0,  // NOLINT
-      0.0, 2.0;                    // NOLINT
+  expected_sqrt_info << 2.0, 0.0, // NOLINT
+      0.0, 2.0;                   // NOLINT
   vesta_core::Matrix2d expected_cov = cov;
 
   // Compare
@@ -116,16 +123,17 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Covariance)
   EXPECT_MATRIX_NEAR(expected_sqrt_info, constraint.sqrtInformation(), 1.0e-9);
 }
 
-TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Optimization)
-{
-  // Optimize a single pose and single constraint, verify the expected value and covariance are generated.
-  // Create the variables
-  auto position_variable = Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Optimization) {
+  // Optimize a single pose and single constraint, verify the expected value and
+  // covariance are generated. Create the variables
+  auto position_variable = Position3DStamped::make_shared(
+      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   position_variable->x() = 1.5;
   position_variable->y() = -3.0;
   position_variable->z() = 10.0;
 
-  auto orientation_variable = Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+  auto orientation_variable = Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   orientation_variable->w() = 0.952;
   orientation_variable->x() = 0.038;
   orientation_variable->y() = -0.189;
@@ -146,41 +154,45 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Optimization)
 
   // And observations...
   Eigen::Matrix<double, 4, 2, Eigen::RowMajor> obs;
-  obs << 261.71822455, 168.60442225,  // NOLINT
-      261.71822455, 307.01280893,     // NOLINT
-      352.44745875, 177.74503448,     // NOLINT
-      352.44745875, 297.87219670;     // NOLINT
+  obs << 261.71822455, 168.60442225, // NOLINT
+      261.71822455, 307.01280893,    // NOLINT
+      352.44745875, 177.74503448,    // NOLINT
+      352.44745875, 297.87219670;    // NOLINT
 
   // Define Pose Covariance
   vesta_core::Matrix2d cov;
-  cov << 0.25, 0.0,  // NOLINT
-      0.0, 0.25;     // NOLINT
+  cov << 0.25, 0.0, // NOLINT
+      0.0, 0.25;    // NOLINT
 
   auto constraint = Fixed3DLandmarkSimpleCovarianceConstraint::make_shared(
-      "test", *position_variable, *orientation_variable, *calibration_variable, marker_size, obs, mean, cov);
+      "test", *position_variable, *orientation_variable, *calibration_variable,
+      marker_size, obs, mean, cov);
 
   // Build the problem
   ceres::Problem::Options problem_options;
   problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
-  problem.AddParameterBlock(position_variable->data(), position_variable->size(),
+  problem.AddParameterBlock(position_variable->data(),
+                            position_variable->size(),
                             position_variable->manifold());
-  problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
+  problem.AddParameterBlock(orientation_variable->data(),
+                            orientation_variable->size(),
                             orientation_variable->manifold());
-  problem.AddParameterBlock(calibration_variable->data(), calibration_variable->size(),
+  problem.AddParameterBlock(calibration_variable->data(),
+                            calibration_variable->size(),
                             calibration_variable->manifold());
 
-  std::vector<double*> parameter_blocks;
+  std::vector<double *> parameter_blocks;
   parameter_blocks.push_back(position_variable->data());
   parameter_blocks.push_back(orientation_variable->data());
   parameter_blocks.push_back(calibration_variable->data());
 
-  if (calibration_variable->holdConstant())
-  {
+  if (calibration_variable->holdConstant()) {
     problem.SetParameterBlockConstant(calibration_variable->data());
   }
 
-  problem.AddResidualBlock(constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
+  problem.AddResidualBlock(constraint->costFunction(),
+                           constraint->lossFunction(), parameter_blocks);
 
   // Run the solver
   ceres::Solver::Options options;
@@ -204,27 +216,37 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Optimization)
 
   // // Compute the covariance
   // std::vector<std::pair<const double*, const double*> > covariance_blocks;
-  // covariance_blocks.emplace_back(position_variable->data(), position_variable->data());
-  // covariance_blocks.emplace_back(orientation_variable->data(), orientation_variable->data());
-  // covariance_blocks.emplace_back(position_variable->data(), orientation_variable->data());
+  // covariance_blocks.emplace_back(position_variable->data(),
+  // position_variable->data());
+  // covariance_blocks.emplace_back(orientation_variable->data(),
+  // orientation_variable->data());
+  // covariance_blocks.emplace_back(position_variable->data(),
+  // orientation_variable->data());
 
   // ceres::Covariance::Options cov_options;
   // ceres::Covariance covariance(cov_options);
   // covariance.Compute(covariance_blocks, &problem);
-  // vesta_core::MatrixXd cov_pos_pos(position_variable->size(), position_variable->size());
-  // covariance.GetCovarianceBlock(position_variable->data(), position_variable->data(), cov_pos_pos.data());
+  // vesta_core::MatrixXd cov_pos_pos(position_variable->size(),
+  // position_variable->size());
+  // covariance.GetCovarianceBlock(position_variable->data(),
+  // position_variable->data(), cov_pos_pos.data());
 
-  // vesta_core::MatrixXd cov_or_or(orientation_variable->tangentSize(), orientation_variable->tangentSize());
+  // vesta_core::MatrixXd cov_or_or(orientation_variable->tangentSize(),
+  // orientation_variable->tangentSize());
   // covariance.GetCovarianceBlockInTangentSpace(
-  //   orientation_variable->data(), orientation_variable->data(), cov_or_or.data());
+  //   orientation_variable->data(), orientation_variable->data(),
+  //   cov_or_or.data());
 
-  // vesta_core::MatrixXd cov_pos_or(position_variable->tangentSize(), orientation_variable->tangentSize());
+  // vesta_core::MatrixXd cov_pos_or(position_variable->tangentSize(),
+  // orientation_variable->tangentSize());
   // covariance.GetCovarianceBlockInTangentSpace(
-  //   position_variable->data(), orientation_variable->data(), cov_pos_or.data());
+  //   position_variable->data(), orientation_variable->data(),
+  //   cov_pos_or.data());
 
   // // Assemble the full covariance from the covariance blocks
   // vesta_core::Matrix2d actual_covariance;
-  // actual_covariance << cov_pos_pos, cov_pos_or, cov_pos_or.transpose(), cov_or_or;
+  // actual_covariance << cov_pos_pos, cov_pos_or, cov_pos_or.transpose(),
+  // cov_or_or;
 
   // // Define the expected covariance
   // vesta_core::Matrix2d cov;
@@ -234,16 +256,17 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Optimization)
   // EXPECT_MATRIX_NEAR(expected_covariance, actual_covariance, 1.0e-5);
 }
 
-TEST(Fixed3DLandmarkSimpleCovarianceConstraint, OptimizationScaledMarker)
-{
-  // Optimize a single pose and single constraint, verify the expected value and covariance are generated.
-  // Create the variables
-  auto position_variable = Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+TEST(Fixed3DLandmarkSimpleCovarianceConstraint, OptimizationScaledMarker) {
+  // Optimize a single pose and single constraint, verify the expected value and
+  // covariance are generated. Create the variables
+  auto position_variable = Position3DStamped::make_shared(
+      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   position_variable->x() = 1.5;
   position_variable->y() = -3.0;
   position_variable->z() = 10.0;
 
-  auto orientation_variable = Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+  auto orientation_variable = Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   orientation_variable->w() = 0.952;
   orientation_variable->x() = 0.038;
   orientation_variable->y() = -0.189;
@@ -264,41 +287,45 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, OptimizationScaledMarker)
 
   // And observations...
   Eigen::Matrix<double, 4, 2, Eigen::RowMajor> obs;
-  obs << 298.8030834636202, 221.44160554498040,  // NOLINT
-      298.8030834636202, 254.17562563665314,     // NOLINT
-      321.3790354517349, 222.01021505859384,     // NOLINT
-      321.3790354517349, 253.60701612303970;     // NOLINT
+  obs << 298.8030834636202, 221.44160554498040, // NOLINT
+      298.8030834636202, 254.17562563665314,    // NOLINT
+      321.3790354517349, 222.01021505859384,    // NOLINT
+      321.3790354517349, 253.60701612303970;    // NOLINT
 
   // Define Pose Covariance
   vesta_core::Matrix2d cov;
-  cov << 0.25, 0.0,  // NOLINT
-      0.0, 0.25;     // NOLINT
+  cov << 0.25, 0.0, // NOLINT
+      0.0, 0.25;    // NOLINT
 
   auto constraint = Fixed3DLandmarkSimpleCovarianceConstraint::make_shared(
-      "test", *position_variable, *orientation_variable, *calibration_variable, marker_size, obs, mean, cov);
+      "test", *position_variable, *orientation_variable, *calibration_variable,
+      marker_size, obs, mean, cov);
 
   // Build the problem
   ceres::Problem::Options problem_options;
   problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
-  problem.AddParameterBlock(position_variable->data(), position_variable->size(),
+  problem.AddParameterBlock(position_variable->data(),
+                            position_variable->size(),
                             position_variable->manifold());
-  problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
+  problem.AddParameterBlock(orientation_variable->data(),
+                            orientation_variable->size(),
                             orientation_variable->manifold());
-  problem.AddParameterBlock(calibration_variable->data(), calibration_variable->size(),
+  problem.AddParameterBlock(calibration_variable->data(),
+                            calibration_variable->size(),
                             calibration_variable->manifold());
 
-  std::vector<double*> parameter_blocks;
+  std::vector<double *> parameter_blocks;
   parameter_blocks.push_back(position_variable->data());
   parameter_blocks.push_back(orientation_variable->data());
   parameter_blocks.push_back(calibration_variable->data());
 
-  if (calibration_variable->holdConstant())
-  {
+  if (calibration_variable->holdConstant()) {
     problem.SetParameterBlockConstant(calibration_variable->data());
   }
 
-  problem.AddResidualBlock(constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
+  problem.AddResidualBlock(constraint->costFunction(),
+                           constraint->lossFunction(), parameter_blocks);
 
   // Run the solver
   ceres::Solver::Options options;
@@ -321,16 +348,17 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, OptimizationScaledMarker)
   EXPECT_NEAR(237.80861559081677, calibration_variable->cy(), 1.0e-3);
 }
 
-TEST(Fixed3DLandmarkSimpleCovarianceConstraint, OptimizationPoints)
-{
-  // Optimize a single pose and single constraint, verify the expected value and covariance are generated.
-  // Create the variables
-  auto position_variable = Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+TEST(Fixed3DLandmarkSimpleCovarianceConstraint, OptimizationPoints) {
+  // Optimize a single pose and single constraint, verify the expected value and
+  // covariance are generated. Create the variables
+  auto position_variable = Position3DStamped::make_shared(
+      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   position_variable->x() = 1.5;
   position_variable->y() = -3.0;
   position_variable->z() = 10.0;
 
-  auto orientation_variable = Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+  auto orientation_variable = Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   orientation_variable->w() = 0.952;
   orientation_variable->x() = 0.038;
   orientation_variable->y() = -0.189;
@@ -348,56 +376,60 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, OptimizationPoints)
 
   // Create the 3D points
   Eigen::Matrix<double, 8, 3, Eigen::RowMajor> pts3d;
-  pts3d << -1.50, -1.5, 0.0,  // NOLINT
-      -1.50, 1.5, 0.0,        // NOLINT
-      1.50, -1.5, 0.0,        // NOLINT
-      1.50, 1.5, 0.0,         // NOLINT
-      3.24, -1.5, 0.0,        // NOLINT
-      3.24, 1.5, 0.0,         // NOLINT
-      1.74, -1.5, 0.0,        // NOLINT
-      1.74, 1.5, 0.0;         // NOLINT
+  pts3d << -1.50, -1.5, 0.0, // NOLINT
+      -1.50, 1.5, 0.0,       // NOLINT
+      1.50, -1.5, 0.0,       // NOLINT
+      1.50, 1.5, 0.0,        // NOLINT
+      3.24, -1.5, 0.0,       // NOLINT
+      3.24, 1.5, 0.0,        // NOLINT
+      1.74, -1.5, 0.0,       // NOLINT
+      1.74, 1.5, 0.0;        // NOLINT
 
   // And observations...
   Eigen::Matrix<double, 8, 2, Eigen::RowMajor> obs;
-  obs << 234.55045762290558, 129.89675764784400,  // NOLINT
-      234.55045762290558, 345.72047353378950,     // NOLINT
-      371.50457352525080, 150.59313756704000,     // NOLINT
-      371.50457352525080, 325.02409361459354,     // NOLINT
-      429.27697088295537, 159.32364907215157,     // NOLINT
-      429.27697088295537, 316.29358210948200,     // NOLINT
-      380.22578098989925, 151.91107841060833,     // NOLINT
-      380.22578098989925, 323.70615277102520;     // NOLINT
+  obs << 234.55045762290558, 129.89675764784400, // NOLINT
+      234.55045762290558, 345.72047353378950,    // NOLINT
+      371.50457352525080, 150.59313756704000,    // NOLINT
+      371.50457352525080, 325.02409361459354,    // NOLINT
+      429.27697088295537, 159.32364907215157,    // NOLINT
+      429.27697088295537, 316.29358210948200,    // NOLINT
+      380.22578098989925, 151.91107841060833,    // NOLINT
+      380.22578098989925, 323.70615277102520;    // NOLINT
 
   // Define Pose Covariance
   vesta_core::Matrix2d cov;
-  cov << 0.25, 0.0,  // NOLINT
-      0.0, 0.25;     // NOLINT
+  cov << 0.25, 0.0, // NOLINT
+      0.0, 0.25;    // NOLINT
 
   auto constraint = Fixed3DLandmarkSimpleCovarianceConstraint::make_shared(
-      "test", *position_variable, *orientation_variable, *calibration_variable, pts3d, obs, mean, cov);
+      "test", *position_variable, *orientation_variable, *calibration_variable,
+      pts3d, obs, mean, cov);
 
   // Build the problem
   ceres::Problem::Options problem_options;
   problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
-  problem.AddParameterBlock(position_variable->data(), position_variable->size(),
+  problem.AddParameterBlock(position_variable->data(),
+                            position_variable->size(),
                             position_variable->manifold());
-  problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
+  problem.AddParameterBlock(orientation_variable->data(),
+                            orientation_variable->size(),
                             orientation_variable->manifold());
-  problem.AddParameterBlock(calibration_variable->data(), calibration_variable->size(),
+  problem.AddParameterBlock(calibration_variable->data(),
+                            calibration_variable->size(),
                             calibration_variable->manifold());
 
-  std::vector<double*> parameter_blocks;
+  std::vector<double *> parameter_blocks;
   parameter_blocks.push_back(position_variable->data());
   parameter_blocks.push_back(orientation_variable->data());
   parameter_blocks.push_back(calibration_variable->data());
 
-  if (calibration_variable->holdConstant())
-  {
+  if (calibration_variable->holdConstant()) {
     problem.SetParameterBlockConstant(calibration_variable->data());
   }
 
-  problem.AddResidualBlock(constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
+  problem.AddResidualBlock(constraint->costFunction(),
+                           constraint->lossFunction(), parameter_blocks);
 
   // Run the solver
   ceres::Solver::Options options;
@@ -420,10 +452,9 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, OptimizationPoints)
   EXPECT_NEAR(237.80861559081677, calibration_variable->cy(), 1.0e-3);
 }
 
-TEST(Fixed3DLandmarkSimpleCovarianceConstraint, MultiViewOptimization)
-{
-  // Optimize a single pose and single constraint, verify the expected value and covariance are generated.
-  // Create the variables
+TEST(Fixed3DLandmarkSimpleCovarianceConstraint, MultiViewOptimization) {
+  // Optimize a single pose and single constraint, verify the expected value and
+  // covariance are generated. Create the variables
 
   auto calibration_variable = PinholeCameraFixed::make_shared(0);
   calibration_variable->fx() = 638.34478759765620;
@@ -441,57 +472,61 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, MultiViewOptimization)
 
   // Create N Constraints
   uint N = 5;
-  std::vector<Eigen::Matrix<double, 4, 2, Eigen::RowMajor> > obs(5);
+  std::vector<Eigen::Matrix<double, 4, 2, Eigen::RowMajor>> obs(5);
 
-  obs[0] << 124.33479102109460, 30.196035559968568,  // NOLINT
-      124.33479102109460, 168.60442224720070,        // NOLINT
-      233.20987206846505, 57.617872261057050,        // NOLINT
-      233.20987206846505, 177.74503448089686;        // NOLINT
+  obs[0] << 124.33479102109460, 30.196035559968568, // NOLINT
+      124.33479102109460, 168.60442224720070,       // NOLINT
+      233.20987206846505, 57.617872261057050,       // NOLINT
+      233.20987206846505, 177.74503448089686;       // NOLINT
 
-  obs[1] << 193.02650778349710, 99.400228903584630,  // NOLINT
-      193.02650778349710, 237.80861559081677,        // NOLINT
-      292.82866541025334, 117.68145337097695,        // NOLINT
-      292.82866541025334, 237.80861559081677;        // NOLINT
+  obs[1] << 193.02650778349710, 99.400228903584630, // NOLINT
+      193.02650778349710, 237.80861559081677,       // NOLINT
+      292.82866541025334, 117.68145337097695,       // NOLINT
+      292.82866541025334, 237.80861559081677;       // NOLINT
 
-  obs[2] << 373.42853736463960, 168.46718090279768,  // NOLINT
-      373.42853736463960, 307.15005027883580,        // NOLINT
-      466.82773058187524, 176.09986812497370,        // NOLINT
-      466.82773058187524, 299.51736305665980;        // NOLINT
+  obs[2] << 373.42853736463960, 168.46718090279768, // NOLINT
+      373.42853736463960, 307.15005027883580,       // NOLINT
+      466.82773058187524, 176.09986812497370,       // NOLINT
+      466.82773058187524, 299.51736305665980;       // NOLINT
 
-  obs[3] << 442.25647916056020, 237.80861559081674,  // NOLINT
-      442.25647916056020, 376.49148496685490,        // NOLINT
-      528.07950735845330, 237.80861559081677,        // NOLINT
-      528.07950735845330, 361.22611052250290;        // NOLINT
+  obs[3] << 442.25647916056020, 237.80861559081674, // NOLINT
+      442.25647916056020, 376.49148496685490,       // NOLINT
+      528.07950735845330, 237.80861559081677,       // NOLINT
+      528.07950735845330, 361.22611052250290;       // NOLINT
 
-  obs[4] << 511.08442095648064, 307.15005027883580,  // NOLINT
-      511.08442095648064, 445.83291965487400,        // NOLINT
-      589.33128413503120, 299.51736305665980,        // NOLINT
-      589.33128413503120, 422.93485798834600;        // NOLINT
+  obs[4] << 511.08442095648064, 307.15005027883580, // NOLINT
+      511.08442095648064, 445.83291965487400,       // NOLINT
+      589.33128413503120, 299.51736305665980,       // NOLINT
+      589.33128413503120, 422.93485798834600;       // NOLINT
 
   std::vector<Position3DStamped::SharedPtr> position_vars(N);
   std::vector<Orientation3DStamped::SharedPtr> orientation_vars(N);
 
-  for (uint i = 0; i < N; i++)
-  {
-    position_vars[i] = Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+  for (uint i = 0; i < N; i++) {
+    position_vars[i] = Position3DStamped::make_shared(
+        vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
     position_vars[i]->x() = 0.0;
     position_vars[i]->y() = 0.0;
     position_vars[i]->z() = 0.0;
 
-    orientation_vars[i] = Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+    orientation_vars[i] = Orientation3DStamped::make_shared(
+        vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
     orientation_vars[i]->w() = 0.952;
     orientation_vars[i]->x() = 0.038;
     orientation_vars[i]->y() = -0.189;
     orientation_vars[i]->z() = 0.239;
 
-    problem.AddParameterBlock(position_vars[i]->data(), position_vars[i]->size(),
+    problem.AddParameterBlock(position_vars[i]->data(),
+                              position_vars[i]->size(),
                               position_vars[i]->manifold());
-    problem.AddParameterBlock(orientation_vars[i]->data(), orientation_vars[i]->size(),
+    problem.AddParameterBlock(orientation_vars[i]->data(),
+                              orientation_vars[i]->size(),
                               orientation_vars[i]->manifold());
-    problem.AddParameterBlock(calibration_variable->data(), calibration_variable->size(),
+    problem.AddParameterBlock(calibration_variable->data(),
+                              calibration_variable->size(),
                               calibration_variable->manifold());
 
-    std::vector<double*> parameter_blocks;
+    std::vector<double *> parameter_blocks;
     parameter_blocks.push_back(position_vars[i]->data());
     parameter_blocks.push_back(orientation_vars[i]->data());
     parameter_blocks.push_back(calibration_variable->data());
@@ -501,17 +536,18 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, MultiViewOptimization)
     mean << 0, 0, 10, 0.9238795, 0, -0.3826834, 0;
 
     vesta_core::Matrix2d cov;
-    cov << 0.25, 0.0,  // NOLINT
-        0.0, 0.25;     // NOLINT
+    cov << 0.25, 0.0, // NOLINT
+        0.0, 0.25;    // NOLINT
 
     auto constraint = Fixed3DLandmarkSimpleCovarianceConstraint::make_shared(
-        "test", *position_vars[i], *orientation_vars[i], *calibration_variable, marker_size, obs[i], mean, cov);
+        "test", *position_vars[i], *orientation_vars[i], *calibration_variable,
+        marker_size, obs[i], mean, cov);
 
-    problem.AddResidualBlock(constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
+    problem.AddResidualBlock(constraint->costFunction(),
+                             constraint->lossFunction(), parameter_blocks);
   }
 
-  if (calibration_variable->holdConstant())
-  {
+  if (calibration_variable->holdConstant()) {
     problem.SetParameterBlockConstant(calibration_variable->data());
   }
 
@@ -572,11 +608,12 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, MultiViewOptimization)
   EXPECT_NEAR(237.80861559081677, calibration_variable->cy(), 1.0e-3);
 }
 
-TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Serialization)
-{
+TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Serialization) {
   // Construct a constraint
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
+                                      vesta_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(
+      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
 
   PinholeCameraFixed calibration_variable(0);
   calibration_variable.fx() = 638.34478759765620;
@@ -589,17 +626,20 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Serialization)
   vesta_core::Vector7d mean;
   mean << 1.0, 2.0, 3.0, 1.0, 0.0, 0.0, 0.0;
 
-  // Generated PD matrix using Octave: R = rand(6, 6); A = R * R' (use format long g to get the required precision)
+  // Generated PD matrix using Octave: R = rand(6, 6); A = R * R' (use format
+  // long g to get the required precision)
   vesta_core::Matrix2d cov;
-  cov << 0.25, 0.0,  // NOLINT
-      0.0, 0.25;     // NOLINT
+  cov << 0.25, 0.0, // NOLINT
+      0.0, 0.25;    // NOLINT
 
   // And observations...
   Eigen::Matrix<double, 4, 2, Eigen::RowMajor> obs;
-  obs << 261.71822455, 168.60442225, 261.71822455, 307.01280893, 352.44745875, 177.74503448, 352.44745875, 297.87219670;
+  obs << 261.71822455, 168.60442225, 261.71822455, 307.01280893, 352.44745875,
+      177.74503448, 352.44745875, 297.87219670;
 
-  Fixed3DLandmarkSimpleCovarianceConstraint expected("test", position_variable, orientation_variable,
-                                                     calibration_variable, marker_size, obs, mean, cov);
+  Fixed3DLandmarkSimpleCovarianceConstraint expected(
+      "test", position_variable, orientation_variable, calibration_variable,
+      marker_size, obs, mean, cov);
 
   // Serialize the constraint into an archive
   std::stringstream stream;
@@ -624,8 +664,7 @@ TEST(Fixed3DLandmarkSimpleCovarianceConstraint, Serialization)
   EXPECT_MATRIX_EQ(expected.observations(), actual.observations());
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

@@ -38,9 +38,9 @@
 #include <vesta_constraints/common/uuid_ordering.h>
 #include <vesta_core/constraint.h>
 #include <vesta_core/eigen.h>
+#include <vesta_core/fuse_macros.h>
 #include <vesta_core/graph.h>
 #include <vesta_core/manifold.h>
-#include <vesta_core/fuse_macros.h>
 #include <vesta_core/transaction.h>
 #include <vesta_core/variable.h>
 
@@ -54,89 +54,98 @@
 #include <string>
 #include <vector>
 
-
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 /**
  * @brief Compute an efficient elimination order for the marginalized variables
  *
- * The marginalized_variables are guaranteed to be placed before any additional connected variables. Each time a
- * variable is eliminated from the system, the resulting reduced system is independent of the eliminated variable.
- * By eliminating the "marginalized variables" first, all of the "additional connected variables" will remain in the
- * system, but they will not depend on any of the "marginalized variables"...which is what we want.
+ * The marginalized_variables are guaranteed to be placed before any additional
+ * connected variables. Each time a variable is eliminated from the system, the
+ * resulting reduced system is independent of the eliminated variable. By
+ * eliminating the "marginalized variables" first, all of the "additional
+ * connected variables" will remain in the system, but they will not depend on
+ * any of the "marginalized variables"...which is what we want.
  *
- * This function uses CCOLAMD to find a good elimination order that eliminates all the "marginalized variables"
- * first.
+ * This function uses CCOLAMD to find a good elimination order that eliminates
+ * all the "marginalized variables" first.
  *
  * @param[in] marginalized_variables The variable UUIDs to be marginalized out
- * @param[in] graph                  A graph containing, at least, all constraints that involve at least one
- *                                   marginalized variable
+ * @param[in] graph                  A graph containing, at least, all
+ * constraints that involve at least one marginalized variable
  * @return The mapping from variable UUID to the computed elimination order
  */
 UuidOrdering computeEliminationOrder(
-  const std::vector<vesta_core::UUID>& marginalized_variables,
-  const vesta_core::Graph& graph);
+    const std::vector<vesta_core::UUID> &marginalized_variables,
+    const vesta_core::Graph &graph);
 
 /**
- * @brief Generate a transaction that, when applied to the graph, will marginalize out the requested variables
+ * @brief Generate a transaction that, when applied to the graph, will
+ * marginalize out the requested variables
  *
- * This computes a linear approximation of the marginal information on the non-marginalized variables. The current
- * variable values in the graph are used as the linearization points for the linear approximation. Thus, marginalizing
- * out a variable will introduce linearization errors as the optimal values move away from the fixed linearization
- * points.
+ * This computes a linear approximation of the marginal information on the
+ * non-marginalized variables. The current variable values in the graph are used
+ * as the linearization points for the linear approximation. Thus, marginalizing
+ * out a variable will introduce linearization errors as the optimal values move
+ * away from the fixed linearization points.
  *
- * This version computes an efficient elimination order using computeEliminationOrder().
+ * This version computes an efficient elimination order using
+ * computeEliminationOrder().
  *
- * @param[in] source                 The name of the sensor or motion model that generated this constraint
- * @param[in] marginalized_variables The set of variable UUIDs to marginalize out
- * @param[in] graph                  A graph containing the variables and constraints that are connected to at least
- *                                   one marginalized variable. The graph may also contain additional variables and
- *                                   constraints.
- * @return A transaction object containing the computed marginal constraints to be added, as well as the set of
- *         variables and constraints to be removed.
+ * @param[in] source                 The name of the sensor or motion model that
+ * generated this constraint
+ * @param[in] marginalized_variables The set of variable UUIDs to marginalize
+ * out
+ * @param[in] graph                  A graph containing the variables and
+ * constraints that are connected to at least one marginalized variable. The
+ * graph may also contain additional variables and constraints.
+ * @return A transaction object containing the computed marginal constraints to
+ * be added, as well as the set of variables and constraints to be removed.
  */
 vesta_core::Transaction marginalizeVariables(
-  const std::string& source,
-  const std::vector<vesta_core::UUID>& marginalized_variables,
-  const vesta_core::Graph& graph);
+    const std::string &source,
+    const std::vector<vesta_core::UUID> &marginalized_variables,
+    const vesta_core::Graph &graph);
 
 /**
- * @brief Generate a transaction that, when applied to the graph, will marginalize out the requested variables
+ * @brief Generate a transaction that, when applied to the graph, will
+ * marginalize out the requested variables
  *
- * This computes a linear approximation of the marginal information on the non-marginalized variables. The current
- * variable values in the graph are used as the linearization points for the linear approximation. Thus, marginalizing
- * out a variable will introduce linearization errors as the optimal values move away from the fixed linearization
- * points.
+ * This computes a linear approximation of the marginal information on the
+ * non-marginalized variables. The current variable values in the graph are used
+ * as the linearization points for the linear approximation. Thus, marginalizing
+ * out a variable will introduce linearization errors as the optimal values move
+ * away from the fixed linearization points.
  *
- * This version allows the user to provide their own elimination order. The marginalized_variables *must* occur
- * before any other variables in that elimination order.
+ * This version allows the user to provide their own elimination order. The
+ * marginalized_variables *must* occur before any other variables in that
+ * elimination order.
  *
- * @param[in] source                 The name of the sensor or motion model that generated this constraint
- * @param[in] marginalized_variables The set of variable UUIDs to marginalize out
- * @param[in] graph                  A graph containing the variables and constraints that are connected to at least
- *                                   one marginalized variable. The graph may also contain additional variables and
- *                                   constraints.
- * @param[in] elimination_order      An sequential ordering of at least the marginalized variables
- * @return A transaction object containing the computed marginal constraints to be added, as well as the set of
- *         variables and constraints to be removed.
+ * @param[in] source                 The name of the sensor or motion model that
+ * generated this constraint
+ * @param[in] marginalized_variables The set of variable UUIDs to marginalize
+ * out
+ * @param[in] graph                  A graph containing the variables and
+ * constraints that are connected to at least one marginalized variable. The
+ * graph may also contain additional variables and constraints.
+ * @param[in] elimination_order      An sequential ordering of at least the
+ * marginalized variables
+ * @return A transaction object containing the computed marginal constraints to
+ * be added, as well as the set of variables and constraints to be removed.
  */
 vesta_core::Transaction marginalizeVariables(
-  const std::string& source,
-  const std::vector<vesta_core::UUID>& marginalized_variables,
-  const vesta_core::Graph& graph,
-  const vesta_constraints::UuidOrdering& elimination_order);
+    const std::string &source,
+    const std::vector<vesta_core::UUID> &marginalized_variables,
+    const vesta_core::Graph &graph,
+    const vesta_constraints::UuidOrdering &elimination_order);
 
-namespace detail
-{
+namespace detail {
 
 /**
  * @brief Structure holding linearized Jacobian blocks
  *
  * The LinearTerm uses sequential variable indices instead of UUIDs
  */
-struct LinearTerm
-{
+struct LinearTerm {
   std::vector<unsigned int> variables;
   std::vector<vesta_core::MatrixXd> A;
   vesta_core::VectorXd b;
@@ -145,45 +154,51 @@ struct LinearTerm
 /**
  * @brief Linearize the nonlinear constraint
  *
- * Variable UUIDs are converted into indices using the \p elimination_order. The variable linearization points are
- * extracted from the current variable values in the \p graph.
+ * Variable UUIDs are converted into indices using the \p elimination_order. The
+ * variable linearization points are extracted from the current variable values
+ * in the \p graph.
  *
  * @param[in] constraint        The constraint to linearize
- * @param[in] graph             A graph containing, at least, the variables involved in the constraint
- * @param[in] elimination_order A mapping from variable UUID to elimination order
- * @return A LinearTerm consisting of Jacobian blocks associated with each involved variable in elimination order
+ * @param[in] graph             A graph containing, at least, the variables
+ * involved in the constraint
+ * @param[in] elimination_order A mapping from variable UUID to elimination
+ * order
+ * @return A LinearTerm consisting of Jacobian blocks associated with each
+ * involved variable in elimination order
  */
-LinearTerm linearize(
-  const vesta_core::Constraint& constraint,
-  const vesta_core::Graph& graph,
-  const UuidOrdering& elimination_order);
+LinearTerm linearize(const vesta_core::Constraint &constraint,
+                     const vesta_core::Graph &graph,
+                     const UuidOrdering &elimination_order);
 
 /**
- * @brief Marginalize out the lowest-ordered variable from the provided set of linear terms
+ * @brief Marginalize out the lowest-ordered variable from the provided set of
+ * linear terms
  *
- * A linear marginal term is returned. This represents the information on the remaining variables after marginalizing
- * out the lowest-ordered variable.
+ * A linear marginal term is returned. This represents the information on the
+ * remaining variables after marginalizing out the lowest-ordered variable.
  *
- * @param[in] linear_terms The set of LinearTerms that are connected to the lowest-ordered variable index
- * @return A LinearTerm object containing the information on the remaining variables
+ * @param[in] linear_terms The set of LinearTerms that are connected to the
+ * lowest-ordered variable index
+ * @return A LinearTerm object containing the information on the remaining
+ * variables
  */
-LinearTerm marginalizeNext(const std::vector<LinearTerm>& linear_terms);
+LinearTerm marginalizeNext(const std::vector<LinearTerm> &linear_terms);
 
 /**
  * @brief Convert the provided linear term into a MarginalConstraint
  *
- * @param[in] source            The name of the sensor or motion model that generated this constraint
+ * @param[in] source            The name of the sensor or motion model that
+ * generated this constraint
  * @param[in] linear_term       The LinearTerm object to convert
- * @param[in] graph             The graph object containing the current variable values
- * @param[in] elimination_order The mapping from variable UUID to LinearTerm variable index
+ * @param[in] graph             The graph object containing the current variable
+ * values
+ * @param[in] elimination_order The mapping from variable UUID to LinearTerm
+ * variable index
  * @return An equivalent MarginalConstraint object
  */
 MarginalConstraint::SharedPtr createMarginalConstraint(
-  const std::string& source,
-  const LinearTerm& linear_term,
-  const vesta_core::Graph& graph,
-  const UuidOrdering& elimination_order);
-}  // namespace detail
+    const std::string &source, const LinearTerm &linear_term,
+    const vesta_core::Graph &graph, const UuidOrdering &elimination_order);
+} // namespace detail
 
-}  // namespace vesta_constraints
-
+} // namespace vesta_constraints

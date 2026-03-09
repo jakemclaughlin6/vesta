@@ -33,27 +33,24 @@
  */
 #include <vesta_variables/2d/velocity_linear_2d_stamped.h>
 
+#include <vesta_core/timestamp.h>
 #include <vesta_core/uuid.h>
 #include <vesta_variables/common/fixed_size_variable.h>
 #include <vesta_variables/common/stamped.h>
-#include <vesta_core/timestamp.h>
 
 #include <boost/serialization/export.hpp>
 
 #include <ostream>
 
+namespace vesta_variables {
 
-namespace vesta_variables
-{
+VelocityLinear2DStamped::VelocityLinear2DStamped(
+    const vesta_core::Timestamp &stamp, const vesta_core::UUID &device_id)
+    : FixedSizeVariable(
+          vesta_core::uuid::generate(detail::type(), stamp, device_id)),
+      Stamped(stamp, device_id) {}
 
-VelocityLinear2DStamped::VelocityLinear2DStamped(const vesta_core::Timestamp& stamp, const vesta_core::UUID& device_id) :
-  FixedSizeVariable(vesta_core::uuid::generate(detail::type(), stamp, device_id)),
-  Stamped(stamp, device_id)
-{
-}
-
-void VelocityLinear2DStamped::print(std::ostream& stream) const
-{
+void VelocityLinear2DStamped::print(std::ostream &stream) const {
   stream << type() << ":\n"
          << "  uuid: " << uuid() << "\n"
          << "  stamp: " << stamp() << "\n"
@@ -64,6 +61,6 @@ void VelocityLinear2DStamped::print(std::ostream& stream) const
          << "  - y: " << y() << "\n";
 }
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::VelocityLinear2DStamped);

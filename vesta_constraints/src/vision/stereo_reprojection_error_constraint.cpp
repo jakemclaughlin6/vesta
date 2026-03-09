@@ -34,29 +34,26 @@
 #include <vesta_constraints/vision/stereo_reprojection_error_constraint.h>
 #include <vesta_constraints/vision/stereo_reprojection_error_cost_functor.h>
 
+#include <Eigen/Dense>
 #include <boost/serialization/export.hpp>
 #include <ceres/autodiff_cost_function.h>
-#include <Eigen/Dense>
 
 #include <string>
 
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 StereoReprojectionErrorConstraint::StereoReprojectionErrorConstraint(
-    const std::string& source, const vesta_variables::Position3DStamped& position,
-    const vesta_variables::Orientation3DStamped& orientation, const vesta_variables::StereoCamera& calibration,
-    const vesta_variables::Point3DLandmark& point,
-    const vesta_core::Vector4d& mean,
-    const vesta_core::Matrix4d& covariance)
-  : vesta_core::Constraint(source, { position.uuid(), orientation.uuid(), calibration.uuid(), point.uuid() })
-  , mean_(mean)
-  , sqrt_information_(covariance.inverse().llt().matrixU())
-{
-}
+    const std::string &source,
+    const vesta_variables::Position3DStamped &position,
+    const vesta_variables::Orientation3DStamped &orientation,
+    const vesta_variables::StereoCamera &calibration,
+    const vesta_variables::Point3DLandmark &point,
+    const vesta_core::Vector4d &mean, const vesta_core::Matrix4d &covariance)
+    : vesta_core::Constraint(source, {position.uuid(), orientation.uuid(),
+                                      calibration.uuid(), point.uuid()}),
+      mean_(mean), sqrt_information_(covariance.inverse().llt().matrixU()) {}
 
-void StereoReprojectionErrorConstraint::print(std::ostream& stream) const
-{
+void StereoReprojectionErrorConstraint::print(std::ostream &stream) const {
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
@@ -65,21 +62,22 @@ void StereoReprojectionErrorConstraint::print(std::ostream& stream) const
          << "  calibration variable: " << variables().at(2) << "\n"
          << "  point variable: " << variables().at(3) << "\n"
          << "  mean: " << mean().transpose() << "\n"
-         << "  sqrt_info:\n" << sqrtInformation() << "\n";
+         << "  sqrt_info:\n"
+         << sqrtInformation() << "\n";
 
-  if (loss())
-  {
+  if (loss()) {
     stream << "  loss: ";
     loss()->print(stream);
   }
 }
 
-ceres::CostFunction* StereoReprojectionErrorConstraint::costFunction() const
-{
-  return new ceres::AutoDiffCostFunction<StereoReprojectionErrorCostFunctor, 4, 3, 4, 5, 3>(
+ceres::CostFunction *StereoReprojectionErrorConstraint::costFunction() const {
+  return new ceres::AutoDiffCostFunction<StereoReprojectionErrorCostFunctor, 4,
+                                         3, 4, 5, 3>(
       new StereoReprojectionErrorCostFunctor(sqrt_information_, mean_));
 }
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints
 
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::StereoReprojectionErrorConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::StereoReprojectionErrorConstraint);

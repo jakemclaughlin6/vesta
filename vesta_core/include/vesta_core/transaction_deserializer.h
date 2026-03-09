@@ -38,9 +38,7 @@
 
 #include <vector>
 
-
-namespace vesta_core
-{
+namespace vesta_core {
 
 /**
  * @brief Serialize a transaction into a byte buffer
@@ -48,18 +46,19 @@ namespace vesta_core
  * @param[in]  transaction  The transaction to serialize
  * @param[out] data         The output byte buffer
  */
-void serializeTransaction(const vesta_core::Transaction& transaction, std::vector<unsigned char>& data);
+void serializeTransaction(const vesta_core::Transaction &transaction,
+                          std::vector<unsigned char> &data);
 
 /**
  * @brief Deserialize a transaction from a byte buffer
  *
- * Uses Boost.Serialization with BOOST_CLASS_EXPORT for polymorphic deserialization
- * of the contained Variable and Constraint types.
+ * Uses Boost.Serialization with BOOST_CLASS_EXPORT for polymorphic
+ * deserialization of the contained Variable and Constraint types.
  *
  * @param[in] data  The serialized byte buffer
  * @return A deserialized Transaction object
  */
-vesta_core::Transaction deserializeTransaction(const std::vector<unsigned char>& data);
+vesta_core::Transaction
+deserializeTransaction(const std::vector<unsigned char> &data);
 
-}  // namespace vesta_core
-
+} // namespace vesta_core

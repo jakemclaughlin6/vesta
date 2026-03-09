@@ -42,20 +42,17 @@
 
 #include <boost/serialization/export.hpp>
 
-namespace vesta_variables
-{
-PinholeCameraFixed::PinholeCameraFixed(const uint64_t& camera_id) :
-  PinholeCamera(vesta_core::uuid::generate(detail::type(), camera_id), camera_id)
-{
-}
+namespace vesta_variables {
+PinholeCameraFixed::PinholeCameraFixed(const uint64_t &camera_id)
+    : PinholeCamera(vesta_core::uuid::generate(detail::type(), camera_id),
+                    camera_id) {}
 
-PinholeCameraFixed::PinholeCameraFixed(const uint64_t& camera_id,
-                              const double& fx, const double& fy,
-                              const double& cx, const double& cy)
-  : PinholeCamera(vesta_core::uuid::generate(detail::type(), camera_id), camera_id, fx, fy, cx, cy)
-{
-}
+PinholeCameraFixed::PinholeCameraFixed(const uint64_t &camera_id,
+                                       const double &fx, const double &fy,
+                                       const double &cx, const double &cy)
+    : PinholeCamera(vesta_core::uuid::generate(detail::type(), camera_id),
+                    camera_id, fx, fy, cx, cy) {}
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::PinholeCameraFixed);

@@ -37,25 +37,19 @@
 
 #include <ostream>
 
+namespace vesta_loss {
 
-namespace vesta_loss
-{
+CauchyLoss::CauchyLoss(const double a) : a_(a) {}
 
-CauchyLoss::CauchyLoss(const double a) : a_(a)
-{
-}
-
-void CauchyLoss::print(std::ostream& stream) const
-{
+void CauchyLoss::print(std::ostream &stream) const {
   stream << type() << "\n"
          << "  a: " << a_ << "\n";
 }
 
-ceres::LossFunction* CauchyLoss::lossFunction() const
-{
+ceres::LossFunction *CauchyLoss::lossFunction() const {
   return new ceres::CauchyLoss(a_);
 }
 
-}  // namespace vesta_loss
+} // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::CauchyLoss);

@@ -43,91 +43,91 @@
 
 #include <Eigen/Core>
 
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 /**
- * @brief Create a prior cost function on the marker position, minimising reprojection error.
+ * @brief Create a prior cost function on the marker position, minimising
+ * reprojection error.
  *
- * The Ceres::NormalPrior cost function only supports a single variable. This is a convenience cost function that
- * applies a prior constraint on the 3D position, orientation and calibration variables at once.
+ * The Ceres::NormalPrior cost function only supports a single variable. This is
+ * a convenience cost function that applies a prior constraint on the 3D
+ * position, orientation and calibration variables at once.
  *
  * The cost function is of the form:
  *
  *   cost(x) = || A * (K * [R_q | p] * [R_{b(3:6)} | b(0:2))] * X - x) ||
  *
- * where, the matrix A and the vector b are fixed, p is the camera position variable, and q is the camera orientation
- * variable, K is the calibration matrix created from the calibration variable (f, r1, r2), X is the set of marker 3D points,
- * R_b(0:3) is the Rotation matrix from the fixed landmark orentation (b(3:6)), b(0:2) is the fixed landmark position
- * and x is the 2D ovservations.
+ * where, the matrix A and the vector b are fixed, p is the camera position
+ * variable, and q is the camera orientation variable, K is the calibration
+ * matrix created from the calibration variable (f, r1, r2), X is the set of
+ * marker 3D points, R_b(0:3) is the Rotation matrix from the fixed landmark
+ * orentation (b(3:6)), b(0:2) is the fixed landmark position and x is the 2D
+ * ovservations.
  *
- * Note that the covariance matrix is defined as a 2x2 error in pixel space, most likely a diagonal matrix.
+ * Note that the covariance matrix is defined as a 2x2 error in pixel space,
+ * most likely a diagonal matrix.
  */
-class ReprojectionErrorSnavellyCostFunctor
-{
+class ReprojectionErrorSnavellyCostFunctor {
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
   /**
    * @brief Construct a cost function instance
    *
-   * @param[in] A The residual weighting matrix, most likely derived from the square root information
-   *              matrix in order (u, v)
+   * @param[in] A The residual weighting matrix, most likely derived from the
+   *square root information matrix in order (u, v)
    * @param[in] b The 2D measurement or prior in order (u, v)
-   * 
+   *
    **/
-  ReprojectionErrorSnavellyCostFunctor(const vesta_core::Matrix2d& A, const vesta_core::Vector2d& b);
+  ReprojectionErrorSnavellyCostFunctor(const vesta_core::Matrix2d &A,
+                                       const vesta_core::Vector2d &b);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
    */
   template <typename T>
-  bool operator()(const T* const position, const T* const orientation, const T* const calibration,
-                  const T* const point, T* residuals) const;
+  bool operator()(const T *const position, const T *const orientation,
+                  const T *const calibration, const T *const point,
+                  T *residuals) const;
 
 private:
   vesta_core::Matrix2d A_;
   vesta_core::Vector2d b_;
 };
 
-ReprojectionErrorSnavellyCostFunctor::ReprojectionErrorSnavellyCostFunctor(const vesta_core::Matrix2d& A,
-                                                                          const vesta_core::Vector2d& b)
-  : A_(A)
-  , b_(b)
-{
-}
+ReprojectionErrorSnavellyCostFunctor::ReprojectionErrorSnavellyCostFunctor(
+    const vesta_core::Matrix2d &A, const vesta_core::Vector2d &b)
+    : A_(A), b_(b) {}
 
 template <typename T>
-bool ReprojectionErrorSnavellyCostFunctor::operator()(const T* const position, const T* const orientation,
-                                              const T* const calibration,
-                                              const T* const point,
-                                              T* residuals) const
-{
+bool ReprojectionErrorSnavellyCostFunctor::operator()(
+    const T *const position, const T *const orientation,
+    const T *const calibration, const T *const point, T *residuals) const {
   // Point to Camera CF ( X' = [R|t] X = RX + t )
   // Rotate Point (RX)
   T p[3];
   ceres::QuaternionRotatePoint(orientation, point, p);
 
   // Ofset (+t)
-  p[0]+=position[0];
-  p[1]+=position[1];
-  p[2]+=position[2];
+  p[0] += position[0];
+  p[1] += position[1];
+  p[2] += position[2];
 
   // Compute the center of distortion. The sign change comes from
   // the camera model that Noah Snavely's Bundler assumes, whereby
   // the camera coordinate system has a negative z axis.
   T uv[2];
-  uv[0] = -p[0]/p[2];
-  uv[1] = -p[1]/p[2];
+  uv[0] = -p[0] / p[2];
+  uv[1] = -p[1] / p[2];
 
   // Apply second and fourth order radial distortion.
-  const T& l1 = calibration[1];
-  const T& l2 = calibration[2];
+  const T &l1 = calibration[1];
+  const T &l2 = calibration[2];
   const T r2 = uv[0] * uv[0] + uv[1] * uv[1];
   const T dist = 1.0 + r2 * (l1 + l2 * r2);
 
   // Compute final projected point position.
-  const T& f = calibration[0];
+  const T &f = calibration[0];
   const T predicted_x = f * dist * uv[0];
   const T predicted_y = f * dist * uv[1];
 
@@ -142,5 +142,4 @@ bool ReprojectionErrorSnavellyCostFunctor::operator()(const T* const position, c
   return true;
 }
 
-}  // namespace vesta_constraints
-
+} // namespace vesta_constraints

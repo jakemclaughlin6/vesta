@@ -37,20 +37,16 @@
 
 #include <ostream>
 
+namespace vesta_loss {
 
-namespace vesta_loss
-{
-
-void TrivialLoss::print(std::ostream& stream) const
-{
+void TrivialLoss::print(std::ostream &stream) const {
   stream << type() << "\n";
 }
 
-ceres::LossFunction* TrivialLoss::lossFunction() const
-{
+ceres::LossFunction *TrivialLoss::lossFunction() const {
   return new ceres::TrivialLoss();
 }
 
-}  // namespace vesta_loss
+} // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::TrivialLoss);

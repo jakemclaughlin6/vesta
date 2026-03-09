@@ -45,14 +45,14 @@
 #include <string>
 #include <utility>
 
-namespace vesta_optimizers
-{
+namespace vesta_optimizers {
 
 /**
  * @brief A simple optimizer implementation that uses batch optimization
  *
- * Received sensor transactions are queued via addTransaction(). When optimize() is called,
- * all pending transactions are merged and applied to the graph, then Ceres optimization is run.
+ * Received sensor transactions are queued via addTransaction(). When optimize()
+ * is called, all pending transactions are merged and applied to the graph, then
+ * Ceres optimization is run.
  *
  * Usage:
  * @code
@@ -65,8 +65,7 @@ namespace vesta_optimizers
  *   auto summary = optimizer.optimize();
  * @endcode
  */
-class BatchOptimizer : public Optimizer
-{
+class BatchOptimizer : public Optimizer {
 public:
   using ParameterType = BatchOptimizerParams;
 
@@ -76,7 +75,8 @@ public:
    * @param[in] params Configuration settings
    * @param[in] graph  The graph object (takes ownership)
    */
-  BatchOptimizer(const BatchOptimizerParams& params, vesta_core::Graph::UniquePtr graph);
+  BatchOptimizer(const BatchOptimizerParams &params,
+                 vesta_core::Graph::UniquePtr graph);
 
   /**
    * @brief Destructor
@@ -91,14 +91,15 @@ public:
    * @param[in] sensor_name The name of the sensor that produced the Transaction
    * @param[in] transaction The populated Transaction object
    */
-  void addTransaction(const std::string& sensor_name,
+  void addTransaction(const std::string &sensor_name,
                       vesta_core::Transaction::SharedPtr transaction) override;
 
   /**
    * @brief Process pending transactions and run Ceres optimization
    *
-   * All pending transactions are merged into a single combined transaction, applied to the graph,
-   * and then the graph is optimized using the configured Ceres solver options.
+   * All pending transactions are merged into a single combined transaction,
+   * applied to the graph, and then the graph is optimized using the configured
+   * Ceres solver options.
    *
    * @return The Ceres solver summary
    */
@@ -114,35 +115,37 @@ public:
   /**
    * @brief Read-only access to the current graph
    */
-  const vesta_core::Graph& graph() const override;
+  const vesta_core::Graph &graph() const override;
 
 private:
   /**
-   * Structure containing the information required to process a transaction after it was received.
+   * Structure containing the information required to process a transaction
+   * after it was received.
    */
-  struct TransactionQueueElement
-  {
+  struct TransactionQueueElement {
     std::string sensor_name;
     vesta_core::Transaction::SharedPtr transaction;
 
-    TransactionQueueElement(
-      const std::string& sensor_name,
-      vesta_core::Transaction::SharedPtr transaction) :
-        sensor_name(sensor_name),
-        transaction(std::move(transaction)) {}
+    TransactionQueueElement(const std::string &sensor_name,
+                            vesta_core::Transaction::SharedPtr transaction)
+        : sensor_name(sensor_name), transaction(std::move(transaction)) {}
   };
 
   /**
    * @brief Queue of Transaction objects, sorted by timestamp.
    */
-  using TransactionQueue = std::multimap<vesta_core::Timestamp, TransactionQueueElement>;
+  using TransactionQueue =
+      std::multimap<vesta_core::Timestamp, TransactionQueueElement>;
 
-  ParameterType params_;  //!< Configuration settings for this optimizer
-  vesta_core::Graph::UniquePtr graph_;  //!< The graph object that holds all variables and constraints
-  vesta_core::Transaction::SharedPtr combined_transaction_;  //!< Aggregated transaction from multiple sensors
-  TransactionQueue pending_transactions_;  //!< Pending transactions not yet applied to the graph
-  bool started_;  //!< Flag indicating the optimizer has received at least one transaction
+  ParameterType params_; //!< Configuration settings for this optimizer
+  vesta_core::Graph::UniquePtr
+      graph_; //!< The graph object that holds all variables and constraints
+  vesta_core::Transaction::SharedPtr
+      combined_transaction_; //!< Aggregated transaction from multiple sensors
+  TransactionQueue pending_transactions_; //!< Pending transactions not yet
+                                          //!< applied to the graph
+  bool started_; //!< Flag indicating the optimizer has received at least one
+                 //!< transaction
 };
 
-}  // namespace vesta_optimizers
-
+} // namespace vesta_optimizers

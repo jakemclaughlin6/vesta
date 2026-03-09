@@ -36,14 +36,10 @@
 #include <cmath>
 #include <limits>
 
+namespace ceres {
 
-namespace ceres
-{
-
-void DCSLoss::Evaluate(double s, double rho[3]) const
-{
-  if (s > a_)
-  {
+void DCSLoss::Evaluate(double s, double rho[3]) const {
+  if (s > a_) {
     // Outlier region
     const double inv = 1.0 / (a_ + s);
     const double scale = 2.0 * a_ * inv;
@@ -51,9 +47,7 @@ void DCSLoss::Evaluate(double s, double rho[3]) const
     rho[0] = a_ * (3.0 * s - a_) * inv;
     rho[1] = scale * scale;
     rho[2] = -2.0 * inv * rho[1];
-  }
-  else
-  {
+  } else {
     // Inlier region
     rho[0] = s;
     rho[1] = 1.0;
@@ -61,19 +55,18 @@ void DCSLoss::Evaluate(double s, double rho[3]) const
   }
 }
 
-void FairLoss::Evaluate(double s, double rho[3]) const
-{
+void FairLoss::Evaluate(double s, double rho[3]) const {
   const double r = std::sqrt(s);
   const double ra = r / a_;
   const double sum = 1.0 + ra;
 
   rho[0] = 2.0 * b_ * (ra - std::log(sum));
   rho[1] = 1.0 / sum;
-  rho[2] = r == 0.0 ? std::numeric_limits<double>::lowest() : -0.5 / (a_ * r * sum * sum);
+  rho[2] = r == 0.0 ? std::numeric_limits<double>::lowest()
+                    : -0.5 / (a_ * r * sum * sum);
 }
 
-void GemanMcClureLoss::Evaluate(double s, double rho[3]) const
-{
+void GemanMcClureLoss::Evaluate(double s, double rho[3]) const {
   const double sum = b_ + s;
   const double inv = 1.0 / sum;
   const double scale = b_ * inv;
@@ -83,8 +76,7 @@ void GemanMcClureLoss::Evaluate(double s, double rho[3]) const
   rho[2] = -2.0 * inv * rho[1];
 }
 
-void WelschLoss::Evaluate(double s, double rho[3]) const
-{
+void WelschLoss::Evaluate(double s, double rho[3]) const {
   const double exp = std::exp(s * c_);
 
   rho[0] = b_ * (1 - exp);
@@ -92,4 +84,4 @@ void WelschLoss::Evaluate(double s, double rho[3]) const
   rho[2] = c_ * exp;
 }
 
-}  // namespace ceres
+} // namespace ceres

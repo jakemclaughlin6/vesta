@@ -32,9 +32,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <vesta_core/serialization.h>
+#include <vesta_core/timestamp.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 #include <vesta_variables/common/stamped.h>
-#include <vesta_core/timestamp.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <ceres/problem.h>
@@ -46,15 +46,12 @@
 
 using vesta_variables::Position3DStamped;
 
-
-TEST(Position3DStamped, Type)
-{
+TEST(Position3DStamped, Type) {
   Position3DStamped variable(vesta_core::Timestamp(12345678, 910111213));
   EXPECT_EQ("vesta_variables::Position3DStamped", variable.type());
 }
 
-TEST(Position3DStamped, UUID)
-{
+TEST(Position3DStamped, UUID) {
   // Verify two positions at the same timestamp produce the same UUID
   {
     Position3DStamped variable1(vesta_core::Timestamp(12345678, 910111213));
@@ -65,47 +62,63 @@ TEST(Position3DStamped, UUID)
   auto uuid_1 = vesta_core::uuid::generate("test_hardware1");
   auto uuid_2 = vesta_core::uuid::generate("test_hardware2");
 
-  // Verify two positions at the same timestamp and same hardware ID produce the same UUID
+  // Verify two positions at the same timestamp and same hardware ID produce the
+  // same UUID
   {
-    Position3DStamped variable1(vesta_core::Timestamp(12345678, 910111213), uuid_1);
-    Position3DStamped variable2(vesta_core::Timestamp(12345678, 910111213), uuid_1);
+    Position3DStamped variable1(vesta_core::Timestamp(12345678, 910111213),
+                                uuid_1);
+    Position3DStamped variable2(vesta_core::Timestamp(12345678, 910111213),
+                                uuid_1);
     EXPECT_EQ(variable1.uuid(), variable2.uuid());
   }
 
-  // Verify two positions with the same timestamp but different hardware IDs generate different UUIDs
+  // Verify two positions with the same timestamp but different hardware IDs
+  // generate different UUIDs
   {
-    Position3DStamped variable1(vesta_core::Timestamp(12345678, 910111213), uuid_1);
-    Position3DStamped variable2(vesta_core::Timestamp(12345678, 910111213), uuid_2);
+    Position3DStamped variable1(vesta_core::Timestamp(12345678, 910111213),
+                                uuid_1);
+    Position3DStamped variable2(vesta_core::Timestamp(12345678, 910111213),
+                                uuid_2);
     EXPECT_NE(variable1.uuid(), variable2.uuid());
   }
 
-  // Verify two positions with the same hardware ID and different timestamps produce different UUIDs
+  // Verify two positions with the same hardware ID and different timestamps
+  // produce different UUIDs
   {
-    Position3DStamped variable1(vesta_core::Timestamp(12345678, 910111213), uuid_1);
-    Position3DStamped variable2(vesta_core::Timestamp(12345678, 910111214), uuid_1);
+    Position3DStamped variable1(vesta_core::Timestamp(12345678, 910111213),
+                                uuid_1);
+    Position3DStamped variable2(vesta_core::Timestamp(12345678, 910111214),
+                                uuid_1);
     EXPECT_NE(variable1.uuid(), variable2.uuid());
 
-    Position3DStamped variable3(vesta_core::Timestamp(12345678, 910111213), uuid_1);
-    Position3DStamped variable4(vesta_core::Timestamp(12345679, 910111213), uuid_1);
+    Position3DStamped variable3(vesta_core::Timestamp(12345678, 910111213),
+                                uuid_1);
+    Position3DStamped variable4(vesta_core::Timestamp(12345679, 910111213),
+                                uuid_1);
     EXPECT_NE(variable3.uuid(), variable4.uuid());
   }
 
-  // Verify two positions with different hardware IDs and different timestamps produce different UUIDs
+  // Verify two positions with different hardware IDs and different timestamps
+  // produce different UUIDs
   {
-    Position3DStamped variable1(vesta_core::Timestamp(12345678, 910111213), uuid_1);
-    Position3DStamped variable2(vesta_core::Timestamp(12345678, 910111214), uuid_2);
+    Position3DStamped variable1(vesta_core::Timestamp(12345678, 910111213),
+                                uuid_1);
+    Position3DStamped variable2(vesta_core::Timestamp(12345678, 910111214),
+                                uuid_2);
     EXPECT_NE(variable1.uuid(), variable2.uuid());
 
-    Position3DStamped variable3(vesta_core::Timestamp(12345678, 910111213), uuid_1);
-    Position3DStamped variable4(vesta_core::Timestamp(12345679, 910111213), uuid_2);
+    Position3DStamped variable3(vesta_core::Timestamp(12345678, 910111213),
+                                uuid_1);
+    Position3DStamped variable4(vesta_core::Timestamp(12345679, 910111213),
+                                uuid_2);
     EXPECT_NE(variable3.uuid(), variable4.uuid());
   }
 }
 
-TEST(Position3DStamped, Stamped)
-{
-  vesta_core::Variable::SharedPtr base = Position3DStamped::make_shared(vesta_core::Timestamp(12345678, 910111213),
-                                                                       vesta_core::uuid::generate("mo"));
+TEST(Position3DStamped, Stamped) {
+  vesta_core::Variable::SharedPtr base =
+      Position3DStamped::make_shared(vesta_core::Timestamp(12345678, 910111213),
+                                     vesta_core::uuid::generate("mo"));
   auto derived = std::dynamic_pointer_cast<Position3DStamped>(base);
   ASSERT_TRUE(static_cast<bool>(derived));
   EXPECT_EQ(vesta_core::Timestamp(12345678, 910111213), derived->stamp());
@@ -117,12 +130,10 @@ TEST(Position3DStamped, Stamped)
   EXPECT_EQ(vesta_core::uuid::generate("mo"), stamped->deviceId());
 }
 
-struct CostFunctor
-{
+struct CostFunctor {
   CostFunctor() {}
 
-  template <typename T> bool operator()(const T* const x, T* residual) const
-  {
+  template <typename T> bool operator()(const T *const x, T *residual) const {
     residual[0] = x[0] - T(3.0);
     residual[1] = x[1] + T(8.0);
     residual[2] = x[2] - T(3.1);
@@ -130,8 +141,7 @@ struct CostFunctor
   }
 };
 
-TEST(Position3DStamped, Optimization)
-{
+TEST(Position3DStamped, Optimization) {
   // Create a Position3DStamped
   Position3DStamped position(vesta_core::Timestamp(12345678, 910111213));
   position.x() = 1.5;
@@ -139,19 +149,15 @@ TEST(Position3DStamped, Optimization)
   position.z() = 0.8;
 
   // Create a simple a constraint
-  ceres::CostFunction* cost_function = new ceres::AutoDiffCostFunction<CostFunctor, 3, 3>(new CostFunctor());
+  ceres::CostFunction *cost_function =
+      new ceres::AutoDiffCostFunction<CostFunctor, 3, 3>(new CostFunctor());
 
   // Build the problem.
   ceres::Problem problem;
-  problem.AddParameterBlock(
-    position.data(),
-    position.size());
-  std::vector<double*> parameter_blocks;
+  problem.AddParameterBlock(position.data(), position.size());
+  std::vector<double *> parameter_blocks;
   parameter_blocks.push_back(position.data());
-  problem.AddResidualBlock(
-    cost_function,
-    nullptr,
-    parameter_blocks);
+  problem.AddResidualBlock(cost_function, nullptr, parameter_blocks);
 
   // Run the solver
   ceres::Solver::Options options;
@@ -164,10 +170,10 @@ TEST(Position3DStamped, Optimization)
   EXPECT_NEAR(3.1, position.z(), 1.0e-5);
 }
 
-TEST(Position3DStamped, Serialization)
-{
+TEST(Position3DStamped, Serialization) {
   // Create a Position3DStamped
-  Position3DStamped expected(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("hal9000"));
+  Position3DStamped expected(vesta_core::Timestamp(12345678, 910111213),
+                             vesta_core::uuid::generate("hal9000"));
   expected.x() = 1.5;
   expected.y() = -3.0;
   expected.z() = 0.8;
@@ -194,8 +200,7 @@ TEST(Position3DStamped, Serialization)
   EXPECT_EQ(expected.z(), actual.z());
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

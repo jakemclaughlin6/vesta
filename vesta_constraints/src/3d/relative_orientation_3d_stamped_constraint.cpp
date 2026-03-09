@@ -35,45 +35,38 @@
 
 #include <vesta_constraints/3d/normal_delta_orientation_3d_cost_functor.h>
 
+#include <Eigen/Geometry>
 #include <boost/serialization/export.hpp>
 #include <ceres/autodiff_cost_function.h>
-#include <Eigen/Geometry>
 
 #include <string>
 
-
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 RelativeOrientation3DStampedConstraint::RelativeOrientation3DStampedConstraint(
-  const std::string& source,
-  const vesta_variables::Orientation3DStamped& orientation1,
-  const vesta_variables::Orientation3DStamped& orientation2,
-  const vesta_core::Vector4d& delta,
-  const vesta_core::Matrix3d& covariance) :
-    vesta_core::Constraint(source, {orientation1.uuid(), orientation2.uuid()}),  // NOLINT(whitespace/braces)
-    delta_(delta),
-    sqrt_information_(covariance.inverse().llt().matrixU())
-{
-}
+    const std::string &source,
+    const vesta_variables::Orientation3DStamped &orientation1,
+    const vesta_variables::Orientation3DStamped &orientation2,
+    const vesta_core::Vector4d &delta, const vesta_core::Matrix3d &covariance)
+    : vesta_core::Constraint(
+          source, {orientation1.uuid(),
+                   orientation2.uuid()}), // NOLINT(whitespace/braces)
+      delta_(delta), sqrt_information_(covariance.inverse().llt().matrixU()) {}
 
 RelativeOrientation3DStampedConstraint::RelativeOrientation3DStampedConstraint(
-  const std::string& source,
-  const vesta_variables::Orientation3DStamped& orientation1,
-  const vesta_variables::Orientation3DStamped& orientation2,
-  const Eigen::Quaterniond& delta,
-  const vesta_core::Matrix3d& covariance) :
-    RelativeOrientation3DStampedConstraint(source, orientation1, orientation2, toEigen(delta), covariance)
-{
-}
+    const std::string &source,
+    const vesta_variables::Orientation3DStamped &orientation1,
+    const vesta_variables::Orientation3DStamped &orientation2,
+    const Eigen::Quaterniond &delta, const vesta_core::Matrix3d &covariance)
+    : RelativeOrientation3DStampedConstraint(source, orientation1, orientation2,
+                                             toEigen(delta), covariance) {}
 
-vesta_core::Matrix3d RelativeOrientation3DStampedConstraint::covariance() const
-{
+vesta_core::Matrix3d
+RelativeOrientation3DStampedConstraint::covariance() const {
   return (sqrt_information_.transpose() * sqrt_information_).inverse();
 }
 
-void RelativeOrientation3DStampedConstraint::print(std::ostream& stream) const
-{
+void RelativeOrientation3DStampedConstraint::print(std::ostream &stream) const {
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
@@ -82,31 +75,33 @@ void RelativeOrientation3DStampedConstraint::print(std::ostream& stream) const
          << "  delta: " << delta().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 
-  if (loss())
-  {
+  if (loss()) {
     stream << "  loss: ";
     loss()->print(stream);
   }
 }
 
-ceres::CostFunction* RelativeOrientation3DStampedConstraint::costFunction() const
-{
-  return new ceres::AutoDiffCostFunction<NormalDeltaOrientation3DCostFunctor, 3, 4, 4>(
-    new NormalDeltaOrientation3DCostFunctor(sqrt_information_, delta_));
+ceres::CostFunction *
+RelativeOrientation3DStampedConstraint::costFunction() const {
+  return new ceres::AutoDiffCostFunction<NormalDeltaOrientation3DCostFunctor, 3,
+                                         4, 4>(
+      new NormalDeltaOrientation3DCostFunctor(sqrt_information_, delta_));
 }
 
-vesta_core::Vector4d RelativeOrientation3DStampedConstraint::toEigen(const Eigen::Quaterniond& quaternion)
-{
+vesta_core::Vector4d RelativeOrientation3DStampedConstraint::toEigen(
+    const Eigen::Quaterniond &quaternion) {
   vesta_core::Vector4d eigen_quaternion_vector;
-  eigen_quaternion_vector << quaternion.w(), quaternion.x(), quaternion.y(), quaternion.z();
+  eigen_quaternion_vector << quaternion.w(), quaternion.x(), quaternion.y(),
+      quaternion.z();
   return eigen_quaternion_vector;
 }
 
-vesta_core::Matrix3d RelativeOrientation3DStampedConstraint::toEigen(const std::array<double, 9>& covariance)
-{
+vesta_core::Matrix3d RelativeOrientation3DStampedConstraint::toEigen(
+    const std::array<double, 9> &covariance) {
   return vesta_core::Matrix3d(covariance.data());
 }
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints
 
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::RelativeOrientation3DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::RelativeOrientation3DStampedConstraint);

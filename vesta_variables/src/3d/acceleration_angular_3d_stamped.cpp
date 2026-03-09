@@ -33,29 +33,24 @@
  */
 #include <vesta_variables/3d/acceleration_angular_3d_stamped.h>
 
+#include <vesta_core/timestamp.h>
 #include <vesta_core/uuid.h>
 #include <vesta_variables/common/fixed_size_variable.h>
 #include <vesta_variables/common/stamped.h>
-#include <vesta_core/timestamp.h>
 
 #include <boost/serialization/export.hpp>
 
 #include <ostream>
 
-
-namespace vesta_variables
-{
+namespace vesta_variables {
 
 AccelerationAngular3DStamped::AccelerationAngular3DStamped(
-  const vesta_core::Timestamp& stamp,
-  const vesta_core::UUID& device_id) :
-    FixedSizeVariable<3>(vesta_core::uuid::generate(detail::type(), stamp, device_id)),
-    Stamped(stamp, device_id)
-{
-}
+    const vesta_core::Timestamp &stamp, const vesta_core::UUID &device_id)
+    : FixedSizeVariable<3>(
+          vesta_core::uuid::generate(detail::type(), stamp, device_id)),
+      Stamped(stamp, device_id) {}
 
-void AccelerationAngular3DStamped::print(std::ostream& stream) const
-{
+void AccelerationAngular3DStamped::print(std::ostream &stream) const {
   stream << type() << ":\n"
          << "  uuid: " << uuid() << "\n"
          << "  stamp: " << stamp() << "\n"
@@ -67,6 +62,6 @@ void AccelerationAngular3DStamped::print(std::ostream& stream) const
          << "  - yaw: " << yaw() << "\n";
 }
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::AccelerationAngular3DStamped);

@@ -44,29 +44,31 @@
 #include <ostream>
 #include <string>
 
-
-namespace vesta_loss
-{
+namespace vesta_loss {
 
 /**
  * @brief The ScaledLoss loss function.
  *
- * This class encapsulates the ceres::ScaledLoss class, adding the ability to serialize it and load it dynamically.
+ * This class encapsulates the ceres::ScaledLoss class, adding the ability to
+ * serialize it and load it dynamically.
  *
- * See the Ceres documentation for more details: http://ceres-solver.org/nnls_modeling.html#lossfunction
+ * See the Ceres documentation for more details:
+ * http://ceres-solver.org/nnls_modeling.html#lossfunction
  */
-class ScaledLoss : public vesta_core::Loss
-{
+class ScaledLoss : public vesta_core::Loss {
 public:
   VESTA_LOSS_DEFINITIONS(ScaledLoss);
 
   /**
    * @brief Constructor
    *
-   * @param[in] a ScaledLoss parameter 'a'. See Ceres documentation for more details.
-   * @param[in] loss The loss function to scale. Its output is scaled/multiplied by 'a'.
+   * @param[in] a ScaledLoss parameter 'a'. See Ceres documentation for more
+   * details.
+   * @param[in] loss The loss function to scale. Its output is scaled/multiplied
+   * by 'a'.
    */
-  explicit ScaledLoss(const double a = 1.0, const std::shared_ptr<vesta_core::Loss>& loss = nullptr);
+  explicit ScaledLoss(const double a = 1.0,
+                      const std::shared_ptr<vesta_core::Loss> &loss = nullptr);
 
   /**
    * @brief Destructor
@@ -74,98 +76,93 @@ public:
   ~ScaledLoss() override = default;
 
   /**
-   * @brief Perform any required post-construction initialization, such as reading from the parameter server.
+   * @brief Perform any required post-construction initialization, such as
+   * reading from the parameter server.
    *
    * This will be called on each plugin after construction.
    *
-   * @param[in] name A unique name to initialize this plugin instance, such as from the parameter server.
+   * @param[in] name A unique name to initialize this plugin instance, such as
+   * from the parameter server.
    */
-  void initialize(const std::string& /*name*/) override
-  {
-  }
+  void initialize(const std::string & /*name*/) override {}
 
   /**
-   * @brief Print a human-readable description of the loss function to the provided stream.
+   * @brief Print a human-readable description of the loss function to the
+   * provided stream.
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream& stream = std::cout) const override;
+  void print(std::ostream &stream = std::cout) const override;
 
   /**
-   * @brief Return a raw pointer to a ceres::LossFunction that implements the loss function.
+   * @brief Return a raw pointer to a ceres::LossFunction that implements the
+   * loss function.
    *
-   * The Ceres interface requires a raw pointer. Ceres will take ownership of the pointer and promises to properly
-   * delete the loss function when it is done. Additionally, Fuse promises that the Loss object will outlive any
-   * generated loss functions (i.e. the Ceres objects will be destroyed before the Loss Function objects). This
-   * guarantee may allow optimizations for the creation of the loss function objects.
+   * The Ceres interface requires a raw pointer. Ceres will take ownership of
+   * the pointer and promises to properly delete the loss function when it is
+   * done. Additionally, Fuse promises that the Loss object will outlive any
+   * generated loss functions (i.e. the Ceres objects will be destroyed before
+   * the Loss Function objects). This guarantee may allow optimizations for the
+   * creation of the loss function objects.
    *
    * @return A base pointer to an instance of a derived ceres::LossFunction.
    */
-  ceres::LossFunction* lossFunction() const override;
+  ceres::LossFunction *lossFunction() const override;
 
   /**
    * @brief Parameter 'a' accessor.
    *
    * @return Parameter 'a'.
    */
-  double a() const
-  {
-    return a_;
-  }
+  double a() const { return a_; }
 
   /**
    * @brief Parameter 'loss' accessor.
    *
    * @return Parameter 'loss'.
    */
-  std::shared_ptr<vesta_core::Loss> loss() const
-  {
-    return loss_;
-  }
+  std::shared_ptr<vesta_core::Loss> loss() const { return loss_; }
 
   /**
    * @brief Parameter 'a' mutator.
    *
    * @param[in] a Parameter 'a'.
    */
-  void a(const double a)
-  {
-    a_ = a;
-  }
+  void a(const double a) { a_ = a; }
 
   /**
    * @brief Parameter 'loss' mutator.
    *
    * @param[in] loss Parameter 'loss'.
    */
-  void loss(const std::shared_ptr<vesta_core::Loss>& loss)
-  {
-    loss_ = loss;
-  }
+  void loss(const std::shared_ptr<vesta_core::Loss> &loss) { loss_ = loss; }
 
 private:
-  double a_{ 1.0 };  //!< ScaledLoss parameter 'a'. See Ceres documentation for more details
-  std::shared_ptr<vesta_core::Loss> loss_{ nullptr };  //!< The loss function to scale
+  double a_{1.0}; //!< ScaledLoss parameter 'a'. See Ceres documentation for
+                  //!< more details
+  std::shared_ptr<vesta_core::Loss> loss_{
+      nullptr}; //!< The loss function to scale
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_core::Loss>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Loss>(*this);
     archive & a_;
     archive & loss_;
   }
 };
 
-}  // namespace vesta_loss
+} // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_KEY(vesta_loss::ScaledLoss);
-

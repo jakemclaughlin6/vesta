@@ -41,24 +41,18 @@
 
 #include <ostream>
 
-namespace vesta_variables
-{
-StereoCamera::StereoCamera(const vesta_core::UUID& uuid, uint64_t camera_id)
-  : BaseCamera(uuid, camera_id)
-{
-}
+namespace vesta_variables {
+StereoCamera::StereoCamera(const vesta_core::UUID &uuid, uint64_t camera_id)
+    : BaseCamera(uuid, camera_id) {}
 
 StereoCamera::StereoCamera(uint64_t camera_id)
-  : StereoCamera(vesta_core::uuid::generate(detail::type(), camera_id), camera_id)
-{
-}
+    : StereoCamera(vesta_core::uuid::generate(detail::type(), camera_id),
+                   camera_id) {}
 
-StereoCamera::StereoCamera(const vesta_core::UUID& uuid, uint64_t camera_id,
-                            double fx, double fy,
-                            double cx, double cy,
-                            double baseline)
-  : StereoCamera(uuid, camera_id)
-{
+StereoCamera::StereoCamera(const vesta_core::UUID &uuid, uint64_t camera_id,
+                           double fx, double fy, double cx, double cy,
+                           double baseline)
+    : StereoCamera(uuid, camera_id) {
   data_[FX] = fx;
   data_[FY] = fy;
   data_[CX] = cx;
@@ -66,8 +60,7 @@ StereoCamera::StereoCamera(const vesta_core::UUID& uuid, uint64_t camera_id,
   data_[BASELINE] = baseline;
 }
 
-void StereoCamera::print(std::ostream& stream) const
-{
+void StereoCamera::print(std::ostream &stream) const {
   stream << type() << ":\n"
          << "  uuid: " << uuid() << "\n"
          << "  size: " << size() << "\n"
@@ -80,6 +73,6 @@ void StereoCamera::print(std::ostream& stream) const
          << "  - baseline: " << baseline() << "\n";
 }
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::StereoCamera);

@@ -37,31 +37,26 @@
 #include <vesta_constraints/vision/reprojection_error_snavelly_constraint.h>
 #include <vesta_constraints/vision/reprojection_error_snavelly_cost_functor.h>
 
-
+#include <Eigen/Dense>
 #include <boost/serialization/export.hpp>
 #include <ceres/autodiff_cost_function.h>
-#include <Eigen/Dense>
 
 #include <string>
 
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 ReprojectionErrorSnavellyConstraint::ReprojectionErrorSnavellyConstraint(
-    const std::string& source, const vesta_variables::Position3DStamped& position,
-    const vesta_variables::Orientation3DStamped& orientation,
-    const vesta_variables::PinholeCameraRadial& calibration,
-    const vesta_variables::Point3DLandmark& point,
-    const vesta_core::Vector2d& mean,
-    const vesta_core::Matrix2d& covariance)
-  : vesta_core::Constraint(source, { position.uuid(), orientation.uuid(), calibration.uuid(), point.uuid() })
-  , mean_(mean)
-  , sqrt_information_(covariance.inverse().llt().matrixU())
-{
-}
+    const std::string &source,
+    const vesta_variables::Position3DStamped &position,
+    const vesta_variables::Orientation3DStamped &orientation,
+    const vesta_variables::PinholeCameraRadial &calibration,
+    const vesta_variables::Point3DLandmark &point,
+    const vesta_core::Vector2d &mean, const vesta_core::Matrix2d &covariance)
+    : vesta_core::Constraint(source, {position.uuid(), orientation.uuid(),
+                                      calibration.uuid(), point.uuid()}),
+      mean_(mean), sqrt_information_(covariance.inverse().llt().matrixU()) {}
 
-void ReprojectionErrorSnavellyConstraint::print(std::ostream& stream) const
-{
+void ReprojectionErrorSnavellyConstraint::print(std::ostream &stream) const {
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
@@ -72,19 +67,19 @@ void ReprojectionErrorSnavellyConstraint::print(std::ostream& stream) const
          << "  mean: " << mean().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 
-  if (loss())
-  {
+  if (loss()) {
     stream << "  loss: ";
     loss()->print(stream);
   }
 }
 
-ceres::CostFunction* ReprojectionErrorSnavellyConstraint::costFunction() const
-{
-  return new ceres::AutoDiffCostFunction<ReprojectionErrorSnavellyCostFunctor, 2, 3, 4, 3, 3>(
+ceres::CostFunction *ReprojectionErrorSnavellyConstraint::costFunction() const {
+  return new ceres::AutoDiffCostFunction<ReprojectionErrorSnavellyCostFunctor,
+                                         2, 3, 4, 3, 3>(
       new ReprojectionErrorSnavellyCostFunctor(sqrt_information_, mean_));
 }
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints
 
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::ReprojectionErrorSnavellyConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::ReprojectionErrorSnavellyConstraint);

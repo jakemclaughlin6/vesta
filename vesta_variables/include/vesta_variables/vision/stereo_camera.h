@@ -37,8 +37,8 @@
 #include <vesta_core/fuse_macros.h>
 #include <vesta_core/serialization.h>
 #include <vesta_core/uuid.h>
-#include <vesta_variables/vision/base_camera.h>
 #include <vesta_variables/common/fixed_size_variable.h>
+#include <vesta_variables/vision/base_camera.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -46,8 +46,7 @@
 
 #include <ostream>
 
-namespace vesta_variables
-{
+namespace vesta_variables {
 /**
  * @brief Variable representing intrinsic parameters of a stereo camera.
  *
@@ -56,24 +55,17 @@ namespace vesta_variables
  * Parameters are (fx, fy, cx, cy, baseline).
  *
  * The UUID of this class is constant after construction and dependent on a user
- * input database id. As such, the database id cannot be altered after construction.
+ * input database id. As such, the database id cannot be altered after
+ * construction.
  */
-class StereoCamera : public BaseCamera<5>
-{
+class StereoCamera : public BaseCamera<5> {
 public:
   VESTA_VARIABLE_DEFINITIONS(StereoCamera);
 
   /**
    * @brief Can be used to directly index variables in the data array
    */
-  enum : size_t
-  {
-    FX = 0,
-    FY = 1,
-    CX = 2,
-    CY = 3,
-    BASELINE = 4
-  };
+  enum : size_t { FX = 0, FY = 1, CX = 2, CY = 3, BASELINE = 4 };
 
   /**
    * @brief Default constructor
@@ -88,7 +80,8 @@ public:
   explicit StereoCamera(uint64_t camera_id);
 
   /**
-   * @brief Construct a stereo camera variable given a uuid, camera id and intrinsic parameters
+   * @brief Construct a stereo camera variable given a uuid, camera id and
+   * intrinsic parameters
    *
    * @param[in] uuid       The UUID for this variable
    * @param[in] camera_id  The id associated to a camera
@@ -96,62 +89,62 @@ public:
    * @param[in] fy         Focal length in y
    * @param[in] cx         Principal point x
    * @param[in] cy         Principal point y
-   * @param[in] baseline   Stereo baseline (distance between left and right camera centers)
+   * @param[in] baseline   Stereo baseline (distance between left and right
+   * camera centers)
    */
-  explicit StereoCamera(const vesta_core::UUID& uuid, uint64_t camera_id,
-                        double fx, double fy,
-                        double cx, double cy,
+  explicit StereoCamera(const vesta_core::UUID &uuid, uint64_t camera_id,
+                        double fx, double fy, double cx, double cy,
                         double baseline);
 
   /**
    * @brief Read-write access to the fx parameter.
    */
-  double& fx() { return data_[FX]; }
+  double &fx() { return data_[FX]; }
 
   /**
    * @brief Read-only access to the fx parameter.
    */
-  const double& fx() const { return data_[FX]; }
+  const double &fx() const { return data_[FX]; }
 
   /**
    * @brief Read-write access to the fy parameter.
    */
-  double& fy() { return data_[FY]; }
+  double &fy() { return data_[FY]; }
 
   /**
    * @brief Read-only access to the fy parameter.
    */
-  const double& fy() const { return data_[FY]; }
+  const double &fy() const { return data_[FY]; }
 
   /**
    * @brief Read-write access to the cx parameter.
    */
-  double& cx() { return data_[CX]; }
+  double &cx() { return data_[CX]; }
 
   /**
    * @brief Read-only access to the cx parameter.
    */
-  const double& cx() const { return data_[CX]; }
+  const double &cx() const { return data_[CX]; }
 
   /**
    * @brief Read-write access to the cy parameter.
    */
-  double& cy() { return data_[CY]; }
+  double &cy() { return data_[CY]; }
 
   /**
    * @brief Read-only access to the cy parameter.
    */
-  const double& cy() const { return data_[CY]; }
+  const double &cy() const { return data_[CY]; }
 
   /**
    * @brief Read-write access to the baseline parameter.
    */
-  double& baseline() { return data_[BASELINE]; }
+  double &baseline() { return data_[BASELINE]; }
 
   /**
    * @brief Read-only access to the baseline parameter.
    */
-  const double& baseline() const { return data_[BASELINE]; }
+  const double &baseline() const { return data_[BASELINE]; }
 
   /**
    * @brief Print a human-readable description of the variable to the provided
@@ -159,7 +152,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream& stream = std::cout) const override;
+  void print(std::ostream &stream = std::cout) const override;
 
 protected:
   /**
@@ -168,7 +161,7 @@ protected:
    * @param[in] uuid       The UUID for this variable
    * @param[in] camera_id  The id associated to a camera_id
    */
-  StereoCamera(const vesta_core::UUID& uuid, uint64_t camera_id);
+  StereoCamera(const vesta_core::UUID &uuid, uint64_t camera_id);
 
 private:
   // Allow Boost Serialization access to private methods
@@ -184,13 +177,11 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive& boost::serialization::base_object<BaseCamera<SIZE>>(*this);
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<BaseCamera<SIZE>>(*this);
   }
 };
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_KEY(vesta_variables::StereoCamera);
-

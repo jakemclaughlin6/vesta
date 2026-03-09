@@ -47,29 +47,28 @@
 #include <vesta_variables/vision/pinhole_camera_radial.h>
 #include <vesta_variables/vision/point_3d_landmark.h>
 
+#include <Eigen/Dense>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
-#include <Eigen/Dense>
 
 #include <ostream>
 #include <string>
 #include <vector>
 
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 /**
- * @brief A constraint that represents an observation of a 3D point using a Snavelly camera model
- *        which contains 3 paramters (f, r1, r2)
+ * @brief A constraint that represents an observation of a 3D point using a
+ * Snavelly camera model which contains 3 paramters (f, r1, r2)
  *
- * A landmark is represented as a 3D point . This class takes the location of the 3D landmark and 
- * applies a reprojection-error based constraint on the position, orientation and calibration of 
- * the camera that observed the landmark.
+ * A landmark is represented as a 3D point . This class takes the location of
+ * the 3D landmark and applies a reprojection-error based constraint on the
+ * position, orientation and calibration of the camera that observed the
+ * landmark.
  *
  */
-class ReprojectionErrorSnavellyConstraint : public vesta_core::Constraint
-{
+class ReprojectionErrorSnavellyConstraint : public vesta_core::Constraint {
 public:
   VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(ReprojectionErrorSnavellyConstraint);
 
@@ -81,21 +80,28 @@ public:
   /**
    * @brief Create a constraint
    *
-   * @param[in] source        The name of the sensor or motion model that generated this constraint
-   * @param[in] position      The variable representing the position components of the camera pose
-   * @param[in] orientation   The variable representing the orientation components of the camera pose
-   * @param[in] calibraton    The calibration parameters of the camera (3x1 vector: f, r1, r2).
-   *                          NOTE: Best practice is to fix this variable unless we have several observations
-   *                          with the same camera
+   * @param[in] source        The name of the sensor or motion model that
+   * generated this constraint
+   * @param[in] position      The variable representing the position components
+   * of the camera pose
+   * @param[in] orientation   The variable representing the orientation
+   * components of the camera pose
+   * @param[in] calibraton    The calibration parameters of the camera (3x1
+   * vector: f, r1, r2). NOTE: Best practice is to fix this variable unless we
+   * have several observations with the same camera
    * @param[in] point         The 3D landmark point variable
-   * @param[in] mean          The measured observation of the point as a vector (2x1 vector: u,v)
-   * @param[in] covariance    The prior observation covariance (2x2 matrix: u, v)
+   * @param[in] mean          The measured observation of the point as a vector
+   * (2x1 vector: u,v)
+   * @param[in] covariance    The prior observation covariance (2x2 matrix: u,
+   * v)
    */
-  ReprojectionErrorSnavellyConstraint(const std::string& source, const vesta_variables::Position3DStamped& position,
-                                      const vesta_variables::Orientation3DStamped& orientation,
-                                      const vesta_variables::PinholeCameraRadial& calibraton,
-                                      const vesta_variables::Point3DLandmark& point,
-                                      const vesta_core::Vector2d& mean, const vesta_core::Matrix2d& covariance);
+  ReprojectionErrorSnavellyConstraint(
+      const std::string &source,
+      const vesta_variables::Position3DStamped &position,
+      const vesta_variables::Orientation3DStamped &orientation,
+      const vesta_variables::PinholeCameraRadial &calibraton,
+      const vesta_variables::Point3DLandmark &point,
+      const vesta_core::Vector2d &mean, const vesta_core::Matrix2d &covariance);
 
   /**
    * @brief Destructor
@@ -107,8 +113,7 @@ public:
    *
    * Order is (u, v)
    */
-  const vesta_core::Matrix2d& sqrtInformation() const
-  {
+  const vesta_core::Matrix2d &sqrtInformation() const {
     return sqrt_information_;
   }
 
@@ -117,63 +122,64 @@ public:
    *
    * Order is (u, v)
    */
-  const vesta_core::Vector2d& mean() const
-  {
-    return mean_;
-  }
+  const vesta_core::Vector2d &mean() const { return mean_; }
 
   /**
    * @brief Compute the measurement covariance matrix.
    *
    * Order is (u, v)
    */
-  vesta_core::Matrix2d covariance() const
-  {
+  vesta_core::Matrix2d covariance() const {
     return (sqrt_information_.transpose() * sqrt_information_).inverse();
   }
 
   /**
-   * @brief Print a human-readable description of the constraint to the provided stream.
+   * @brief Print a human-readable description of the constraint to the provided
+   * stream.
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream& stream = std::cout) const override;
+  void print(std::ostream &stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
    *
-   * The function caller will own the new cost function instance. It is the responsibility of the caller to delete
-   * the cost function object when it is no longer needed. If the pointer is provided to a Ceres::Problem object, the
-   * Ceres::Problem object will takes ownership of the pointer and delete it during destruction.
+   * The function caller will own the new cost function instance. It is the
+   * responsibility of the caller to delete the cost function object when it is
+   * no longer needed. If the pointer is provided to a Ceres::Problem object,
+   * the Ceres::Problem object will takes ownership of the pointer and delete it
+   * during destruction.
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction* costFunction() const override;
+  ceres::CostFunction *costFunction() const override;
 
 protected:
-  vesta_core::Vector2d mean_;              //!< The 2D observations (in pixel space)
-  vesta_core::Matrix2d sqrt_information_;  //!< The square root information matrix
+  vesta_core::Vector2d mean_; //!< The 2D observations (in pixel space)
+  vesta_core::Matrix2d
+      sqrt_information_; //!< The square root information matrix
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
-    archive& mean_;
-    archive& sqrt_information_;
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+    archive & mean_;
+    archive & sqrt_information_;
   }
 };
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints
 
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::ReprojectionErrorSnavellyConstraint);
-

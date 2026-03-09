@@ -35,30 +35,25 @@
 
 #include <vesta_constraints/3d/normal_prior_pose_3d_cost_functor.h>
 
+#include <Eigen/Dense>
 #include <boost/serialization/export.hpp>
 #include <ceres/autodiff_cost_function.h>
-#include <Eigen/Dense>
 
 #include <string>
 
-
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 AbsolutePose3DStampedConstraint::AbsolutePose3DStampedConstraint(
-  const std::string& source,
-  const vesta_variables::Position3DStamped& position,
-  const vesta_variables::Orientation3DStamped& orientation,
-  const vesta_core::Vector7d& mean,
-  const vesta_core::Matrix6d& covariance) :
-    vesta_core::Constraint(source, {position.uuid(), orientation.uuid()}),  // NOLINT(whitespace/braces)
-    mean_(mean),
-    sqrt_information_(covariance.inverse().llt().matrixU())
-{
-}
+    const std::string &source,
+    const vesta_variables::Position3DStamped &position,
+    const vesta_variables::Orientation3DStamped &orientation,
+    const vesta_core::Vector7d &mean, const vesta_core::Matrix6d &covariance)
+    : vesta_core::Constraint(
+          source,
+          {position.uuid(), orientation.uuid()}), // NOLINT(whitespace/braces)
+      mean_(mean), sqrt_information_(covariance.inverse().llt().matrixU()) {}
 
-void AbsolutePose3DStampedConstraint::print(std::ostream& stream) const
-{
+void AbsolutePose3DStampedConstraint::print(std::ostream &stream) const {
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
@@ -67,19 +62,18 @@ void AbsolutePose3DStampedConstraint::print(std::ostream& stream) const
          << "  mean: " << mean().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 
-  if (loss())
-  {
+  if (loss()) {
     stream << "  loss: ";
     loss()->print(stream);
   }
 }
 
-ceres::CostFunction* AbsolutePose3DStampedConstraint::costFunction() const
-{
+ceres::CostFunction *AbsolutePose3DStampedConstraint::costFunction() const {
   return new ceres::AutoDiffCostFunction<NormalPriorPose3DCostFunctor, 6, 3, 4>(
-    new NormalPriorPose3DCostFunctor(sqrt_information_, mean_));
+      new NormalPriorPose3DCostFunctor(sqrt_information_, mean_));
 }
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints
 
-BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::AbsolutePose3DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(
+    vesta_constraints::AbsolutePose3DStampedConstraint);

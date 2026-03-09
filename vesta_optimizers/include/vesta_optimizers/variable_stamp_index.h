@@ -42,18 +42,18 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace vesta_optimizers
-{
+namespace vesta_optimizers {
 /**
  * @brief Object designed to track the timestamps associated with each variable
  *
- * If the variable is derived from a vesta_variables::Stamped type, then the variable's stamp is used. If a variable
- * is not derived from a vesta_variables::Stamped type, then the timestamp of the newest vesta_variables::Stamped
- * variable *directly connected* to the unstamped variable is used. If an unstamped variable is not directly connected
- * to any variable, then it is assigned a zero timestamp.
+ * If the variable is derived from a vesta_variables::Stamped type, then the
+ * variable's stamp is used. If a variable is not derived from a
+ * vesta_variables::Stamped type, then the timestamp of the newest
+ * vesta_variables::Stamped variable *directly connected* to the unstamped
+ * variable is used. If an unstamped variable is not directly connected to any
+ * variable, then it is assigned a zero timestamp.
  */
-class VariableStampIndex
-{
+class VariableStampIndex {
 public:
   VESTA_SMART_PTR_DEFINITIONS(VariableStampIndex);
 
@@ -80,8 +80,7 @@ public:
   /**
    * @brief Clear all tracked state
    */
-  void clear()
-  {
+  void clear() {
     stamped_index_.clear();
     variables_.clear();
     constraints_.clear();
@@ -95,58 +94,58 @@ public:
   /**
    * @brief Update the index with the information from the added transactions
    *
-   * @param[in] transaction The set of variables and constraints to add and remove
+   * @param[in] transaction The set of variables and constraints to add and
+   * remove
    */
-  void addNewTransaction(const vesta_core::Transaction& transaction);
+  void addNewTransaction(const vesta_core::Transaction &transaction);
 
   /**
    * @brief Update the index with the information from a marginal transaction
    *
-   * Only a subset of information is used from the marginal transaction. We do not want to track the variable
-   * connections induced by marginal factors.
+   * Only a subset of information is used from the marginal transaction. We do
+   * not want to track the variable connections induced by marginal factors.
    *
    * @param[in] transaction The set of variables and constraints to remove
    */
-  void addMarginalTransaction(const vesta_core::Transaction& transaction);
+  void addMarginalTransaction(const vesta_core::Transaction &transaction);
 
   /**
-   * @brief Add all variables that are not directly connected to a stamped variable with a timestamp greater than or
-   *        equal to the provided stamp
+   * @brief Add all variables that are not directly connected to a stamped
+   * variable with a timestamp greater than or equal to the provided stamp
    *
-   * @param[in]  stamp  The reference timestamp. Only variables not associated with timestamps greater than or equal to
-   *                    this will be added to the output container
-   * @param[out] result An output iterator capable of receiving vesta_core::UUID objects
+   * @param[in]  stamp  The reference timestamp. Only variables not associated
+   * with timestamps greater than or equal to this will be added to the output
+   * container
+   * @param[out] result An output iterator capable of receiving vesta_core::UUID
+   * objects
    */
   template <typename OutputUuidIterator>
-  void query(const vesta_core::Timestamp& stamp, OutputUuidIterator result) const
-  {
-    // First get all of the stamped variables greater than or equal to the input stamp
+  void query(const vesta_core::Timestamp &stamp,
+             OutputUuidIterator result) const {
+    // First get all of the stamped variables greater than or equal to the input
+    // stamp
     std::unordered_set<vesta_core::UUID> recent_variable_uuids;
-    for (const auto& variable_stamp_pair : stamped_index_)
-    {
-      if (variable_stamp_pair.second >= stamp)
-      {
+    for (const auto &variable_stamp_pair : stamped_index_) {
+      if (variable_stamp_pair.second >= stamp) {
         recent_variable_uuids.insert(variable_stamp_pair.first);
       }
     }
 
     // Now find all of the variables connected to the recent variables
     std::unordered_set<vesta_core::UUID> connected_variable_uuids;
-    for (const auto& recent_variable_uuid : recent_variable_uuids)
-    {
-      // Add the recent variable to ensure connected_variable_uuids is a superset of recent_variable_uuids
+    for (const auto &recent_variable_uuid : recent_variable_uuids) {
+      // Add the recent variable to ensure connected_variable_uuids is a
+      // superset of recent_variable_uuids
       connected_variable_uuids.insert(recent_variable_uuid);
 
       const auto variables_iter = variables_.find(recent_variable_uuid);
-      if (variables_iter != variables_.end())
-      {
-        for (const auto& connected_constraint_uuid : variables_iter->second)
-        {
-          const auto constraints_iter = constraints_.find(connected_constraint_uuid);
-          if (constraints_iter != constraints_.end())
-          {
-            for (const auto& connected_variable_uuid : constraints_iter->second)
-            {
+      if (variables_iter != variables_.end()) {
+        for (const auto &connected_constraint_uuid : variables_iter->second) {
+          const auto constraints_iter =
+              constraints_.find(connected_constraint_uuid);
+          if (constraints_iter != constraints_.end()) {
+            for (const auto &connected_variable_uuid :
+                 constraints_iter->second) {
               connected_variable_uuids.insert(connected_variable_uuid);
             }
           }
@@ -155,10 +154,9 @@ public:
     }
 
     // Return the set of variables that are not connected
-    for (const auto& variable : variables_)
-    {
-      if (connected_variable_uuids.find(variable.first) == connected_variable_uuids.end())
-      {
+    for (const auto &variable : variables_) {
+      if (connected_variable_uuids.find(variable.first) ==
+          connected_variable_uuids.end()) {
         *result = variable.first;
         ++result;
       }
@@ -166,35 +164,44 @@ public:
   }
 
 protected:
-  using StampedMap = std::unordered_map<vesta_core::UUID, vesta_core::Timestamp>;
-  StampedMap stamped_index_;  //!< Container that holds the UUID->Stamp mapping for vesta_variables::Stamped variables
+  using StampedMap =
+      std::unordered_map<vesta_core::UUID, vesta_core::Timestamp>;
+  StampedMap stamped_index_; //!< Container that holds the UUID->Stamp mapping
+                             //!< for vesta_variables::Stamped variables
 
-  using VariableToConstraintsMap = std::unordered_map<vesta_core::UUID, std::unordered_set<vesta_core::UUID>>;
+  using VariableToConstraintsMap =
+      std::unordered_map<vesta_core::UUID,
+                         std::unordered_set<vesta_core::UUID>>;
   VariableToConstraintsMap variables_;
 
-  using ConstraintToVariablesMap = std::unordered_map<vesta_core::UUID, std::unordered_set<vesta_core::UUID>>;
+  using ConstraintToVariablesMap =
+      std::unordered_map<vesta_core::UUID,
+                         std::unordered_set<vesta_core::UUID>>;
   ConstraintToVariablesMap constraints_;
 
   /**
-   * @brief Update this VariableStampIndex with the added constraints from the provided transaction
+   * @brief Update this VariableStampIndex with the added constraints from the
+   * provided transaction
    */
-  void applyAddedConstraints(const vesta_core::Transaction& transaction);
+  void applyAddedConstraints(const vesta_core::Transaction &transaction);
 
   /**
-   * @brief Update this VariableStampIndex with the added variables from the provided transaction
+   * @brief Update this VariableStampIndex with the added variables from the
+   * provided transaction
    */
-  void applyAddedVariables(const vesta_core::Transaction& transaction);
+  void applyAddedVariables(const vesta_core::Transaction &transaction);
 
   /**
-   * @brief Update this VariableStampIndex with the removed constraints from the provided transaction
+   * @brief Update this VariableStampIndex with the removed constraints from the
+   * provided transaction
    */
-  void applyRemovedConstraints(const vesta_core::Transaction& transaction);
+  void applyRemovedConstraints(const vesta_core::Transaction &transaction);
 
   /**
-   * @brief Update this VariableStampIndex with the removed variables from the provided transaction
+   * @brief Update this VariableStampIndex with the removed variables from the
+   * provided transaction
    */
-  void applyRemovedVariables(const vesta_core::Transaction& transaction);
+  void applyRemovedVariables(const vesta_core::Transaction &transaction);
 };
 
-}  // namespace vesta_optimizers
-
+} // namespace vesta_optimizers

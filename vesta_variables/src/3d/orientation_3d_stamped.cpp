@@ -34,28 +34,24 @@
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 
 #include <vesta_core/manifold.h>
+#include <vesta_core/timestamp.h>
 #include <vesta_core/uuid.h>
 #include <vesta_variables/common/fixed_size_variable.h>
 #include <vesta_variables/common/stamped.h>
-#include <vesta_core/timestamp.h>
 
 #include <boost/serialization/export.hpp>
 
-
 #include <ostream>
 
+namespace vesta_variables {
 
-namespace vesta_variables
-{
+Orientation3DStamped::Orientation3DStamped(const vesta_core::Timestamp &stamp,
+                                           const vesta_core::UUID &device_id)
+    : FixedSizeVariable<4>(
+          vesta_core::uuid::generate(detail::type(), stamp, device_id)),
+      Stamped(stamp, device_id) {}
 
-Orientation3DStamped::Orientation3DStamped(const vesta_core::Timestamp& stamp, const vesta_core::UUID& device_id) :
-  FixedSizeVariable<4>(vesta_core::uuid::generate(detail::type(), stamp, device_id)),
-  Stamped(stamp, device_id)
-{
-}
-
-void Orientation3DStamped::print(std::ostream& stream) const
-{
+void Orientation3DStamped::print(std::ostream &stream) const {
   stream << type() << ":\n"
          << "  uuid: " << uuid() << "\n"
          << "  device_id: " << deviceId() << "\n"
@@ -68,12 +64,11 @@ void Orientation3DStamped::print(std::ostream& stream) const
          << "  - z: " << z() << "\n";
 }
 
-vesta_core::Manifold* Orientation3DStamped::manifold() const
-{
+vesta_core::Manifold *Orientation3DStamped::manifold() const {
   return new Orientation3DManifold();
 }
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::Orientation3DManifold);
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::Orientation3DStamped);

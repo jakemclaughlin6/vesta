@@ -35,16 +35,16 @@
 
 #include <gtest/gtest.h>
 
-
-TEST(Eigen, isSymmetric)
-{
+TEST(Eigen, isSymmetric) {
   const auto random_matrix = vesta_core::Matrix3d::Random().eval();
 
   // A symmetric matrix:
-  const auto symmetric_matrix = (0.5 * (random_matrix + random_matrix.transpose())).eval();
+  const auto symmetric_matrix =
+      (0.5 * (random_matrix + random_matrix.transpose())).eval();
 
-  EXPECT_TRUE(vesta_core::isSymmetric(symmetric_matrix)) << "Matrix\n"
-                                                        << symmetric_matrix << "\n expected to be symmetric.";
+  EXPECT_TRUE(vesta_core::isSymmetric(symmetric_matrix))
+      << "Matrix\n"
+      << symmetric_matrix << "\n expected to be symmetric.";
 
   // A non-symmetric matrix:
   const double asymmetry_error = 1.0e-6;
@@ -56,31 +56,37 @@ TEST(Eigen, isSymmetric)
       << "Matrix\n"
       << non_symmetric_matrix << "\n expected to not be symmetric.";
 
-  // Checking symmetry with precision larger than asymmetry error in non-symmetric matrix:
+  // Checking symmetry with precision larger than asymmetry error in
+  // non-symmetric matrix:
   const double precision = 1.0e2 * asymmetry_error;
 
   EXPECT_TRUE(vesta_core::isSymmetric(non_symmetric_matrix, precision))
       << "Matrix\n"
-      << non_symmetric_matrix << "\n expected to be symmetric with precision " << precision << ".";
+      << non_symmetric_matrix << "\n expected to be symmetric with precision "
+      << precision << ".";
 
-  // vesta_core::isSymmetric is not defined for non-square matrices. The following will simply fail to compile because it
-  // is not allowed, as intended:
+  // vesta_core::isSymmetric is not defined for non-square matrices. The
+  // following will simply fail to compile because it is not allowed, as
+  // intended:
   //
-  // const auto non_square_matrix = vesta_core::Matrix<double, 2, 3>::Random().eval();
+  // const auto non_square_matrix = vesta_core::Matrix<double, 2,
+  // 3>::Random().eval();
   //
   // EXPECT_FALSE(vesta_core::isSymmetric(non_square_matrix));
 }
 
-TEST(Eigen, isPositiveDefinite)
-{
+TEST(Eigen, isPositiveDefinite) {
   const auto random_matrix = vesta_core::Matrix3d::Random().eval();
 
   // A Positive Definite matrix:
-  const auto symmetric_matrix = (0.5 * (random_matrix + random_matrix.transpose())).eval();
-  const auto psd_matrix = (symmetric_matrix + 3 * vesta_core::Matrix3d::Identity()).eval();
+  const auto symmetric_matrix =
+      (0.5 * (random_matrix + random_matrix.transpose())).eval();
+  const auto psd_matrix =
+      (symmetric_matrix + 3 * vesta_core::Matrix3d::Identity()).eval();
 
-  EXPECT_TRUE(vesta_core::isPositiveDefinite(psd_matrix)) << "Matrix\n"
-                                                         << psd_matrix << "\n expected to be Positive Definite.";
+  EXPECT_TRUE(vesta_core::isPositiveDefinite(psd_matrix))
+      << "Matrix\n"
+      << psd_matrix << "\n expected to be Positive Definite.";
 
   // A non Positive Definite matrix:
   auto non_psd_matrix = psd_matrix;
@@ -90,16 +96,16 @@ TEST(Eigen, isPositiveDefinite)
       << "Matrix\n"
       << non_psd_matrix << "\n expected to not be Positive Definite.";
 
-  // vesta_core::isPositiveDefinite is not defined for non-square matrices. The following will simply fail to compile
-  // because it is allowed, as intended:
+  // vesta_core::isPositiveDefinite is not defined for non-square matrices. The
+  // following will simply fail to compile because it is allowed, as intended:
   //
-  // const auto non_square_matrix = vesta_core::Matrix<double, 2, 3>::Random().eval();
+  // const auto non_square_matrix = vesta_core::Matrix<double, 2,
+  // 3>::Random().eval();
   //
   // EXPECT_FALSE(vesta_core::isPositiveDefinite(non_square_matrix));
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

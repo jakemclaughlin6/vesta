@@ -38,49 +38,34 @@
 
 #include <Eigen/Core>
 
-#include <vector>
 #include <iostream>
+#include <vector>
 
-
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 MarginalCostFunction::MarginalCostFunction(
-    const std::vector<vesta_core::MatrixXd>& A,
-    const vesta_core::VectorXd& b,
-    const std::vector<vesta_core::VectorXd>& x_bar,
-    const std::vector<vesta_core::Manifold::SharedPtr>& manifolds) :
-  A_(A),
-  b_(b),
-  manifolds_(manifolds),
-  x_bar_(x_bar)
-{
+    const std::vector<vesta_core::MatrixXd> &A, const vesta_core::VectorXd &b,
+    const std::vector<vesta_core::VectorXd> &x_bar,
+    const std::vector<vesta_core::Manifold::SharedPtr> &manifolds)
+    : A_(A), b_(b), manifolds_(manifolds), x_bar_(x_bar) {
   set_num_residuals(b_.rows());
-  for (const auto& x_bar : x_bar_)
-  {
+  for (const auto &x_bar : x_bar_) {
     mutable_parameter_block_sizes()->push_back(x_bar.size());
   }
 }
 
-bool MarginalCostFunction::Evaluate(
-  double const* const* parameters,
-  double* residuals,
-  double** jacobians) const
-{
+bool MarginalCostFunction::Evaluate(double const *const *parameters,
+                                    double *residuals,
+                                    double **jacobians) const {
   // Compute cost
   Eigen::Map<vesta_core::VectorXd> residuals_map(residuals, num_residuals());
   residuals_map = b_;
-  for (size_t i = 0; i < A_.size(); ++i)
-  {
+  for (size_t i = 0; i < A_.size(); ++i) {
     vesta_core::VectorXd delta(A_[i].cols());
-    if (manifolds_[i])
-    {
+    if (manifolds_[i]) {
       manifolds_[i]->Minus(x_bar_[i].data(), parameters[i], delta.data());
-    }
-    else
-    {
-      for (int j = 0; j < x_bar_[i].rows(); ++j)
-      {
+    } else {
+      for (int j = 0; j < x_bar_[i].rows(); ++j) {
         delta[j] = parameters[i][j] - x_bar_[i][j];
       }
     }
@@ -88,22 +73,20 @@ bool MarginalCostFunction::Evaluate(
   }
 
   // Compute requested Jacobians
-  if (jacobians)
-  {
-    for (size_t i = 0; i < A_.size(); ++i)
-    {
-      if (jacobians[i])
-      {
-        if (manifolds_[i])
-        {
-          const auto& manifold = manifolds_[i];
-          vesta_core::MatrixXd J_local(manifold->TangentSize(), manifold->AmbientSize());
+  if (jacobians) {
+    for (size_t i = 0; i < A_.size(); ++i) {
+      if (jacobians[i]) {
+        if (manifolds_[i]) {
+          const auto &manifold = manifolds_[i];
+          vesta_core::MatrixXd J_local(manifold->TangentSize(),
+                                       manifold->AmbientSize());
           manifold->MinusJacobian(parameters[i], J_local.data());
-          Eigen::Map<vesta_core::MatrixXd>(jacobians[i], num_residuals(), parameter_block_sizes()[i]) = A_[i] * J_local;
-        }
-        else
-        {
-          Eigen::Map<vesta_core::MatrixXd>(jacobians[i], num_residuals(), parameter_block_sizes()[i]) = A_[i];
+          Eigen::Map<vesta_core::MatrixXd>(jacobians[i], num_residuals(),
+                                           parameter_block_sizes()[i]) =
+              A_[i] * J_local;
+        } else {
+          Eigen::Map<vesta_core::MatrixXd>(jacobians[i], num_residuals(),
+                                           parameter_block_sizes()[i]) = A_[i];
         }
       }
     }
@@ -112,4 +95,4 @@ bool MarginalCostFunction::Evaluate(
   return true;
 }
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints

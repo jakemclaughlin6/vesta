@@ -38,8 +38,7 @@
 #include <numeric>
 #include <string>
 
-TEST(Util, wrapAngle2D)
-{
+TEST(Util, wrapAngle2D) {
   // Wrap angle already in [-Pi, +Pi) range
   {
     const double angle = 0.5;
@@ -71,8 +70,7 @@ TEST(Util, wrapAngle2D)
   }
 }
 
-int main(int argc, char** argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

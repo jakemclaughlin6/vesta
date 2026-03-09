@@ -41,20 +41,18 @@
 
 #include <boost/serialization/access.hpp>
 
-
-namespace vesta_variables
-{
+namespace vesta_variables {
 
 /**
  * @brief A class that provides a timestamp and device id
  *
- * This is intended to be used as secondary base class (multiple inheritance) for variables that are time-varying.
- * Some common examples include robot poses or velocities. This is in contrast to variables that represent unknown
- * but fixed quantities, such as the world position of landmarks, or possibly calibration values that are assumed
- * constant.
+ * This is intended to be used as secondary base class (multiple inheritance)
+ * for variables that are time-varying. Some common examples include robot poses
+ * or velocities. This is in contrast to variables that represent unknown but
+ * fixed quantities, such as the world position of landmarks, or possibly
+ * calibration values that are assumed constant.
  */
-class Stamped
-{
+class Stamped {
 public:
   VESTA_SMART_PTR_ALIASES_ONLY(Stamped);
 
@@ -66,10 +64,9 @@ public:
   /**
    * @brief Constructor
    */
-  explicit Stamped(const vesta_core::Timestamp& stamp, const vesta_core::UUID& device_id = vesta_core::uuid::NIL) :
-    device_id_(device_id),
-    stamp_(stamp)
-  {}
+  explicit Stamped(const vesta_core::Timestamp &stamp,
+                   const vesta_core::UUID &device_id = vesta_core::uuid::NIL)
+      : device_id_(device_id), stamp_(stamp) {}
 
   /**
    * @brief Destructor
@@ -79,33 +76,36 @@ public:
   /**
    * @brief Read-only access to the associated timestamp.
    */
-  const vesta_core::Timestamp& stamp() const { return stamp_; }
+  const vesta_core::Timestamp &stamp() const { return stamp_; }
 
   /**
    * @brief Read-only access to the associated device ID.
    */
-  const vesta_core::UUID& deviceId() const { return device_id_; }
+  const vesta_core::UUID &deviceId() const { return device_id_; }
 
 private:
-  vesta_core::UUID device_id_;  //!< The UUID associated with this specific device or hardware
-  vesta_core::Timestamp stamp_;  //!< The timestamp associated with this variable instance
+  vesta_core::UUID
+      device_id_; //!< The UUID associated with this specific device or hardware
+  vesta_core::Timestamp
+      stamp_; //!< The timestamp associated with this variable instance
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
     archive & device_id_;
     archive & stamp_;
   }
 };
 
-}  // namespace vesta_variables
-
+} // namespace vesta_variables

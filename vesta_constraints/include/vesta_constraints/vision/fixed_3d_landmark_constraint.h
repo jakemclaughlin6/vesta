@@ -46,31 +46,32 @@
 #include <vesta_variables/3d/position_3d_stamped.h>
 #include <vesta_variables/vision/pinhole_camera.h>
 
+#include <Eigen/Dense>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
-#include <Eigen/Dense>
 
 #include <ostream>
 #include <string>
 #include <vector>
 
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 /**
- * @brief A constraint that represents an observation of a 3D landmark (ARTag or Similar)
+ * @brief A constraint that represents an observation of a 3D landmark (ARTag or
+ * Similar)
  *
- * A landmark is represented as a 3D pose (3D position and a 3D orientation). This class takes 
- * the ground truth location of the 3D landmark and applies a reprojection-error based constraint
- * on the position, orientation and calibration of the camera that observed the landmark.
- * 
- * In most cases, the camera calibration should be held fixed as a single landmark does not present enough
- * points to accurately constrain the pose AND the calibraton.
- * 
+ * A landmark is represented as a 3D pose (3D position and a 3D orientation).
+ * This class takes the ground truth location of the 3D landmark and applies a
+ * reprojection-error based constraint on the position, orientation and
+ * calibration of the camera that observed the landmark.
+ *
+ * In most cases, the camera calibration should be held fixed as a single
+ * landmark does not present enough points to accurately constrain the pose AND
+ * the calibraton.
+ *
  */
-class Fixed3DLandmarkConstraint : public vesta_core::Constraint
-{
+class Fixed3DLandmarkConstraint : public vesta_core::Constraint {
 public:
   VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(Fixed3DLandmarkConstraint);
 
@@ -79,48 +80,64 @@ public:
    */
   Fixed3DLandmarkConstraint() = default;
 
-    /**
+  /**
    * @brief Create a constraint using a known 3D fiducial marker
    *
-   * @param[in] source        The name of the sensor or motion model that generated this constraint
-   * @param[in] position      The variable representing the position components of the landmark pose
-   * @param[in] orientation   The variable representing the orientation components of the marker pose
-   * @param[in] calibraton    The intrinsic calibration parameters of the camera (4x1 vector: cx, cy, fx, fy).
-   *                          NOTE: Best practice is to fix this variable unless we have several observations
-   *                          with the same camera
+   * @param[in] source        The name of the sensor or motion model that
+   * generated this constraint
+   * @param[in] position      The variable representing the position components
+   * of the landmark pose
+   * @param[in] orientation   The variable representing the orientation
+   * components of the marker pose
+   * @param[in] calibraton    The intrinsic calibration parameters of the camera
+   * (4x1 vector: cx, cy, fx, fy). NOTE: Best practice is to fix this variable
+   * unless we have several observations with the same camera
    * @param[in] pts3d         Matrix of 3D points in marker coordiate frame.
-   * @param[in] observations  The 2D (pixel) observations of each marker's corners.
-   * @param[in] mean          The measured/prior pose of the marker as a vector (7x1 vector: x, y, z, qw, qx, qy, qz)
-   * @param[in] covariance    The measurement/prior marker pose covariance (6x6 matrix: x, y, z, qx, qy, qz)
+   * @param[in] observations  The 2D (pixel) observations of each marker's
+   * corners.
+   * @param[in] mean          The measured/prior pose of the marker as a vector
+   * (7x1 vector: x, y, z, qw, qx, qy, qz)
+   * @param[in] covariance    The measurement/prior marker pose covariance (6x6
+   * matrix: x, y, z, qx, qy, qz)
    */
-  Fixed3DLandmarkConstraint(const std::string& source, const vesta_variables::Position3DStamped& position,
-                            const vesta_variables::Orientation3DStamped& orientation,
-                            const vesta_variables::PinholeCamera& calibraton,
-                            const vesta_core::MatrixXd& pts3d,
-                            const vesta_core::MatrixXd& observations, const vesta_core::Vector7d& mean,
-                            const vesta_core::Matrix6d& covariance);
+  Fixed3DLandmarkConstraint(
+      const std::string &source,
+      const vesta_variables::Position3DStamped &position,
+      const vesta_variables::Orientation3DStamped &orientation,
+      const vesta_variables::PinholeCamera &calibraton,
+      const vesta_core::MatrixXd &pts3d,
+      const vesta_core::MatrixXd &observations,
+      const vesta_core::Vector7d &mean, const vesta_core::Matrix6d &covariance);
 
   /**
-   * @brief Create a constraint using a known 3D fiducial marker. Convenience constructor for the special case of
-   *        an ARTag with 4 corners.
+   * @brief Create a constraint using a known 3D fiducial marker. Convenience
+   * constructor for the special case of an ARTag with 4 corners.
    *
-   * @param[in] source        The name of the sensor or motion model that generated this constraint
-   * @param[in] position      The variable representing the position components of the marker pose
-   * @param[in] orientation   The variable representing the orientation components of the marker pose
-   * @param[in] calibraton    The intrinsic calibration parameters of the camera (4x1 vector: cx, cy, fx, fy).
-   *                          NOTE: Best practice is to fix this variable unless we have several observations
-   *                          with the same camera
-   * @param[in] marker_size   The size of the marker, in meters. Assumed to be square.
-   * @param[in] observations  The 2D (pixel) observations of each marker's corners.
-   * @param[in] mean          The measured/prior pose of the marker as a vector (7x1 vector: x, y, z, qw, qx, qy, qz)
-   * @param[in] covariance    The measurement/prior marker pose covariance (6x6 matrix: x, y, z, qx, qy, qz)
+   * @param[in] source        The name of the sensor or motion model that
+   * generated this constraint
+   * @param[in] position      The variable representing the position components
+   * of the marker pose
+   * @param[in] orientation   The variable representing the orientation
+   * components of the marker pose
+   * @param[in] calibraton    The intrinsic calibration parameters of the camera
+   * (4x1 vector: cx, cy, fx, fy). NOTE: Best practice is to fix this variable
+   * unless we have several observations with the same camera
+   * @param[in] marker_size   The size of the marker, in meters. Assumed to be
+   * square.
+   * @param[in] observations  The 2D (pixel) observations of each marker's
+   * corners.
+   * @param[in] mean          The measured/prior pose of the marker as a vector
+   * (7x1 vector: x, y, z, qw, qx, qy, qz)
+   * @param[in] covariance    The measurement/prior marker pose covariance (6x6
+   * matrix: x, y, z, qx, qy, qz)
    */
-  Fixed3DLandmarkConstraint(const std::string& source, const vesta_variables::Position3DStamped& position,
-                            const vesta_variables::Orientation3DStamped& orientation,
-                            const vesta_variables::PinholeCamera& calibraton,
-                            const double& marker_size,
-                            const vesta_core::MatrixXd& observations, const vesta_core::Vector7d& mean,
-                            const vesta_core::Matrix6d& covariance);
+  Fixed3DLandmarkConstraint(
+      const std::string &source,
+      const vesta_variables::Position3DStamped &position,
+      const vesta_variables::Orientation3DStamped &orientation,
+      const vesta_variables::PinholeCamera &calibraton,
+      const double &marker_size, const vesta_core::MatrixXd &observations,
+      const vesta_core::Vector7d &mean, const vesta_core::Matrix6d &covariance);
 
   /**
    * @brief Destructor
@@ -132,18 +149,14 @@ public:
    *
    * Order is (x, y, z, qw, qx, qy, qz)
    */
-  const vesta_core::Vector7d& mean() const
-  {
-    return mean_;
-  }
+  const vesta_core::Vector7d &mean() const { return mean_; }
 
   /**
    * @brief Read-only access to the square root information matrix.
    *
    * Order is (x, y, z, qx, qy, qz)
    */
-  const vesta_core::Matrix6d& sqrtInformation() const
-  {
+  const vesta_core::Matrix6d &sqrtInformation() const {
     return sqrt_information_;
   }
 
@@ -152,8 +165,7 @@ public:
    *
    * Order is (x, y, z, qx, qy, qz)
    */
-  vesta_core::Matrix6d covariance() const
-  {
+  vesta_core::Matrix6d covariance() const {
     return (sqrt_information_.transpose() * sqrt_information_).inverse();
   }
 
@@ -162,67 +174,68 @@ public:
    *
    * Order is (x, y)
    */
-  const vesta_core::MatrixXd& pts3d() const
-  {
-    return pts3d_;
-  }
+  const vesta_core::MatrixXd &pts3d() const { return pts3d_; }
 
   /**
    * @brief Read-only access to the observation Matrix (Nx2).
    *
    * Order is (x, y)
    */
-  const vesta_core::MatrixXd& observations() const
-  {
-    return observations_;
-  }
+  const vesta_core::MatrixXd &observations() const { return observations_; }
 
   /**
-   * @brief Print a human-readable description of the constraint to the provided stream.
+   * @brief Print a human-readable description of the constraint to the provided
+   * stream.
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream& stream = std::cout) const override;
+  void print(std::ostream &stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
    *
-   * The function caller will own the new cost function instance. It is the responsibility of the caller to delete
-   * the cost function object when it is no longer needed. If the pointer is provided to a Ceres::Problem object, the
-   * Ceres::Problem object will takes ownership of the pointer and delete it during destruction.
+   * The function caller will own the new cost function instance. It is the
+   * responsibility of the caller to delete the cost function object when it is
+   * no longer needed. If the pointer is provided to a Ceres::Problem object,
+   * the Ceres::Problem object will takes ownership of the pointer and delete it
+   * during destruction.
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction* costFunction() const override;
+  ceres::CostFunction *costFunction() const override;
 
 protected:
-  vesta_core::MatrixXd pts3d_;             //!< The 3D points in marker Coordinate frame
-  vesta_core::MatrixXd observations_;      //!< The 2D observations (in pixel space) of the marker at postion mean_
-  vesta_core::Vector7d mean_;              //!< The measured/prior mean vector for this variable
-  vesta_core::Matrix6d sqrt_information_;  //!< The square root information matrix
+  vesta_core::MatrixXd pts3d_; //!< The 3D points in marker Coordinate frame
+  vesta_core::MatrixXd observations_; //!< The 2D observations (in pixel space)
+                                      //!< of the marker at postion mean_
+  vesta_core::Vector7d
+      mean_; //!< The measured/prior mean vector for this variable
+  vesta_core::Matrix6d
+      sqrt_information_; //!< The square root information matrix
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
-    archive& pts3d_;
-    archive& observations_;
-    archive& mean_;
-    archive& sqrt_information_;
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+    archive & pts3d_;
+    archive & observations_;
+    archive & mean_;
+    archive & sqrt_information_;
   }
 };
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints
 
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::Fixed3DLandmarkConstraint);
-

@@ -54,19 +54,21 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <memory>
-#include <utility>
 #include <string>
+#include <utility>
 
 /**
- * Creates a custom new() implementation that ensures memory is allocated with proper byte alignment. This should
- * be added to the public section of classes or structs that contain fixed-sized vectorable Eigen objects.
+ * Creates a custom new() implementation that ensures memory is allocated with
+ * proper byte alignment. This should be added to the public section of classes
+ * or structs that contain fixed-sized vectorable Eigen objects.
  *
- * For examples of vectorable types, see: https://eigen.tuxfamily.org/dox-devel/group__TopicFixedSizeVectorizable.html
+ * For examples of vectorable types, see:
+ * https://eigen.tuxfamily.org/dox-devel/group__TopicFixedSizeVectorizable.html
  *
- * This function is called internally by the SMART_PTR_DEFINITIONS_WITH_EIGEN below. You only need to call this
- * function manually if the class or struct is not adding the smart pointer definitions.
+ * This function is called internally by the SMART_PTR_DEFINITIONS_WITH_EIGEN
+ * below. You only need to call this function manually if the class or struct is
+ * not adding the smart pointer definitions.
  */
 #define VESTA_MAKE_ALIGNED_OPERATOR_NEW()
 
@@ -75,23 +77,24 @@
  *
  * Use in the public section of the class.
  */
-#define VESTA_SMART_PTR_DEFINITIONS(...) \
-  __VESTA_SHARED_PTR_ALIAS(__VA_ARGS__) \
-  __VESTA_MAKE_SHARED_DEFINITION(__VA_ARGS__) \
-  __VESTA_WEAK_PTR_ALIAS(__VA_ARGS__) \
-  __VESTA_UNIQUE_PTR_ALIAS(__VA_ARGS__) \
+#define VESTA_SMART_PTR_DEFINITIONS(...)                                       \
+  __VESTA_SHARED_PTR_ALIAS(__VA_ARGS__)                                        \
+  __VESTA_MAKE_SHARED_DEFINITION(__VA_ARGS__)                                  \
+  __VESTA_WEAK_PTR_ALIAS(__VA_ARGS__)                                          \
+  __VESTA_UNIQUE_PTR_ALIAS(__VA_ARGS__)                                        \
   __VESTA_MAKE_UNIQUE_DEFINITION(__VA_ARGS__)
 
 /**
- * Defines smart pointer aliases and static functions for a class that contains fixed-sized vectorable Eigen member
- * variables.
+ * Defines smart pointer aliases and static functions for a class that contains
+ * fixed-sized vectorable Eigen member variables.
  *
- * Same as SMART_PTR_DEFINITIONS except it ensures that shared ptr memory is allocated with proper byte alignment.
- * For examples of vectorable types, see: https://eigen.tuxfamily.org/dox-devel/group__TopicFixedSizeVectorizable.html
+ * Same as SMART_PTR_DEFINITIONS except it ensures that shared ptr memory is
+ * allocated with proper byte alignment. For examples of vectorable types, see:
+ * https://eigen.tuxfamily.org/dox-devel/group__TopicFixedSizeVectorizable.html
  *
  * Use in the public section of the class.
  */
-#define VESTA_SMART_PTR_DEFINITIONS_WITH_EIGEN(...) \
+#define VESTA_SMART_PTR_DEFINITIONS_WITH_EIGEN(...)                            \
   VESTA_SMART_PTR_DEFINITIONS(__VA_ARGS__)
 
 /**
@@ -103,35 +106,30 @@
  *
  * Use in the public section of the class.
  */
-#define VESTA_SMART_PTR_ALIASES_ONLY(...) \
-  __VESTA_SHARED_PTR_ALIAS(__VA_ARGS__) \
-  __VESTA_WEAK_PTR_ALIAS(__VA_ARGS__) \
+#define VESTA_SMART_PTR_ALIASES_ONLY(...)                                      \
+  __VESTA_SHARED_PTR_ALIAS(__VA_ARGS__)                                        \
+  __VESTA_WEAK_PTR_ALIAS(__VA_ARGS__)                                          \
   __VESTA_UNIQUE_PTR_ALIAS(__VA_ARGS__)
 
-#define __VESTA_SHARED_PTR_ALIAS(...) \
-  using SharedPtr = std::shared_ptr<__VA_ARGS__>; \
+#define __VESTA_SHARED_PTR_ALIAS(...)                                          \
+  using SharedPtr = std::shared_ptr<__VA_ARGS__>;                              \
   using ConstSharedPtr = std::shared_ptr<const __VA_ARGS__>;
 
-#define __VESTA_MAKE_SHARED_DEFINITION(...) \
-  template<typename ... Args> \
-  static std::shared_ptr<__VA_ARGS__> \
-  make_shared(Args && ... args) \
-  { \
-    return std::make_shared<__VA_ARGS__>(std::forward<Args>(args) ...); \
+#define __VESTA_MAKE_SHARED_DEFINITION(...)                                    \
+  template <typename... Args>                                                  \
+  static std::shared_ptr<__VA_ARGS__> make_shared(Args &&...args) {            \
+    return std::make_shared<__VA_ARGS__>(std::forward<Args>(args)...);         \
   }
 
-#define __VESTA_WEAK_PTR_ALIAS(...) \
-  using WeakPtr = std::weak_ptr<__VA_ARGS__>; \
+#define __VESTA_WEAK_PTR_ALIAS(...)                                            \
+  using WeakPtr = std::weak_ptr<__VA_ARGS__>;                                  \
   using ConstWeakPtr = std::weak_ptr<const __VA_ARGS__>;
 
-#define __VESTA_UNIQUE_PTR_ALIAS(...) \
+#define __VESTA_UNIQUE_PTR_ALIAS(...)                                          \
   using UniquePtr = std::unique_ptr<__VA_ARGS__>;
 
-#define __VESTA_MAKE_UNIQUE_DEFINITION(...) \
-  template<typename ... Args> \
-  static std::unique_ptr<__VA_ARGS__> \
-  make_unique(Args && ... args) \
-  { \
-    return std::make_unique<__VA_ARGS__>(std::forward<Args>(args) ...); \
+#define __VESTA_MAKE_UNIQUE_DEFINITION(...)                                    \
+  template <typename... Args>                                                  \
+  static std::unique_ptr<__VA_ARGS__> make_unique(Args &&...args) {            \
+    return std::make_unique<__VA_ARGS__>(std::forward<Args>(args)...);         \
   }
-

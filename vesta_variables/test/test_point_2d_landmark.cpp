@@ -32,9 +32,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <vesta_core/serialization.h>
-#include <vesta_variables/vision/point_2d_landmark.h>
-#include <vesta_variables/common/stamped.h>
 #include <vesta_core/timestamp.h>
+#include <vesta_variables/common/stamped.h>
+#include <vesta_variables/vision/point_2d_landmark.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <ceres/problem.h>
@@ -46,21 +46,17 @@
 
 using vesta_variables::Point2DLandmark;
 
-
-TEST(Point2DLandmark, Type)
-{
+TEST(Point2DLandmark, Type) {
   Point2DLandmark variable(0);
   EXPECT_EQ("vesta_variables::Point2DLandmark", variable.type());
 }
 
-TEST(Point2DLandmark, SchurGroup)
-{
+TEST(Point2DLandmark, SchurGroup) {
   Point2DLandmark variable(0);
   EXPECT_EQ(0, variable.schurGroup());
 }
 
-TEST(Point2DLandmark, UUID)
-{
+TEST(Point2DLandmark, UUID) {
   // Verify two positions with the same landmark ids produce the same uuids
   {
     Point2DLandmark variable1(0);
@@ -68,7 +64,8 @@ TEST(Point2DLandmark, UUID)
     EXPECT_EQ(variable1.uuid(), variable2.uuid());
   }
 
-    // Verify two positions with the different landmark ids  produce different uuids
+  // Verify two positions with the different landmark ids  produce different
+  // uuids
   {
     Point2DLandmark variable1(0);
     Point2DLandmark variable2(1);
@@ -76,39 +73,32 @@ TEST(Point2DLandmark, UUID)
   }
 }
 
-struct CostFunctor
-{
+struct CostFunctor {
   CostFunctor() {}
 
-  template <typename T> bool operator()(const T* const x, T* residual) const
-  {
+  template <typename T> bool operator()(const T *const x, T *residual) const {
     residual[0] = x[0] - T(3.0);
     residual[1] = x[1] + T(8.0);
     return true;
   }
 };
 
-TEST(Point2DLandmark, Optimization)
-{
+TEST(Point2DLandmark, Optimization) {
   // Create a Point2DLandmark
   Point2DLandmark position(0);
   position.x() = 1.5;
   position.y() = -3.0;
 
   // Create a simple a constraint
-  ceres::CostFunction* cost_function = new ceres::AutoDiffCostFunction<CostFunctor, 2, 2>(new CostFunctor());
+  ceres::CostFunction *cost_function =
+      new ceres::AutoDiffCostFunction<CostFunctor, 2, 2>(new CostFunctor());
 
   // Build the problem.
   ceres::Problem problem;
-  problem.AddParameterBlock(
-    position.data(),
-    position.size());
-  std::vector<double*> parameter_blocks;
+  problem.AddParameterBlock(position.data(), position.size());
+  std::vector<double *> parameter_blocks;
   parameter_blocks.push_back(position.data());
-  problem.AddResidualBlock(
-    cost_function,
-    nullptr,
-    parameter_blocks);
+  problem.AddResidualBlock(cost_function, nullptr, parameter_blocks);
 
   // Run the solver
   ceres::Solver::Options options;
@@ -120,8 +110,7 @@ TEST(Point2DLandmark, Optimization)
   EXPECT_NEAR(-8.0, position.y(), 1.0e-5);
 }
 
-TEST(Point2DLandmark, Serialization)
-{
+TEST(Point2DLandmark, Serialization) {
   // Create a Point2DLandmark
   Point2DLandmark expected(0);
   expected.x() = 1.5;
@@ -148,8 +137,7 @@ TEST(Point2DLandmark, Serialization)
   EXPECT_EQ(expected.y(), actual.y());
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

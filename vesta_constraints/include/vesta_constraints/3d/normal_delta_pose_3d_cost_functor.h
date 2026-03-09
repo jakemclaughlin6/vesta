@@ -41,96 +41,88 @@
 
 #include <ceres/rotation.h>
 
-
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 /**
- * @brief Implements a cost function that models a difference between 3D pose variables.
+ * @brief Implements a cost function that models a difference between 3D pose
+ * variables.
  *
- * A single pose involves two variables: a 3D position and a 3D orientation. This cost function computes the difference
- * using standard 3D transformation math:
+ * A single pose involves two variables: a 3D position and a 3D orientation.
+ * This cost function computes the difference using standard 3D transformation
+ * math:
  *
  *   cost(x) = || A * [ q1^-1 * (p2 - p1) - b(0:2)        ] ||^2
  *             ||     [ AngleAxis(b(3:6)^-1 * q1^-1 * q2) ] ||
  *
- * where p1 and p2 are the position variables, q1 and q2 are the quaternion orientation variables, and the matrix A
- * and the vector b are fixed. In case the user is interested in implementing a cost function of
- * the form:
+ * where p1 and p2 are the position variables, q1 and q2 are the quaternion
+ * orientation variables, and the matrix A and the vector b are fixed. In case
+ * the user is interested in implementing a cost function of the form:
  *
  *   cost(X) = (X - mu)^T S^{-1} (X - mu)
  *
- * where, mu is a vector and S is a covariance matrix, then, A = S^{-1/2}, i.e the matrix A is the square root
- * information matrix (the inverse of the covariance).
+ * where, mu is a vector and S is a covariance matrix, then, A = S^{-1/2}, i.e
+ * the matrix A is the square root information matrix (the inverse of the
+ * covariance).
  *
- * Note that the cost function's quaternion components are only concerned with the imaginary components (qx, qy, qz).
+ * Note that the cost function's quaternion components are only concerned with
+ * the imaginary components (qx, qy, qz).
  */
-class NormalDeltaPose3DCostFunctor
-{
+class NormalDeltaPose3DCostFunctor {
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
   /**
    * @brief Constructor
    *
-   * @param[in] A The residual weighting matrix, most likely the square root information matrix in order
-   *              (dx, dy, dz, dqx, dqy, dqz)
-   * @param[in] b The exposed pose difference in order (dx, dy, dz, dqw, dqx, dqy, dqz)
+   * @param[in] A The residual weighting matrix, most likely the square root
+   * information matrix in order (dx, dy, dz, dqx, dqy, dqz)
+   * @param[in] b The exposed pose difference in order (dx, dy, dz, dqw, dqx,
+   * dqy, dqz)
    */
-  NormalDeltaPose3DCostFunctor(const vesta_core::Matrix6d& A, const vesta_core::Vector7d& b);
+  NormalDeltaPose3DCostFunctor(const vesta_core::Matrix6d &A,
+                               const vesta_core::Vector7d &b);
 
   /**
-   * @brief Compute the cost values/residuals using the provided variable/parameter values
+   * @brief Compute the cost values/residuals using the provided
+   * variable/parameter values
    */
   template <typename T>
-  bool operator()(
-    const T* const position1,
-    const T* const orientation1,
-    const T* const position2,
-    const T* const orientation2,
-    T* residual) const;
+  bool operator()(const T *const position1, const T *const orientation1,
+                  const T *const position2, const T *const orientation2,
+                  T *residual) const;
 
 private:
-  vesta_core::Matrix6d A_;  //!< The residual weighting matrix, most likely the square root information matrix
-  vesta_core::Vector7d b_;  //!< The measured difference between variable pose1 and variable pose2
+  vesta_core::Matrix6d A_; //!< The residual weighting matrix, most likely the
+                           //!< square root information matrix
+  vesta_core::Vector7d
+      b_; //!< The measured difference between variable pose1 and variable pose2
 
   NormalDeltaOrientation3DCostFunctor orientation_functor_;
 };
 
-NormalDeltaPose3DCostFunctor::NormalDeltaPose3DCostFunctor(const vesta_core::Matrix6d& A, const vesta_core::Vector7d& b) :
-  A_(A),
-  b_(b),
-  orientation_functor_(vesta_core::Matrix3d::Identity(), b_.tail<4>())  // Orientation residuals will not be scaled
-{
-}
+NormalDeltaPose3DCostFunctor::NormalDeltaPose3DCostFunctor(
+    const vesta_core::Matrix6d &A, const vesta_core::Vector7d &b)
+    : A_(A), b_(b),
+      orientation_functor_(
+          vesta_core::Matrix3d::Identity(),
+          b_.tail<4>()) // Orientation residuals will not be scaled
+{}
 
 template <typename T>
-bool NormalDeltaPose3DCostFunctor::operator()(
-  const T* const position1,
-  const T* const orientation1,
-  const T* const position2,
-  const T* const orientation2,
-  T* residual) const
-{
+bool NormalDeltaPose3DCostFunctor::operator()(const T *const position1,
+                                              const T *const orientation1,
+                                              const T *const position2,
+                                              const T *const orientation2,
+                                              T *residual) const {
   // Compute the position delta between pose1 and pose2
-  T orientation1_inverse[4] =
-  {
-    orientation1[0],
-    -orientation1[1],
-    -orientation1[2],
-    -orientation1[3]
-  };
-  T position_delta[3] =
-  {
-    position2[0] - position1[0],
-    position2[1] - position1[1],
-    position2[2] - position1[2]
-  };
+  T orientation1_inverse[4] = {orientation1[0], -orientation1[1],
+                               -orientation1[2], -orientation1[3]};
+  T position_delta[3] = {position2[0] - position1[0],
+                         position2[1] - position1[1],
+                         position2[2] - position1[2]};
   T position_delta_rotated[3];
-  ceres::QuaternionRotatePoint(
-    orientation1_inverse,
-    position_delta,
-    position_delta_rotated);
+  ceres::QuaternionRotatePoint(orientation1_inverse, position_delta,
+                               position_delta_rotated);
 
   // Compute the first three residual terms as (position_delta - b)
   residual[0] = position_delta_rotated[0] - T(b_[0]);
@@ -147,5 +139,4 @@ bool NormalDeltaPose3DCostFunctor::operator()(
   return true;
 }
 
-}  // namespace vesta_constraints
-
+} // namespace vesta_constraints

@@ -36,12 +36,12 @@
 
 #include <vesta_core/manifold.h>
 #include <vesta_core/serialization.h>
+#include <vesta_core/timestamp.h>
 #include <vesta_core/util.h>
 #include <vesta_core/uuid.h>
 #include <vesta_core/variable.h>
 #include <vesta_variables/common/fixed_size_variable.h>
 #include <vesta_variables/common/stamped.h>
-#include <vesta_core/timestamp.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -49,62 +49,42 @@
 
 #include <ostream>
 
-
-namespace vesta_variables
-{
+namespace vesta_variables {
 
 /**
  * @brief A Manifold class for 2D Orientations.
  *
- * 2D orientations add and subtract in the "usual" way, except for the 2*pi rollover issue. This manifold
- * handles the rollover. Because the Jacobians for this manifold are always identity, we implement this
- * manifold with "analytic" derivatives, instead of using the Ceres's autodiff system.
+ * 2D orientations add and subtract in the "usual" way, except for the 2*pi
+ * rollover issue. This manifold handles the rollover. Because the Jacobians for
+ * this manifold are always identity, we implement this manifold with "analytic"
+ * derivatives, instead of using the Ceres's autodiff system.
  */
-class Orientation2DManifold : public vesta_core::Manifold
-{
+class Orientation2DManifold : public vesta_core::Manifold {
 public:
-  int AmbientSize() const override
-  {
-    return 1;
-  }
+  int AmbientSize() const override { return 1; }
 
-  int TangentSize() const override
-  {
-    return 1;
-  }
+  int TangentSize() const override { return 1; }
 
-  bool Plus(
-    const double* x,
-    const double* delta,
-    double* x_plus_delta) const override
-  {
-    // Compute the angle increment as a linear update, and handle the 2*Pi rollover
+  bool Plus(const double *x, const double *delta,
+            double *x_plus_delta) const override {
+    // Compute the angle increment as a linear update, and handle the 2*Pi
+    // rollover
     x_plus_delta[0] = vesta_core::wrapAngle2D(x[0] + delta[0]);
     return true;
   }
 
-  bool PlusJacobian(
-    const double* /*x*/,
-    double* jacobian) const override
-  {
+  bool PlusJacobian(const double * /*x*/, double *jacobian) const override {
     jacobian[0] = 1.0;
     return true;
   }
 
-  bool Minus(
-    const double* x1,
-    const double* x2,
-    double* delta) const override
-  {
+  bool Minus(const double *x1, const double *x2, double *delta) const override {
     // Compute the difference from x2 to x1, and handle the 2*Pi rollover
     delta[0] = vesta_core::wrapAngle2D(x2[0] - x1[0]);
     return true;
   }
 
-  bool MinusJacobian(
-    const double* /*x*/,
-    double* jacobian) const override
-  {
+  bool MinusJacobian(const double * /*x*/, double *jacobian) const override {
     jacobian[0] = 1.0;
     return true;
   }
@@ -114,36 +94,36 @@ private:
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_core::Manifold>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Manifold>(*this);
   }
 };
 
 /**
- * @brief Variable representing a 2D orientation (theta) at a specific time, with a specific piece of hardware.
+ * @brief Variable representing a 2D orientation (theta) at a specific time,
+ * with a specific piece of hardware.
  *
- * This is commonly used to represent a robot's orientation within a map. The UUID of this class is static after
- * construction. As such, the timestamp and device id cannot be modified. The value of the orientation can be modified.
+ * This is commonly used to represent a robot's orientation within a map. The
+ * UUID of this class is static after construction. As such, the timestamp and
+ * device id cannot be modified. The value of the orientation can be modified.
  */
-class Orientation2DStamped : public FixedSizeVariable<1>, public Stamped
-{
+class Orientation2DStamped : public FixedSizeVariable<1>, public Stamped {
 public:
   VESTA_VARIABLE_DEFINITIONS(Orientation2DStamped);
 
   /**
    * @brief Can be used to directly index variables in the data array
    */
-  enum : size_t
-  {
-    YAW = 0
-  };
+  enum : size_t { YAW = 0 };
 
   /**
    * @brief Default constructor
@@ -154,26 +134,35 @@ public:
    * @brief Construct a 2D orientation at a specific point in time.
    *
    * @param[in] stamp     The timestamp attached to this orientation.
-   * @param[in] device_id An optional device id, for use when variables originate from multiple robots or devices
+   * @param[in] device_id An optional device id, for use when variables
+   * originate from multiple robots or devices
    */
-  explicit Orientation2DStamped(const vesta_core::Timestamp& stamp, const vesta_core::UUID& device_id = vesta_core::uuid::NIL);
+  explicit Orientation2DStamped(
+      const vesta_core::Timestamp &stamp,
+      const vesta_core::UUID &device_id = vesta_core::uuid::NIL);
 
   /**
    * @brief Read-write access to the heading angle.
    */
-  [[deprecated("The yaw value must be in the range [-pi, pi). Use the setYaw(value) method to ensure minimum phase.")]]
-  double& yaw() { return data_[YAW]; }
+  [[deprecated("The yaw value must be in the range [-pi, pi). Use the "
+               "setYaw(value) method to ensure minimum phase.")]]
+  double &yaw() {
+    return data_[YAW];
+  }
 
   /**
    * @brief Read-only access to the heading angle.
    */
-  [[deprecated("Use the getYaw()/setYaw(value) methods to ensure const-correctness.")]]
-  const double& yaw() const { return data_[YAW]; }
+  [[deprecated(
+      "Use the getYaw()/setYaw(value) methods to ensure const-correctness.")]]
+  const double &yaw() const {
+    return data_[YAW];
+  }
 
   /**
    * @brief Read-only access to the heading angle.
    */
-  const double& getYaw() const { return data_[YAW]; }
+  const double &getYaw() const { return data_[YAW]; }
 
   /**
    * @brief Write access to the heading angle.
@@ -181,50 +170,53 @@ public:
   void setYaw(const double yaw) { data_[YAW] = vesta_core::wrapAngle2D(yaw); }
 
   /**
-   * @brief Print a human-readable description of the variable to the provided stream.
+   * @brief Print a human-readable description of the variable to the provided
+   * stream.
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream& stream = std::cout) const override;
+  void print(std::ostream &stream = std::cout) const override;
 
   /**
    * @brief Returns the number of elements of the tangent space.
    *
-   * Since we are overriding the \p manifold() method, it is good practice to override the \p tangentSize()
-   * method as well.
+   * Since we are overriding the \p manifold() method, it is good practice to
+   * override the \p tangentSize() method as well.
    */
   size_t tangentSize() const override { return 1u; }
 
   /**
-   * @brief Create a new Ceres manifold object to apply to updates of this variable
+   * @brief Create a new Ceres manifold object to apply to updates of this
+   * variable
    *
-   * A 2D rotation has a nonlinearity when the angle wraps around from -PI to PI. This is handled by a custom
-   * manifold to ensure smooth derivatives.
+   * A 2D rotation has a nonlinearity when the angle wraps around from -PI to
+   * PI. This is handled by a custom manifold to ensure smooth derivatives.
    *
    * @return A base pointer to an instance of a derived Manifold
    */
-  vesta_core::Manifold* manifold() const override;
+  vesta_core::Manifold *manifold() const override;
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
-    archive & boost::serialization::base_object<Stamped>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
+    archive &boost::serialization::base_object<Stamped>(*this);
   }
 };
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_KEY(vesta_variables::Orientation2DManifold);
 BOOST_CLASS_EXPORT_KEY(vesta_variables::Orientation2DStamped);
-

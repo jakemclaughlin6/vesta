@@ -32,8 +32,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <vesta_constraints/3d/absolute_orientation_3d_stamped_constraint.h>
-#include <vesta_constraints/common/marginalize_variables.h>
 #include <vesta_constraints/3d/relative_orientation_3d_stamped_constraint.h>
+#include <vesta_constraints/common/marginalize_variables.h>
 #include <vesta_constraints/common/uuid_ordering.h>
 #include <vesta_core/constraint.h>
 #include <vesta_core/eigen.h>
@@ -55,31 +55,25 @@
 #include <utility>
 #include <vector>
 
-
 /**
  * @brief Create a simple Variable implementation for testing
  */
-class GenericVariable : public vesta_core::Variable
-{
+class GenericVariable : public vesta_core::Variable {
 public:
   VESTA_VARIABLE_DEFINITIONS(GenericVariable);
 
-  GenericVariable() :
-    vesta_core::Variable(vesta_core::uuid::generate()),
-    data_{}
-  {}
+  GenericVariable()
+      : vesta_core::Variable(vesta_core::uuid::generate()), data_{} {}
 
-  explicit GenericVariable(const vesta_core::UUID& uuid) :
-    vesta_core::Variable(uuid),
-    data_{}
-  {}
+  explicit GenericVariable(const vesta_core::UUID &uuid)
+      : vesta_core::Variable(uuid), data_{} {}
 
   size_t size() const override { return 1; }
 
-  const double* data() const override { return &data_; }
-  double* data() override { return &data_; }
+  const double *data() const override { return &data_; }
+  double *data() override { return &data_; }
 
-  void print(std::ostream& /*stream = std::cout*/) const override {}
+  void print(std::ostream & /*stream = std::cout*/) const override {}
 
 protected:
   double data_;
@@ -89,15 +83,17 @@ private:
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_core::Variable>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Variable>(*this);
     archive & data_;
   }
 };
@@ -107,77 +103,77 @@ BOOST_CLASS_EXPORT(GenericVariable);
 /**
  * @brief Create a simple Constraint implementation for testing
  */
-class GenericConstraint : public vesta_core::Constraint
-{
+class GenericConstraint : public vesta_core::Constraint {
 public:
   VESTA_CONSTRAINT_DEFINITIONS(GenericConstraint);
 
-  GenericConstraint(std::initializer_list<vesta_core::UUID> variable_uuids) :
-    Constraint("test", variable_uuids) {}
+  GenericConstraint(std::initializer_list<vesta_core::UUID> variable_uuids)
+      : Constraint("test", variable_uuids) {}
 
-  explicit GenericConstraint(const vesta_core::UUID& variable1) :
-    vesta_core::Constraint("test", {variable1}) {}
+  explicit GenericConstraint(const vesta_core::UUID &variable1)
+      : vesta_core::Constraint("test", {variable1}) {}
 
-  GenericConstraint(const vesta_core::UUID& variable1, const vesta_core::UUID& variable2) :
-    vesta_core::Constraint("test", {variable1, variable2}) {}
+  GenericConstraint(const vesta_core::UUID &variable1,
+                    const vesta_core::UUID &variable2)
+      : vesta_core::Constraint("test", {variable1, variable2}) {}
 
-  void print(std::ostream& /*stream = std::cout*/) const override {}
+  void print(std::ostream & /*stream = std::cout*/) const override {}
 
-  ceres::CostFunction* costFunction() const override { return nullptr; }
+  ceres::CostFunction *costFunction() const override { return nullptr; }
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_core::Constraint>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
   }
 };
 
-class FixedOrientation3DStamped : public vesta_variables::Orientation3DStamped
-{
+class FixedOrientation3DStamped : public vesta_variables::Orientation3DStamped {
 public:
   VESTA_VARIABLE_DEFINITIONS(FixedOrientation3DStamped);
 
   FixedOrientation3DStamped() = default;
 
-  explicit FixedOrientation3DStamped(const vesta_core::Timestamp& stamp, const vesta_core::UUID& device_id = vesta_core::uuid::NIL) :
-    Orientation3DStamped(stamp, device_id)
-  {
-  }
+  explicit FixedOrientation3DStamped(
+      const vesta_core::Timestamp &stamp,
+      const vesta_core::UUID &device_id = vesta_core::uuid::NIL)
+      : Orientation3DStamped(stamp, device_id) {}
 
-  bool holdConstant() const override
-  {
-    return true;
-  }
+  bool holdConstant() const override { return true; }
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_variables::Orientation3DStamped>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<
+        vesta_variables::Orientation3DStamped>(*this);
   }
 };
 
-TEST(MarginalizeVariables, ComputeEliminationOrder)
-{
+TEST(MarginalizeVariables, ComputeEliminationOrder) {
   // Create a graph
   auto x1 = GenericVariable::make_shared();
   auto x2 = GenericVariable::make_shared();
@@ -204,10 +200,12 @@ TEST(MarginalizeVariables, ComputeEliminationOrder)
   graph.addConstraint(c6);
 
   // Define the set of variables to be marginalized
-  auto to_be_marginalized = std::vector<vesta_core::UUID>{x2->uuid(), x1->uuid()};
+  auto to_be_marginalized =
+      std::vector<vesta_core::UUID>{x2->uuid(), x1->uuid()};
 
   // Compute the ordering
-  auto actual = vesta_constraints::computeEliminationOrder(to_be_marginalized, graph);
+  auto actual =
+      vesta_constraints::computeEliminationOrder(to_be_marginalized, graph);
 
   // Define the expected order
   auto expected = vesta_constraints::UuidOrdering();
@@ -218,15 +216,14 @@ TEST(MarginalizeVariables, ComputeEliminationOrder)
 
   // Check
   ASSERT_EQ(expected.size(), actual.size());
-  for (size_t i = 0; i < expected.size(); ++i)
-  {
+  for (size_t i = 0; i < expected.size(); ++i) {
     SCOPED_TRACE(i);
-    EXPECT_EQ(vesta_core::uuid::to_string(expected.at(i)), vesta_core::uuid::to_string(actual.at(i)));
+    EXPECT_EQ(vesta_core::uuid::to_string(expected.at(i)),
+              vesta_core::uuid::to_string(actual.at(i)));
   }
 }
 
-TEST(MarginalizeVariables, ComputeEliminationOrderWithOrphanVariables)
-{
+TEST(MarginalizeVariables, ComputeEliminationOrderWithOrphanVariables) {
   // Create a graph
   auto x1 = GenericVariable::make_shared();
   auto x2 = GenericVariable::make_shared();
@@ -252,18 +249,23 @@ TEST(MarginalizeVariables, ComputeEliminationOrderWithOrphanVariables)
   graph.addConstraint(c5);
   graph.addConstraint(c6);
 
-  // Add orphan variables (with explicit UUID so it's easier to identify them if any of the checks fail)
-  // With 1 or 2 orphan variables computeEliminationOrder throws an std::runtime_error exception because CCOLAMD fails
-  // With 3 or more orphan variables computeEliminationOrder crashes with `free(): invalid next size (fast)`
-  auto o1 = GenericVariable::make_shared(vesta_core::uuid::from_string("b726fbef-4015-4dc8-b4dd-cb57d4439c74"));
+  // Add orphan variables (with explicit UUID so it's easier to identify them if
+  // any of the checks fail) With 1 or 2 orphan variables
+  // computeEliminationOrder throws an std::runtime_error exception because
+  // CCOLAMD fails With 3 or more orphan variables computeEliminationOrder
+  // crashes with `free(): invalid next size (fast)`
+  auto o1 = GenericVariable::make_shared(
+      vesta_core::uuid::from_string("b726fbef-4015-4dc8-b4dd-cb57d4439c74"));
   graph.addVariable(o1);
 
   // Define the set of variables to be marginalized
-  auto to_be_marginalized = std::vector<vesta_core::UUID>{ x2->uuid(), x1->uuid(), o1->uuid() };
+  auto to_be_marginalized =
+      std::vector<vesta_core::UUID>{x2->uuid(), x1->uuid(), o1->uuid()};
 
   // Compute the ordering
   vesta_constraints::UuidOrdering actual;
-  ASSERT_NO_THROW(actual = vesta_constraints::computeEliminationOrder(to_be_marginalized, graph));
+  ASSERT_NO_THROW(actual = vesta_constraints::computeEliminationOrder(
+                      to_be_marginalized, graph));
 
   // Define the expected order
   auto expected = vesta_constraints::UuidOrdering();
@@ -275,36 +277,35 @@ TEST(MarginalizeVariables, ComputeEliminationOrderWithOrphanVariables)
 
   // Check
   ASSERT_EQ(expected.size(), actual.size());
-  for (size_t i = 0; i < expected.size(); ++i)
-  {
+  for (size_t i = 0; i < expected.size(); ++i) {
     SCOPED_TRACE(i);
-    EXPECT_EQ(vesta_core::uuid::to_string(expected.at(i)), vesta_core::uuid::to_string(actual.at(i)));
+    EXPECT_EQ(vesta_core::uuid::to_string(expected.at(i)),
+              vesta_core::uuid::to_string(actual.at(i)));
   }
 
   // Check all marginalized variables are in the elimination order
   // This check is equivalent to the assert in marginalizeVariables
-  for (const auto& variable_uuid : to_be_marginalized)
-  {
+  for (const auto &variable_uuid : to_be_marginalized) {
     SCOPED_TRACE(vesta_core::uuid::to_string(variable_uuid));
 
     EXPECT_TRUE(actual.exists(variable_uuid));
-    if (actual.exists(variable_uuid))
-    {
+    if (actual.exists(variable_uuid)) {
       EXPECT_GT(to_be_marginalized.size(), actual.at(variable_uuid));
     }
   }
 }
 
-TEST(MarginalizeVariables, Linearize)
-{
+TEST(MarginalizeVariables, Linearize) {
   // Create a graph with one relative 3D orientation constraint
-  auto x1 = vesta_variables::Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0));
+  auto x1 = vesta_variables::Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(1, 0));
   x1->w() = 0.927362;
   x1->x() = 0.1;
   x1->y() = 0.2;
   x1->z() = 0.3;
 
-  auto x2 = vesta_variables::Orientation3DStamped::make_shared(vesta_core::Timestamp(2, 0));
+  auto x2 = vesta_variables::Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(2, 0));
   x2->w() = 0.848625;
   x2->x() = 0.13798;
   x2->y() = 0.175959;
@@ -313,8 +314,10 @@ TEST(MarginalizeVariables, Linearize)
   vesta_core::Vector4d delta;
   delta << 0.979795897, 0.0, 0.0, 0.2;
   vesta_core::Matrix3d cov;
-  cov << 1.0, 0.0, 0.0,   0.0, 2.0, 0.0,   0.0, 0.0, 3.0;
-  auto constraint = vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared("test", *x1, *x2, delta, cov);
+  cov << 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0;
+  auto constraint =
+      vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
+          "test", *x1, *x2, delta, cov);
 
   auto graph = vesta_graphs::HashGraph();
   graph.addVariable(x1);
@@ -323,27 +326,37 @@ TEST(MarginalizeVariables, Linearize)
 
   // Create an elimination order
   auto elimination_order = vesta_constraints::UuidOrdering();
-  elimination_order.push_back(vesta_core::uuid::generate());  // Add a dummy variable to the elimination order
+  elimination_order.push_back(
+      vesta_core::uuid::generate()); // Add a dummy variable to the elimination
+                                     // order
   elimination_order.push_back(x2->uuid());
-  elimination_order.push_back(vesta_core::uuid::generate());  // Add a dummy variable to the elimination order
+  elimination_order.push_back(
+      vesta_core::uuid::generate()); // Add a dummy variable to the elimination
+                                     // order
   elimination_order.push_back(x1->uuid());
 
   // Compute the linear term
-  auto actual = vesta_constraints::detail::linearize(*constraint, graph, elimination_order);
+  auto actual = vesta_constraints::detail::linearize(*constraint, graph,
+                                                     elimination_order);
 
   // Define the expected values
   vesta_core::MatrixXd expected_A0(3, 3);
-  expected_A0 << -0.91999992754510684367,    -0.39191852892782985673,    -2.8735440640859089001e-07,
-                  0.27712824947756498073,    -0.65053818745824854020,    -2.5352112979770691226e-07,
-                  7.1505019336171038447e-08,  2.5546009342625186633e-07, -0.57735026918958520792;
+  expected_A0 << -0.91999992754510684367, -0.39191852892782985673,
+      -2.8735440640859089001e-07, 0.27712824947756498073,
+      -0.65053818745824854020, -2.5352112979770691226e-07,
+      7.1505019336171038447e-08, 2.5546009342625186633e-07,
+      -0.57735026918958520792;
 
   vesta_core::MatrixXd expected_A1(3, 3);
-  expected_A1 <<  0.99999999999996114219,    -1.8482708254510815671e-07, -2.873543621662033587e-07,
-                  1.3069243487082160549e-07,  0.70710678118650927004,    -2.5352115484711390536e-07,
-                  1.6590414383954588118e-07,  2.0699913566568639567e-07,  0.57735026918958520792;
+  expected_A1 << 0.99999999999996114219, -1.8482708254510815671e-07,
+      -2.873543621662033587e-07, 1.3069243487082160549e-07,
+      0.70710678118650927004, -2.5352115484711390536e-07,
+      1.6590414383954588118e-07, 2.0699913566568639567e-07,
+      0.57735026918958520792;
 
   vesta_core::VectorXd expected_b(3);
-  expected_b << 7.1706607563166841896e-07, -4.0638046747479327072e-07, 2.1341989211309879704e-07;
+  expected_b << 7.1706607563166841896e-07, -4.0638046747479327072e-07,
+      2.1341989211309879704e-07;
 
   // Check
   ASSERT_EQ(2u, actual.variables.size());
@@ -355,35 +368,42 @@ TEST(MarginalizeVariables, Linearize)
   EXPECT_MATRIX_NEAR(expected_b, actual.b, 1.0e-9);
 }
 
-TEST(MarginalizeVariables, MarginalizeNext)
-{
+TEST(MarginalizeVariables, MarginalizeNext) {
   // Construct a couple of linear terms
   auto term1 = vesta_constraints::detail::LinearTerm();
   term1.variables.push_back(1);
   auto A1 = vesta_core::MatrixXd(3, 3);
-  A1 <<  0.99999999999999922284,     4.4999993911720714834e-08, -2.9999995598828377297e-08,
-        -3.181980062078038074e-08,   0.70710678118654701763,     1.0606600528428877794e-08,
-         1.7320505793505525105e-08, -8.6602525498080673572e-09,  0.57735026918962550901;
+  A1 << 0.99999999999999922284, 4.4999993911720714834e-08,
+      -2.9999995598828377297e-08, -3.181980062078038074e-08,
+      0.70710678118654701763, 1.0606600528428877794e-08,
+      1.7320505793505525105e-08, -8.6602525498080673572e-09,
+      0.57735026918962550901;
   term1.A.push_back(A1);
   auto b1 = vesta_core::VectorXd(3);
-  b1 << -2.9999995786018886696e-08, -4.2426400911723613558e-08, -5.1961516896187549911e-08;
+  b1 << -2.9999995786018886696e-08, -4.2426400911723613558e-08,
+      -5.1961516896187549911e-08;
   term1.b = b1;
 
   auto term2 = vesta_constraints::detail::LinearTerm();
   term2.variables.push_back(3);
   term2.variables.push_back(1);
   auto A21 = vesta_core::MatrixXd(3, 3);
-  A21 << 0.99999999999996114219,    -1.8482708254510815671e-07, -2.873543621662033587e-07,
-         1.3069243487082160549e-07,  0.70710678118650927004,    -2.5352115484711390536e-07,
-         1.6590414383954588118e-07,  2.0699913566568639567e-07,  0.57735026918958520792;
+  A21 << 0.99999999999996114219, -1.8482708254510815671e-07,
+      -2.873543621662033587e-07, 1.3069243487082160549e-07,
+      0.70710678118650927004, -2.5352115484711390536e-07,
+      1.6590414383954588118e-07, 2.0699913566568639567e-07,
+      0.57735026918958520792;
   auto A22 = vesta_core::MatrixXd(3, 3);
-  A22 << -0.91999992754510684367,    -0.39191852892782985673,    -2.8735440640859089001e-07,
-          0.27712824947756498073,    -0.6505381874582485402,     -2.5352112979770691226e-07,
-          7.1505019336171038447e-08,  2.5546009342625186633e-07, -0.57735026918958520792;
+  A22 << -0.91999992754510684367, -0.39191852892782985673,
+      -2.8735440640859089001e-07, 0.27712824947756498073,
+      -0.6505381874582485402, -2.5352112979770691226e-07,
+      7.1505019336171038447e-08, 2.5546009342625186633e-07,
+      -0.57735026918958520792;
   term2.A.push_back(A21);
   term2.A.push_back(A22);
   auto b2 = vesta_core::VectorXd(3);
-  b2 << 7.1706607563166841896e-07, -4.0638046747479327072e-07, 2.1341989211309879704e-07;
+  b2 << 7.1706607563166841896e-07, -4.0638046747479327072e-07,
+      2.1341989211309879704e-07;
   term2.b = b2;
 
   auto terms = std::vector<vesta_constraints::detail::LinearTerm>();
@@ -397,9 +417,9 @@ TEST(MarginalizeVariables, MarginalizeNext)
   auto expected = vesta_constraints::detail::LinearTerm();
   expected.variables.push_back(3);
   auto A_expected = vesta_core::MatrixXd(3, 3);
-  A_expected << -0.686835139329528,   0.064384601986636,   0.000000153209328,
-                 0.000000000000000,  -0.509885650799691,   0.000000079984512,
-                 0.000000000000000,   0.000000000000000,   0.408248290463911;
+  A_expected << -0.686835139329528, 0.064384601986636, 0.000000153209328,
+      0.000000000000000, -0.509885650799691, 0.000000079984512,
+      0.000000000000000, 0.000000000000000, 0.408248290463911;
   expected.A.push_back(A_expected);
   auto b_expected = vesta_core::VectorXd(3);
   b_expected << -0.000000497197868, 0.000000315186479, 0.000000114168337;
@@ -414,25 +434,28 @@ TEST(MarginalizeVariables, MarginalizeNext)
   EXPECT_MATRIX_NEAR(expected.b, actual.b, 1.0e-9);
 }
 
-TEST(MarginalizeVariables, MarginalizeVariables)
-{
+TEST(MarginalizeVariables, MarginalizeVariables) {
   // Create variables
-  auto x1 = vesta_variables::Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0));
+  auto x1 = vesta_variables::Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(1, 0));
   x1->w() = 0.927362;
   x1->x() = 0.1;
   x1->y() = 0.2;
   x1->z() = 0.3;
-  auto x2 = vesta_variables::Orientation3DStamped::make_shared(vesta_core::Timestamp(2, 0));
+  auto x2 = vesta_variables::Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(2, 0));
   x2->w() = 0.848625;
   x2->x() = 0.13798;
   x2->y() = 0.175959;
   x2->z() = 0.479411;
-  auto x3 = vesta_variables::Orientation3DStamped::make_shared(vesta_core::Timestamp(3, 0));
+  auto x3 = vesta_variables::Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(3, 0));
   x3->w() = 0.735597;
   x3->x() = 0.170384;
   x3->y() = 0.144808;
   x3->z() = 0.63945;
-  auto l1 = vesta_variables::Orientation3DStamped::make_shared(vesta_core::Timestamp(3, 500000000));
+  auto l1 = vesta_variables::Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(3, 500000000));
   l1->w() = 0.803884;
   l1->x() = 0.304917;
   l1->y() = 0.268286;
@@ -442,30 +465,34 @@ TEST(MarginalizeVariables, MarginalizeVariables)
   vesta_core::Vector4d mean1;
   mean1 << 0.92736185, 0.1, 0.2, 0.3;
   vesta_core::Matrix3d cov1;
-  cov1 << 1.0, 0.0, 0.0,  0.0, 2.0, 0.0,  0.0, 0.0, 3.0;
-  auto prior_x1 = vesta_constraints::AbsoluteOrientation3DStampedConstraint::make_shared(
-    "test", *x1, mean1, cov1);
+  cov1 << 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0;
+  auto prior_x1 =
+      vesta_constraints::AbsoluteOrientation3DStampedConstraint::make_shared(
+          "test", *x1, mean1, cov1);
 
   vesta_core::Vector4d delta2;
   delta2 << 0.979795897, 0.0, 0.0, 0.2;
   vesta_core::Matrix3d cov2;
-  cov2 << 1.0, 0.0, 0.0,   0.0, 2.0, 0.0,   0.0, 0.0, 3.0;
-  auto relative_x1_x2 = vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
-    "test", *x1, *x2, delta2, cov2);
+  cov2 << 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0;
+  auto relative_x1_x2 =
+      vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
+          "test", *x1, *x2, delta2, cov2);
 
   vesta_core::Vector4d delta3;
   delta3 << 0.979795897, 0.0, 0.0, 0.2;
   vesta_core::Matrix3d cov3;
-  cov3 << 1.0, 0.0, 0.0,   0.0, 2.0, 0.0,   0.0, 0.0, 3.0;
-  auto relative_x2_x3 = vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
-    "test", *x2, *x3, delta3, cov3);
+  cov3 << 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0;
+  auto relative_x2_x3 =
+      vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
+          "test", *x2, *x3, delta3, cov3);
 
   vesta_core::Vector4d delta4;
   delta4 << 0.979795897, 0.2, 0.0, 0.0;
   vesta_core::Matrix3d cov4;
-  cov4 << 1.0, 0.0, 0.0,   0.0, 2.0, 0.0,   0.0, 0.0, 3.0;
-  auto relative_x2_l1 = vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
-    "test", *x2, *l1, delta4, cov4);
+  cov4 << 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0;
+  auto relative_x2_l1 =
+      vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
+          "test", *x2, *l1, delta4, cov4);
 
   // Add to the graph
   auto graph = vesta_graphs::HashGraph();
@@ -486,34 +513,37 @@ TEST(MarginalizeVariables, MarginalizeVariables)
   auto expected_x3 = x3->array();
   auto expected_l1 = l1->array();
 
-  auto requests = std::vector<std::pair<vesta_core::UUID, vesta_core::UUID>>
-  {
-    {x2->uuid(), x2->uuid()}, {x3->uuid(), x3->uuid()}, {l1->uuid(), l1->uuid()}
-  };
+  auto requests = std::vector<std::pair<vesta_core::UUID, vesta_core::UUID>>{
+      {x2->uuid(), x2->uuid()},
+      {x3->uuid(), x3->uuid()},
+      {l1->uuid(), l1->uuid()}};
   auto expected_covariances = std::vector<std::vector<double>>();
   graph.getCovariance(requests, expected_covariances);
-  const auto& expected_x2_cov = expected_covariances[0];
-  const auto& expected_x3_cov = expected_covariances[1];
-  const auto& expected_l1_cov = expected_covariances[2];
+  const auto &expected_x2_cov = expected_covariances[0];
+  const auto &expected_x3_cov = expected_covariances[1];
+  const auto &expected_l1_cov = expected_covariances[2];
 
   // Marginalize out X1
-  auto transaction = vesta_constraints::marginalizeVariables("test", {x1->uuid()}, graph);  // NOLINT
+  auto transaction = vesta_constraints::marginalizeVariables(
+      "test", {x1->uuid()}, graph); // NOLINT
 
   // Verify the computed transaction
   auto added_variables = transaction.addedVariables();
   EXPECT_EQ(0u, std::distance(added_variables.begin(), added_variables.end()));
 
   auto removed_variables_range = transaction.removedVariables();
-  auto removed_variables = std::set<vesta_core::UUID>(removed_variables_range.begin(), removed_variables_range.end());
+  auto removed_variables = std::set<vesta_core::UUID>(
+      removed_variables_range.begin(), removed_variables_range.end());
   EXPECT_EQ(1u, removed_variables.size());
   EXPECT_TRUE(removed_variables.count(x1->uuid()));
 
   auto added_constraints = transaction.addedConstraints();
-  EXPECT_EQ(1u, std::distance(added_constraints.begin(), added_constraints.end()));
+  EXPECT_EQ(1u,
+            std::distance(added_constraints.begin(), added_constraints.end()));
 
   auto removed_constraints_range = transaction.removedConstraints();
-  auto removed_constraints = std::set<vesta_core::UUID>(removed_constraints_range.begin(),
-                                                       removed_constraints_range.end());
+  auto removed_constraints = std::set<vesta_core::UUID>(
+      removed_constraints_range.begin(), removed_constraints_range.end());
   EXPECT_EQ(2u, removed_constraints.size());
   EXPECT_TRUE(removed_constraints.count(prior_x1->uuid()));
   EXPECT_TRUE(removed_constraints.count(relative_x1_x2->uuid()));
@@ -531,64 +561,62 @@ TEST(MarginalizeVariables, MarginalizeVariables)
 
   auto actual_covariances = std::vector<std::vector<double>>();
   graph.getCovariance(requests, actual_covariances);
-  const auto& actual_x2_cov = actual_covariances[0];
-  const auto& actual_x3_cov = actual_covariances[1];
-  const auto& actual_l1_cov = actual_covariances[2];
+  const auto &actual_x2_cov = actual_covariances[0];
+  const auto &actual_x3_cov = actual_covariances[1];
+  const auto &actual_l1_cov = actual_covariances[2];
 
-  // Compare. The post-marginal results should be identical to the pre-marginal results
+  // Compare. The post-marginal results should be identical to the pre-marginal
+  // results
   ASSERT_EQ(expected_x2.size(), actual_x2.size());
-  for (size_t i = 0; i < expected_x2.size(); ++i)
-  {
+  for (size_t i = 0; i < expected_x2.size(); ++i) {
     EXPECT_NEAR(expected_x2[i], actual_x2[i], 1.0e-5);
   }
   ASSERT_EQ(expected_x2_cov.size(), actual_x2_cov.size());
-  for (size_t i = 0; i < expected_x2_cov.size(); ++i)
-  {
+  for (size_t i = 0; i < expected_x2_cov.size(); ++i) {
     EXPECT_NEAR(expected_x2_cov[i], actual_x2_cov[i], 1.0e-5);
   }
 
   ASSERT_EQ(expected_x3.size(), actual_x3.size());
-  for (size_t i = 0; i < expected_x3.size(); ++i)
-  {
+  for (size_t i = 0; i < expected_x3.size(); ++i) {
     EXPECT_NEAR(expected_x3[i], actual_x3[i], 1.0e-5);
   }
   ASSERT_EQ(expected_x3_cov.size(), actual_x3_cov.size());
-  for (size_t i = 0; i < expected_x3_cov.size(); ++i)
-  {
+  for (size_t i = 0; i < expected_x3_cov.size(); ++i) {
     EXPECT_NEAR(expected_x3_cov[i], actual_x3_cov[i], 1.0e-5);
   }
 
   ASSERT_EQ(expected_l1.size(), actual_l1.size());
-  for (size_t i = 0; i < expected_l1.size(); ++i)
-  {
+  for (size_t i = 0; i < expected_l1.size(); ++i) {
     EXPECT_NEAR(expected_l1[i], actual_l1[i], 1.0e-5);
   }
   ASSERT_EQ(expected_l1_cov.size(), actual_l1_cov.size());
-  for (size_t i = 0; i < expected_l1_cov.size(); ++i)
-  {
+  for (size_t i = 0; i < expected_l1_cov.size(); ++i) {
     EXPECT_NEAR(expected_l1_cov[i], actual_l1_cov[i], 1.0e-5);
   }
 }
 
-TEST(MarginalizeVariables, MarginalizeFixedVariables)
-{
+TEST(MarginalizeVariables, MarginalizeFixedVariables) {
   // Create variables
-  auto x1 = vesta_variables::Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0));
+  auto x1 = vesta_variables::Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(1, 0));
   x1->w() = 0.927362;
   x1->x() = 0.1;
   x1->y() = 0.2;
   x1->z() = 0.3;
-  auto x2 = vesta_variables::Orientation3DStamped::make_shared(vesta_core::Timestamp(2, 0));
+  auto x2 = vesta_variables::Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(2, 0));
   x2->w() = 0.848625;
   x2->x() = 0.13798;
   x2->y() = 0.175959;
   x2->z() = 0.479411;
-  auto x3 = vesta_variables::Orientation3DStamped::make_shared(vesta_core::Timestamp(3, 0));
+  auto x3 = vesta_variables::Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(3, 0));
   x3->w() = 0.735597;
   x3->x() = 0.170384;
   x3->y() = 0.144808;
   x3->z() = 0.63945;
-  auto l1 = FixedOrientation3DStamped::make_shared(vesta_core::Timestamp(3, 500000000));
+  auto l1 = FixedOrientation3DStamped::make_shared(
+      vesta_core::Timestamp(3, 500000000));
   l1->w() = 0.803884;
   l1->x() = 0.304917;
   l1->y() = 0.268286;
@@ -598,40 +626,47 @@ TEST(MarginalizeVariables, MarginalizeFixedVariables)
   vesta_core::Vector4d mean1;
   mean1 << 0.92736185, 0.1, 0.2, 0.3;
   vesta_core::Matrix3d cov1;
-  cov1 << 1.0, 0.0, 0.0,  0.0, 2.0, 0.0,  0.0, 0.0, 3.0;
-  auto prior_x1 = vesta_constraints::AbsoluteOrientation3DStampedConstraint::make_shared(
-    "test", *x1, mean1, cov1);
+  cov1 << 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0;
+  auto prior_x1 =
+      vesta_constraints::AbsoluteOrientation3DStampedConstraint::make_shared(
+          "test", *x1, mean1, cov1);
 
-  // Note that this prior on the landmark is required. The covariance of the prior has no impact on the solution, as
-  // the value of the landmark will be held constant. However, due to assumptions made in the marginalization code, the
-  // landmark variable must be fully-constrained. Hopefully this requirement will be removed in a future version.
+  // Note that this prior on the landmark is required. The covariance of the
+  // prior has no impact on the solution, as the value of the landmark will be
+  // held constant. However, due to assumptions made in the marginalization
+  // code, the landmark variable must be fully-constrained. Hopefully this
+  // requirement will be removed in a future version.
   vesta_core::Vector4d mean2;
   mean2 << 0.842614977, 0.2, 0.3, 0.4;
   vesta_core::Matrix3d cov2;
-  cov2 << 3.0, 0.0, 0.0,  0.0, 3.1, 0.0,  0.0, 0.0, 3.2;
-  auto prior_l1 = vesta_constraints::AbsoluteOrientation3DStampedConstraint::make_shared(
-    "test", *l1, mean2, cov2);
+  cov2 << 3.0, 0.0, 0.0, 0.0, 3.1, 0.0, 0.0, 0.0, 3.2;
+  auto prior_l1 =
+      vesta_constraints::AbsoluteOrientation3DStampedConstraint::make_shared(
+          "test", *l1, mean2, cov2);
 
   vesta_core::Vector4d delta3;
   delta3 << 0.979795897, 0.0, 0.0, 0.2;
   vesta_core::Matrix3d cov3;
-  cov3 << 1.0, 0.0, 0.0,   0.0, 2.0, 0.0,   0.0, 0.0, 3.0;
-  auto relative_x1_x2 = vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
-    "test", *x1, *x2, delta3, cov3);
+  cov3 << 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0;
+  auto relative_x1_x2 =
+      vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
+          "test", *x1, *x2, delta3, cov3);
 
   vesta_core::Vector4d delta4;
   delta4 << 0.979795897, 0.0, 0.0, 0.2;
   vesta_core::Matrix3d cov4;
-  cov4 << 1.0, 0.0, 0.0,   0.0, 2.0, 0.0,   0.0, 0.0, 3.0;
-  auto relative_x2_x3 = vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
-    "test", *x2, *x3, delta4, cov4);
+  cov4 << 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0;
+  auto relative_x2_x3 =
+      vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
+          "test", *x2, *x3, delta4, cov4);
 
   vesta_core::Vector4d delta5;
   delta5 << 0.979795897, 0.2, 0.0, 0.0;
   vesta_core::Matrix3d cov5;
-  cov5 << 1.0, 0.0, 0.0,   0.0, 2.0, 0.0,   0.0, 0.0, 3.0;
-  auto relative_x1_l1 = vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
-    "test", *x1, *l1, delta5, cov5);
+  cov5 << 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0;
+  auto relative_x1_l1 =
+      vesta_constraints::RelativeOrientation3DStampedConstraint::make_shared(
+          "test", *x1, *l1, delta5, cov5);
 
   // Add to the graph
   auto graph = vesta_graphs::HashGraph();
@@ -652,34 +687,35 @@ TEST(MarginalizeVariables, MarginalizeFixedVariables)
   auto expected_x2 = x2->array();
   auto expected_x3 = x3->array();
 
-  auto requests = std::vector<std::pair<vesta_core::UUID, vesta_core::UUID>>
-  {
-    {x2->uuid(), x2->uuid()}, {x3->uuid(), x3->uuid()}
-  };
+  auto requests = std::vector<std::pair<vesta_core::UUID, vesta_core::UUID>>{
+      {x2->uuid(), x2->uuid()}, {x3->uuid(), x3->uuid()}};
   auto expected_covariances = std::vector<std::vector<double>>();
   graph.getCovariance(requests, expected_covariances);
-  const auto& expected_x2_cov = expected_covariances[0];
-  const auto& expected_x3_cov = expected_covariances[1];
+  const auto &expected_x2_cov = expected_covariances[0];
+  const auto &expected_x3_cov = expected_covariances[1];
 
   // Marginalize out X1 and L1
-  auto transaction = vesta_constraints::marginalizeVariables("test", {x1->uuid(), l1->uuid()}, graph);  // NOLINT
+  auto transaction = vesta_constraints::marginalizeVariables(
+      "test", {x1->uuid(), l1->uuid()}, graph); // NOLINT
 
   // Verify the computed transaction
   auto added_variables = transaction.addedVariables();
   EXPECT_EQ(0u, std::distance(added_variables.begin(), added_variables.end()));
 
   auto removed_variables_range = transaction.removedVariables();
-  auto removed_variables = std::set<vesta_core::UUID>(removed_variables_range.begin(), removed_variables_range.end());
+  auto removed_variables = std::set<vesta_core::UUID>(
+      removed_variables_range.begin(), removed_variables_range.end());
   EXPECT_EQ(2u, removed_variables.size());
   EXPECT_TRUE(removed_variables.count(x1->uuid()));
   EXPECT_TRUE(removed_variables.count(l1->uuid()));
 
   auto added_constraints = transaction.addedConstraints();
-  EXPECT_EQ(1u, std::distance(added_constraints.begin(), added_constraints.end()));
+  EXPECT_EQ(1u,
+            std::distance(added_constraints.begin(), added_constraints.end()));
 
   auto removed_constraints_range = transaction.removedConstraints();
-  auto removed_constraints = std::set<vesta_core::UUID>(removed_constraints_range.begin(),
-                                                       removed_constraints_range.end());
+  auto removed_constraints = std::set<vesta_core::UUID>(
+      removed_constraints_range.begin(), removed_constraints_range.end());
 
   EXPECT_EQ(4u, removed_constraints.size());
   EXPECT_TRUE(removed_constraints.count(prior_x1->uuid()));
@@ -699,35 +735,31 @@ TEST(MarginalizeVariables, MarginalizeFixedVariables)
 
   auto actual_covariances = std::vector<std::vector<double>>();
   graph.getCovariance(requests, actual_covariances);
-  const auto& actual_x2_cov = actual_covariances[0];
-  const auto& actual_x3_cov = actual_covariances[1];
+  const auto &actual_x2_cov = actual_covariances[0];
+  const auto &actual_x3_cov = actual_covariances[1];
 
-  // Compare. The post-marginal results should be identical to the pre-marginal results
+  // Compare. The post-marginal results should be identical to the pre-marginal
+  // results
   ASSERT_EQ(expected_x2.size(), actual_x2.size());
-  for (size_t i = 0; i < expected_x2.size(); ++i)
-  {
+  for (size_t i = 0; i < expected_x2.size(); ++i) {
     EXPECT_NEAR(expected_x2[i], actual_x2[i], 1.0e-3);
   }
   ASSERT_EQ(expected_x2_cov.size(), actual_x2_cov.size());
-  for (size_t i = 0; i < expected_x2_cov.size(); ++i)
-  {
+  for (size_t i = 0; i < expected_x2_cov.size(); ++i) {
     EXPECT_NEAR(expected_x2_cov[i], actual_x2_cov[i], 1.0e-3);
   }
 
   ASSERT_EQ(expected_x3.size(), actual_x3.size());
-  for (size_t i = 0; i < expected_x3.size(); ++i)
-  {
+  for (size_t i = 0; i < expected_x3.size(); ++i) {
     EXPECT_NEAR(expected_x3[i], actual_x3[i], 1.0e-3);
   }
   ASSERT_EQ(expected_x3_cov.size(), actual_x3_cov.size());
-  for (size_t i = 0; i < expected_x3_cov.size(); ++i)
-  {
+  for (size_t i = 0; i < expected_x3_cov.size(); ++i) {
     EXPECT_NEAR(expected_x3_cov[i], actual_x3_cov[i], 1.0e-3);
   }
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

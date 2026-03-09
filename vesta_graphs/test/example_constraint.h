@@ -48,21 +48,15 @@
 
 #include <string>
 
-
 /**
  * @brief Dummy cost function used for testing
  */
-class ExampleFunctor
-{
+class ExampleFunctor {
 public:
-  explicit ExampleFunctor(const double& b) :
-    b_(b)
-  {
-  }
+  explicit ExampleFunctor(const double &b) : b_(b) {}
 
   template <typename T>
-  bool operator()(const T* const variable, T* residual) const
-  {
+  bool operator()(const T *const variable, T *residual) const {
     residual[0] = variable[0] - T(b_);
     return true;
   }
@@ -74,44 +68,43 @@ private:
 /**
  * @brief Dummy constraint implementation for testing
  */
-class ExampleConstraint : public vesta_core::Constraint
-{
+class ExampleConstraint : public vesta_core::Constraint {
 public:
   VESTA_CONSTRAINT_DEFINITIONS(ExampleConstraint);
 
   ExampleConstraint() = default;
 
-  explicit ExampleConstraint(const std::string& source, const vesta_core::UUID& variable_uuid) :
-    vesta_core::Constraint(source, {variable_uuid}),  // NOLINT
-    data(0.0)
-  {
+  explicit ExampleConstraint(const std::string &source,
+                             const vesta_core::UUID &variable_uuid)
+      : vesta_core::Constraint(source, {variable_uuid}), // NOLINT
+        data(0.0) {}
+
+  void print(std::ostream & /*stream = std::cout*/) const override {}
+  ceres::CostFunction *costFunction() const override {
+    return new ceres::AutoDiffCostFunction<ExampleFunctor, 1, 1>(
+        new ExampleFunctor(data));
   }
 
-  void print(std::ostream& /*stream = std::cout*/) const override {}
-  ceres::CostFunction* costFunction() const override
-  {
-    return new ceres::AutoDiffCostFunction<ExampleFunctor, 1, 1>(new ExampleFunctor(data));
-  }
-
-  double data;  // Public member variable just for testing
+  double data; // Public member variable just for testing
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
-  template<class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive & boost::serialization::base_object<vesta_core::Constraint>(*this);
+  template <class Archive>
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & data;
   }
 };
 
 BOOST_CLASS_EXPORT(ExampleConstraint);
-

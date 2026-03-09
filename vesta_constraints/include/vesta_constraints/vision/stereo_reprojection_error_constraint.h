@@ -41,20 +41,19 @@
 #include <vesta_core/uuid.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
-#include <vesta_variables/vision/stereo_camera.h>
 #include <vesta_variables/vision/point_3d_landmark.h>
+#include <vesta_variables/vision/stereo_camera.h>
 
+#include <Eigen/Dense>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
-#include <Eigen/Dense>
 
 #include <ostream>
 #include <string>
 #include <vector>
 
-namespace vesta_constraints
-{
+namespace vesta_constraints {
 
 /**
  * @brief A constraint that represents a stereo observation of a 3D point.
@@ -66,8 +65,7 @@ namespace vesta_constraints
  *
  * The observation is a 4D vector (u_left, v_left, u_right, v_right).
  */
-class StereoReprojectionErrorConstraint : public vesta_core::Constraint
-{
+class StereoReprojectionErrorConstraint : public vesta_core::Constraint {
 public:
   VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(StereoReprojectionErrorConstraint);
 
@@ -79,21 +77,26 @@ public:
   /**
    * @brief Create a constraint
    *
-   * @param[in] source        The name of the sensor or motion model that generated this constraint
-   * @param[in] position      The variable representing the position components of the camera pose
-   * @param[in] orientation   The variable representing the orientation components of the camera pose
-   * @param[in] calibration   The stereo calibration parameters (5x1 vector: fx, fy, cx, cy, baseline)
+   * @param[in] source        The name of the sensor or motion model that
+   * generated this constraint
+   * @param[in] position      The variable representing the position components
+   * of the camera pose
+   * @param[in] orientation   The variable representing the orientation
+   * components of the camera pose
+   * @param[in] calibration   The stereo calibration parameters (5x1 vector: fx,
+   * fy, cx, cy, baseline)
    * @param[in] point         The 3D landmark point variable
-   * @param[in] mean          The measured stereo observation (4x1 vector: u_left, v_left, u_right, v_right)
+   * @param[in] mean          The measured stereo observation (4x1 vector:
+   * u_left, v_left, u_right, v_right)
    * @param[in] covariance    The observation covariance (4x4 matrix)
    */
-  StereoReprojectionErrorConstraint(const std::string& source,
-                                     const vesta_variables::Position3DStamped& position,
-                                     const vesta_variables::Orientation3DStamped& orientation,
-                                     const vesta_variables::StereoCamera& calibration,
-                                     const vesta_variables::Point3DLandmark& point,
-                                     const vesta_core::Vector4d& mean,
-                                     const vesta_core::Matrix4d& covariance);
+  StereoReprojectionErrorConstraint(
+      const std::string &source,
+      const vesta_variables::Position3DStamped &position,
+      const vesta_variables::Orientation3DStamped &orientation,
+      const vesta_variables::StereoCamera &calibration,
+      const vesta_variables::Point3DLandmark &point,
+      const vesta_core::Vector4d &mean, const vesta_core::Matrix4d &covariance);
 
   /**
    * @brief Destructor
@@ -105,8 +108,7 @@ public:
    *
    * Order is (u_left, v_left, u_right, v_right)
    */
-  const vesta_core::Matrix4d& sqrtInformation() const
-  {
+  const vesta_core::Matrix4d &sqrtInformation() const {
     return sqrt_information_;
   }
 
@@ -115,63 +117,64 @@ public:
    *
    * Order is (u_left, v_left, u_right, v_right)
    */
-  const vesta_core::Vector4d& mean() const
-  {
-    return mean_;
-  }
+  const vesta_core::Vector4d &mean() const { return mean_; }
 
   /**
    * @brief Compute the measurement covariance matrix.
    *
    * Order is (u_left, v_left, u_right, v_right)
    */
-  vesta_core::Matrix4d covariance() const
-  {
+  vesta_core::Matrix4d covariance() const {
     return (sqrt_information_.transpose() * sqrt_information_).inverse();
   }
 
   /**
-   * @brief Print a human-readable description of the constraint to the provided stream.
+   * @brief Print a human-readable description of the constraint to the provided
+   * stream.
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream& stream = std::cout) const override;
+  void print(std::ostream &stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
    *
-   * The function caller will own the new cost function instance. It is the responsibility of the caller to delete
-   * the cost function object when it is no longer needed. If the pointer is provided to a Ceres::Problem object, the
-   * Ceres::Problem object will takes ownership of the pointer and delete it during destruction.
+   * The function caller will own the new cost function instance. It is the
+   * responsibility of the caller to delete the cost function object when it is
+   * no longer needed. If the pointer is provided to a Ceres::Problem object,
+   * the Ceres::Problem object will takes ownership of the pointer and delete it
+   * during destruction.
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction* costFunction() const override;
+  ceres::CostFunction *costFunction() const override;
 
 protected:
-  vesta_core::Vector4d mean_;              //!< The 4D stereo observations (in pixel space)
-  vesta_core::Matrix4d sqrt_information_;  //!< The square root information matrix
+  vesta_core::Vector4d mean_; //!< The 4D stereo observations (in pixel space)
+  vesta_core::Matrix4d
+      sqrt_information_; //!< The square root information matrix
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
 
   /**
-   * @brief The Boost Serialize method that serializes all of the data members in to/out of the archive
+   * @brief The Boost Serialize method that serializes all of the data members
+   * in to/out of the archive
    *
-   * @param[in/out] archive - The archive object that holds the serialized class members
-   * @param[in] version - The version of the archive being read/written. Generally unused.
+   * @param[in/out] archive - The archive object that holds the serialized class
+   * members
+   * @param[in] version - The version of the archive being read/written.
+   * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
-    archive& mean_;
-    archive& sqrt_information_;
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+    archive & mean_;
+    archive & sqrt_information_;
   }
 };
 
-}  // namespace vesta_constraints
+} // namespace vesta_constraints
 
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::StereoReprojectionErrorConstraint);
-

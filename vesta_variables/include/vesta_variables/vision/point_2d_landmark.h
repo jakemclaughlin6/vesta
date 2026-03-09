@@ -45,28 +45,22 @@
 
 #include <ostream>
 
-namespace vesta_variables
-{
+namespace vesta_variables {
 /**
  * @brief Variable representing a 2D point landmark that exists across time.
  *
- * This is commonly used to represent locations of visual features. The UUID of this class is constant after
- * construction and dependent on a user input database id. As such, the database id cannot be altered after
- * construction.
+ * This is commonly used to represent locations of visual features. The UUID of
+ * this class is constant after construction and dependent on a user input
+ * database id. As such, the database id cannot be altered after construction.
  */
-class Point2DLandmark : public FixedSizeVariable<2>
-{
+class Point2DLandmark : public FixedSizeVariable<2> {
 public:
   VESTA_VARIABLE_DEFINITIONS(Point2DLandmark);
 
   /**
    * @brief Can be used to directly index variables in the data array
    */
-  enum : size_t
-  {
-    X = 0,
-    Y = 1
-  };
+  enum : size_t { X = 0, Y = 1 };
 
   /**
    * @brief Default constructor
@@ -78,37 +72,38 @@ public:
    *
    * @param[in] landmark_id  The id associated to a landmark
    */
-  explicit Point2DLandmark(const uint64_t& landmark_id);
+  explicit Point2DLandmark(const uint64_t &landmark_id);
 
   /**
    * @brief Read-write access to the X-axis position.
    */
-  double& x() { return data_[X]; }
+  double &x() { return data_[X]; }
 
   /**
    * @brief Read-only access to the X-axis position.
    */
-  const double& x() const { return data_[X]; }
+  const double &x() const { return data_[X]; }
 
   /**
    * @brief Read-write access to the Y-axis position.
    */
-  double& y() { return data_[Y]; }
+  double &y() { return data_[Y]; }
 
   /**
    * @brief Read-only access to the Y-axis position.
    */
-  const double& y() const { return data_[Y]; }
+  const double &y() const { return data_[Y]; }
 
   /**
    * @brief Read-only access to the id
    */
-  const uint64_t& id() const { return id_; }
+  const uint64_t &id() const { return id_; }
 
   /**
    * @brief Returns the Schur elimination group for this variable.
    *
-   * Landmarks are placed in group 0 to be eliminated first in Schur complement-based solvers.
+   * Landmarks are placed in group 0 to be eliminated first in Schur
+   * complement-based solvers.
    */
   int schurGroup() const override { return 0; }
 
@@ -118,7 +113,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream& stream = std::cout) const override;
+  void print(std::ostream &stream = std::cout) const override;
 
 protected:
   /**
@@ -127,12 +122,12 @@ protected:
    * @param[in] uuid  The UUID for this variable
    * @param[in] landmark_id  The id associated to a landmark
    */
-  Point2DLandmark(const vesta_core::UUID& uuid, const uint64_t& landmark_id);
+  Point2DLandmark(const vesta_core::UUID &uuid, const uint64_t &landmark_id);
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
-  uint64_t id_ { 0 };
+  uint64_t id_{0};
 
   /**
    * @brief The Boost Serialize method that serializes all of the data members
@@ -144,14 +139,12 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive& boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
-    archive& id_;
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
+    archive & id_;
   }
 };
 
-}  // namespace vesta_variables
+} // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_KEY(vesta_variables::Point2DLandmark);
-

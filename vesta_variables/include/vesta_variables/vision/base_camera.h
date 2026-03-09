@@ -48,18 +48,15 @@
 
 #include <ostream>
 
-namespace vesta_variables
-{
+namespace vesta_variables {
 /**
  * @brief Variable representing intrinsic parameters of a camera.
  *
  * The UUID of this class is constant after
- * construction and dependent on a user input database id. As such, the database id cannot be altered after
- * construction.
+ * construction and dependent on a user input database id. As such, the database
+ * id cannot be altered after construction.
  */
-template <size_t N>
-class BaseCamera : public FixedSizeVariable<N>
-{
+template <size_t N> class BaseCamera : public FixedSizeVariable<N> {
 public:
   VESTA_VARIABLE_DEFINITIONS(BaseCamera);
 
@@ -69,27 +66,32 @@ public:
   BaseCamera() = default;
 
   /**
-   * @brief Construct a pinhole camera variable given a camera id and intrinsic parameters
+   * @brief Construct a pinhole camera variable given a camera id and intrinsic
+   * parameters
    *
    * @param[in] uuid        The UUID of the sensor
    * @param[in] camera_id  The id associated to a camera
    */
-  explicit BaseCamera(const vesta_core::UUID& uuid, const uint64_t& camera_id):
-  FixedSizeVariable<N>(uuid), id_(camera_id) {}
+  explicit BaseCamera(const vesta_core::UUID &uuid, const uint64_t &camera_id)
+      : FixedSizeVariable<N>(uuid), id_(camera_id) {}
 
   /**
    * @brief Construct a pinhole camera variable given a camera id
    *
-   * @param[in] camera_name  The id associated to a camera (e.g. which camera on a robot)
-   * @param[in] device_id  The device_id associated to the camera (e.g. which robot)
+   * @param[in] camera_name  The id associated to a camera (e.g. which camera on
+   * a robot)
+   * @param[in] device_id  The device_id associated to the camera (e.g. which
+   * robot)
    */
-explicit BaseCamera(const uint64_t& camera_id, const vesta_core::UUID& device_id = vesta_core::uuid::NIL)
-  : BaseCamera(vesta_core::uuid::generate(detail::type(), camera_id, device_id)) {}
+  explicit BaseCamera(const uint64_t &camera_id,
+                      const vesta_core::UUID &device_id = vesta_core::uuid::NIL)
+      : BaseCamera(
+            vesta_core::uuid::generate(detail::type(), camera_id, device_id)) {}
 
   /**
    * @brief Read-only access to the id
    */
-  const uint64_t& id() const { return id_; }
+  const uint64_t &id() const { return id_; }
 
   /**
    * @brief Print a human-readable description of the variable to the provided
@@ -97,18 +99,17 @@ explicit BaseCamera(const uint64_t& camera_id, const vesta_core::UUID& device_id
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream& stream = std::cout) const override
-  {
-      stream << type() << ":\n"
-         << "  uuid: " << this->uuid() << "\n"
-         << "  size: " << this->size() << "\n"
-         << "  camera id: " << id() << "\n";
+  void print(std::ostream &stream = std::cout) const override {
+    stream << type() << ":\n"
+           << "  uuid: " << this->uuid() << "\n"
+           << "  size: " << this->size() << "\n"
+           << "  camera id: " << id() << "\n";
   };
 
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
-  uint64_t id_ { 0 };
+  uint64_t id_{0};
 
   /**
    * @brief The Boost Serialize method that serializes all of the data members
@@ -120,12 +121,10 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive& archive, const unsigned int /* version */)
-  {
-    archive& boost::serialization::base_object<FixedSizeVariable<N>>(*this);
-    archive& id_;
+  void serialize(Archive &archive, const unsigned int /* version */) {
+    archive &boost::serialization::base_object<FixedSizeVariable<N>>(*this);
+    archive & id_;
   }
 };
 
-}  // namespace vesta_variables
-
+} // namespace vesta_variables

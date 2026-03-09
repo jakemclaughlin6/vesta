@@ -38,10 +38,10 @@
 #include <vesta_core/uuid.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 
+#include <Eigen/Geometry>
 #include <ceres/covariance.h>
 #include <ceres/problem.h>
 #include <ceres/solver.h>
-#include <Eigen/Geometry>
 #include <gtest/gtest.h>
 
 #include <utility>
@@ -50,36 +50,40 @@
 using vesta_constraints::AbsoluteOrientation3DStampedConstraint;
 using vesta_variables::Orientation3DStamped;
 
-
-TEST(AbsoluteOrientation3DStampedConstraint, Constructor)
-{
+TEST(AbsoluteOrientation3DStampedConstraint, Constructor) {
   // Construct a constraint just to make sure it compiles.
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(
+      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
   vesta_core::Vector4d mean;
   mean << 1.0, 0.0, 0.0, 0.0;
   vesta_core::Matrix3d cov;
   cov << 1.0, 0.1, 0.2, 0.1, 2.0, 0.3, 0.2, 0.3, 3.0;
-  EXPECT_NO_THROW(AbsoluteOrientation3DStampedConstraint constraint("test", orientation_variable, mean, cov));
+  EXPECT_NO_THROW(AbsoluteOrientation3DStampedConstraint constraint(
+      "test", orientation_variable, mean, cov));
 
   Eigen::Quaterniond quat_eigen(1.0, 0.0, 0.0, 0.0);
-  EXPECT_NO_THROW(AbsoluteOrientation3DStampedConstraint constraint("test", orientation_variable, quat_eigen, cov));
+  EXPECT_NO_THROW(AbsoluteOrientation3DStampedConstraint constraint(
+      "test", orientation_variable, quat_eigen, cov));
 }
 
-TEST(AbsoluteOrientation3DStampedConstraint, Covariance)
-{
+TEST(AbsoluteOrientation3DStampedConstraint, Covariance) {
   // Verify the covariance <--> sqrt information conversions are correct
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("mo"));
+  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678),
+                                            vesta_core::uuid::generate("mo"));
   vesta_core::Vector4d mean;
   mean << 1.0, 0.0, 0.0, 0.0;
   vesta_core::Matrix3d cov;
   cov << 1.0, 0.1, 0.2, 0.1, 2.0, 0.3, 0.2, 0.3, 3.0;
-  AbsoluteOrientation3DStampedConstraint constraint("test", orientation_variable, mean, cov);
+  AbsoluteOrientation3DStampedConstraint constraint(
+      "test", orientation_variable, mean, cov);
 
-  // Define the expected matrices (used Octave to compute sqrt_info: 'chol(inv(A))')
+  // Define the expected matrices (used Octave to compute sqrt_info:
+  // 'chol(inv(A))')
   vesta_core::Matrix3d expected_sqrt_info;
-  expected_sqrt_info <<  1.008395589795798, -0.040950074712520, -0.063131365181801,
-                         0.000000000000000,  0.712470499879096, -0.071247049987910,
-                         0.000000000000000,  0.000000000000000,  0.577350269189626;
+  expected_sqrt_info << 1.008395589795798, -0.040950074712520,
+      -0.063131365181801, 0.000000000000000, 0.712470499879096,
+      -0.071247049987910, 0.000000000000000, 0.000000000000000,
+      0.577350269189626;
   vesta_core::Matrix3d expected_cov = cov;
 
   // Compare
@@ -87,11 +91,11 @@ TEST(AbsoluteOrientation3DStampedConstraint, Covariance)
   EXPECT_MATRIX_NEAR(expected_sqrt_info, constraint.sqrtInformation(), 1.0e-9);
 }
 
-TEST(AbsoluteOrientation3DStampedConstraint, Optimization)
-{
-  // Optimize a single pose and single constraint, verify the expected value and covariance are generated.
-  // Create the variables
-  auto orientation_variable = Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+TEST(AbsoluteOrientation3DStampedConstraint, Optimization) {
+  // Optimize a single pose and single constraint, verify the expected value and
+  // covariance are generated. Create the variables
+  auto orientation_variable = Orientation3DStamped::make_shared(
+      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   orientation_variable->w() = 0.952;
   orientation_variable->x() = 0.038;
   orientation_variable->y() = -0.189;
@@ -102,31 +106,22 @@ TEST(AbsoluteOrientation3DStampedConstraint, Optimization)
   mean << 1.0, 0.0, 0.0, 0.0;
 
   vesta_core::Matrix3d cov;
-  cov <<
-    1.0, 0.1, 0.2,
-    0.1, 2.0, 0.3,
-    0.2, 0.3, 3.0;
+  cov << 1.0, 0.1, 0.2, 0.1, 2.0, 0.3, 0.2, 0.3, 3.0;
   auto constraint = AbsoluteOrientation3DStampedConstraint::make_shared(
-    "test",
-    *orientation_variable,
-    mean,
-    cov);
+      "test", *orientation_variable, mean, cov);
 
   // Build the problem
   ceres::Problem::Options problem_options;
   problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
-  problem.AddParameterBlock(
-    orientation_variable->data(),
-    orientation_variable->size(),
-    orientation_variable->manifold());
+  problem.AddParameterBlock(orientation_variable->data(),
+                            orientation_variable->size(),
+                            orientation_variable->manifold());
 
-  std::vector<double*> parameter_blocks;
+  std::vector<double *> parameter_blocks;
   parameter_blocks.push_back(orientation_variable->data());
-  problem.AddResidualBlock(
-    constraint->costFunction(),
-    constraint->lossFunction(),
-    parameter_blocks);
+  problem.AddResidualBlock(constraint->costFunction(),
+                           constraint->lossFunction(), parameter_blocks);
 
   // Run the solver
   ceres::Solver::Options options;
@@ -140,33 +135,34 @@ TEST(AbsoluteOrientation3DStampedConstraint, Optimization)
   EXPECT_NEAR(0.0, orientation_variable->z(), 1.0e-3);
 
   // Compute the covariance
-  std::vector<std::pair<const double*, const double*> > covariance_blocks;
-  covariance_blocks.emplace_back(orientation_variable->data(), orientation_variable->data());
+  std::vector<std::pair<const double *, const double *>> covariance_blocks;
+  covariance_blocks.emplace_back(orientation_variable->data(),
+                                 orientation_variable->data());
   ceres::Covariance::Options cov_options;
   ceres::Covariance covariance(cov_options);
   covariance.Compute(covariance_blocks, &problem);
-  vesta_core::Matrix3d actual_covariance(orientation_variable->tangentSize(), orientation_variable->tangentSize());
-  covariance.GetCovarianceBlockInTangentSpace(
-    orientation_variable->data(), orientation_variable->data(), actual_covariance.data());
+  vesta_core::Matrix3d actual_covariance(orientation_variable->tangentSize(),
+                                         orientation_variable->tangentSize());
+  covariance.GetCovarianceBlockInTangentSpace(orientation_variable->data(),
+                                              orientation_variable->data(),
+                                              actual_covariance.data());
 
   // Define the expected covariance
   vesta_core::Matrix3d expected_covariance;
-  expected_covariance <<
-    1.0, 0.1, 0.2,
-    0.1, 2.0, 0.3,
-    0.2, 0.3, 3.0;
+  expected_covariance << 1.0, 0.1, 0.2, 0.1, 2.0, 0.3, 0.2, 0.3, 3.0;
   EXPECT_MATRIX_NEAR(expected_covariance, actual_covariance, 1.0e-3);
 }
 
-TEST(AbsoluteOrientation3DStampedConstraint, Serialization)
-{
+TEST(AbsoluteOrientation3DStampedConstraint, Serialization) {
   // Construct a constraint
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(
+      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
   vesta_core::Vector4d mean;
   mean << 1.0, 0.0, 0.0, 0.0;
   vesta_core::Matrix3d cov;
   cov << 1.0, 0.1, 0.2, 0.1, 2.0, 0.3, 0.2, 0.3, 3.0;
-  AbsoluteOrientation3DStampedConstraint expected("test", orientation_variable, mean, cov);
+  AbsoluteOrientation3DStampedConstraint expected("test", orientation_variable,
+                                                  mean, cov);
 
   // Serialize the constraint into an archive
   std::stringstream stream;
@@ -189,8 +185,7 @@ TEST(AbsoluteOrientation3DStampedConstraint, Serialization)
   EXPECT_MATRIX_EQ(expected.sqrtInformation(), actual.sqrtInformation());
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

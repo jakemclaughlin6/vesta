@@ -31,20 +31,18 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#include <vesta_core/uuid.h>
 #include <test/example_constraint.h>
+#include <vesta_core/uuid.h>
 
 #include <gtest/gtest.h>
 
 #include <vector>
 
-
-TEST(Constraint, Constructor)
-{
+TEST(Constraint, Constructor) {
   // Create a constraint with a single UUID
   {
     vesta_core::UUID variable_uuid1 = vesta_core::uuid::generate();
-    ExampleConstraint constraint("test", {variable_uuid1});  // NOLINT
+    ExampleConstraint constraint("test", {variable_uuid1}); // NOLINT
     ASSERT_EQ(1u, constraint.variables().size());
     ASSERT_EQ(variable_uuid1, constraint.variables().at(0));
   }
@@ -53,7 +51,8 @@ TEST(Constraint, Constructor)
     vesta_core::UUID variable_uuid1 = vesta_core::uuid::generate();
     vesta_core::UUID variable_uuid2 = vesta_core::uuid::generate();
     vesta_core::UUID variable_uuid3 = vesta_core::uuid::generate();
-    ExampleConstraint constraint("test", {variable_uuid1, variable_uuid2, variable_uuid3});  // NOLINT
+    ExampleConstraint constraint(
+        "test", {variable_uuid1, variable_uuid2, variable_uuid3}); // NOLINT
     ASSERT_EQ(3u, constraint.variables().size());
     ASSERT_EQ(variable_uuid1, constraint.variables().at(0));
     ASSERT_EQ(variable_uuid2, constraint.variables().at(1));
@@ -66,10 +65,10 @@ TEST(Constraint, Constructor)
     variable_uuids.push_back(vesta_core::uuid::generate());
     variable_uuids.push_back(vesta_core::uuid::generate());
     variable_uuids.push_back(vesta_core::uuid::generate());
-    ExampleConstraint constraint("test", variable_uuids.begin(), variable_uuids.end());
+    ExampleConstraint constraint("test", variable_uuids.begin(),
+                                 variable_uuids.end());
     ASSERT_EQ(variable_uuids.size(), constraint.variables().size());
-    for (size_t i = 0; i < variable_uuids.size(); ++i)
-    {
+    for (size_t i = 0; i < variable_uuids.size(); ++i) {
       ASSERT_EQ(variable_uuids.at(i), constraint.variables().at(i));
     }
   }
@@ -78,27 +77,25 @@ TEST(Constraint, Constructor)
     vesta_core::UUID variable_uuid1 = vesta_core::uuid::generate();
     vesta_core::UUID variable_uuid2 = vesta_core::uuid::generate();
     vesta_core::UUID variable_uuid3 = vesta_core::uuid::generate();
-    ExampleConstraint constraint1("test", {variable_uuid1, variable_uuid2, variable_uuid3});  // NOLINT
+    ExampleConstraint constraint1(
+        "test", {variable_uuid1, variable_uuid2, variable_uuid3}); // NOLINT
     ExampleConstraint constraint2(constraint1);
 
     ASSERT_EQ(constraint1.uuid(), constraint2.uuid());
     ASSERT_EQ(constraint1.variables().size(), constraint2.variables().size());
-    for (size_t i = 0; i < constraint1.variables().size(); ++i)
-    {
+    for (size_t i = 0; i < constraint1.variables().size(); ++i) {
       ASSERT_EQ(constraint1.variables().at(i), constraint2.variables().at(i));
     }
   }
 }
 
-TEST(Constraint, Type)
-{
+TEST(Constraint, Type) {
   vesta_core::UUID variable_uuid1 = vesta_core::uuid::generate();
-  ExampleConstraint constraint("test", {variable_uuid1});  // NOLINT
+  ExampleConstraint constraint("test", {variable_uuid1}); // NOLINT
   ASSERT_EQ("ExampleConstraint", constraint.type());
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

@@ -36,35 +36,33 @@
 
 #include <vesta_core/uuid.h>
 
+#include <Eigen/Core>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/uuid/uuid_serialize.hpp>
-#include <Eigen/Core>
 
 #include <boost/iostreams/categories.hpp>
 
 #include <vector>
 
-
-namespace vesta_core
-{
+namespace vesta_core {
 using BinaryInputArchive = boost::archive::binary_iarchive;
 using BinaryOutputArchive = boost::archive::binary_oarchive;
 using TextInputArchive = boost::archive::text_iarchive;
 using TextOutputArchive = boost::archive::text_oarchive;
 
 /**
- * @brief A Boost IOStreams source device designed to read bytes directly from a ROS message byte array ('uint8[]')
+ * @brief A Boost IOStreams source device designed to read bytes directly from a
+ * ROS message byte array ('uint8[]')
  */
-class MessageBufferStreamSource
-{
+class MessageBufferStreamSource {
 public:
   typedef char char_type;
   typedef boost::iostreams::source_tag category;
@@ -72,16 +70,18 @@ public:
   /**
    * @brief Construct a stream source from a previously populated data vector
    *
-   * The input vector type is designed to work with ROS message fields of type 'uint8[]'
+   * The input vector type is designed to work with ROS message fields of type
+   * 'uint8[]'
    *
    * @param[in] data A byte vector from a ROS message
    */
-  explicit MessageBufferStreamSource(const std::vector<unsigned char>& data);
+  explicit MessageBufferStreamSource(const std::vector<unsigned char> &data);
 
   /**
    * @brief The stream source is non-copyable
    */
-  MessageBufferStreamSource operator=(const MessageBufferStreamSource&) = delete;
+  MessageBufferStreamSource
+  operator=(const MessageBufferStreamSource &) = delete;
 
   /**
    * @brief Read up to n characters from the data vector
@@ -92,18 +92,19 @@ public:
    * @param[in] n The number of bytes to read from the stream
    * @return The number of bytes read, or -1 to indicate EOF
    */
-  std::streamsize read(char_type* s, std::streamsize n);
+  std::streamsize read(char_type *s, std::streamsize n);
 
 private:
-  const std::vector<unsigned char>& data_;  //!< Reference to the source container
-  size_t index_;  //!< The next vector index to read
+  const std::vector<unsigned char>
+      &data_;    //!< Reference to the source container
+  size_t index_; //!< The next vector index to read
 };
 
 /**
- * @brief A Boost IOStreams sink device designed to write bytes directly from a ROS message byte array ('uint8[]')
+ * @brief A Boost IOStreams sink device designed to write bytes directly from a
+ * ROS message byte array ('uint8[]')
  */
-class MessageBufferStreamSink
-{
+class MessageBufferStreamSink {
 public:
   typedef char char_type;
   typedef boost::iostreams::sink_tag category;
@@ -111,16 +112,17 @@ public:
   /**
    * @brief Construct a stream sink from a data vector
    *
-   * The input vector type is designed to work with ROS message fields of type 'uint8[]'
+   * The input vector type is designed to work with ROS message fields of type
+   * 'uint8[]'
    *
    * @param[in] data A byte vector from a ROS message
    */
-  explicit MessageBufferStreamSink(std::vector<unsigned char>& data);
+  explicit MessageBufferStreamSink(std::vector<unsigned char> &data);
 
   /**
    * @brief The stream sink is non-copyable
    */
-  MessageBufferStreamSink operator=(const MessageBufferStreamSink&) = delete;
+  MessageBufferStreamSink operator=(const MessageBufferStreamSink &) = delete;
 
   /**
    * @brief Write n characters to the data vector
@@ -131,44 +133,39 @@ public:
    * @param[in] n The number of bytes to write to the stream
    * @return The number of bytes written
    */
-  std::streamsize write(const char_type* s, std::streamsize n);
+  std::streamsize write(const char_type *s, std::streamsize n);
 
 private:
-  std::vector<unsigned char>& data_;  //!< Reference to the destination container
+  std::vector<unsigned char> &data_; //!< Reference to the destination container
 };
 
-}  // namespace vesta_core
+} // namespace vesta_core
 
-namespace boost
-{
-namespace serialization
-{
+namespace boost {
+namespace serialization {
 
 /**
  * @brief Serialize an Eigen Matrix using Boost Serialization
  *
  * https://stackoverflow.com/questions/54534047/eigen-matrix-boostserialization-c17/54535484#54535484
  */
-template <class Archive, typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
-inline void serialize(
-  Archive& archive,
-  Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols>& matrix,
-  const unsigned int /* version */)
-{
+template <class Archive, typename Scalar, int Rows, int Cols, int Options,
+          int MaxRows, int MaxCols>
+inline void
+serialize(Archive &archive,
+          Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, MaxCols> &matrix,
+          const unsigned int /* version */) {
   Eigen::Index rows = matrix.rows();
   Eigen::Index cols = matrix.cols();
   archive & rows;
   archive & cols;
-  if (rows != matrix.rows() || cols != matrix.cols())
-  {
+  if (rows != matrix.rows() || cols != matrix.cols()) {
     matrix.resize(rows, cols);
   }
-  if (matrix.size() != 0)
-  {
-    archive & boost::serialization::make_array(matrix.data(), rows * cols);
+  if (matrix.size() != 0) {
+    archive &boost::serialization::make_array(matrix.data(), rows * cols);
   }
 }
 
-}  // namespace serialization
-}  // namespace boost
-
+} // namespace serialization
+} // namespace boost

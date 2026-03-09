@@ -40,24 +40,27 @@
 
 #include <memory>
 
-namespace vesta_core
-{
+namespace vesta_core {
 
 /**
- * @brief Build a ceres::ParameterBlockOrdering from a graph for Schur complement-based solvers.
+ * @brief Build a ceres::ParameterBlockOrdering from a graph for Schur
+ * complement-based solvers.
  *
- * Iterates all variables in the graph and assigns them to Schur elimination groups based on
- * Variable::schurGroup(). Variables returning 0 are placed in group 0 (eliminated first, e.g.
- * landmarks in bundle adjustment). Variables returning 1 or -1 (unclassified) are placed in
- * group 1 (kept in the reduced system, e.g. camera poses).
+ * Iterates all variables in the graph and assigns them to Schur elimination
+ * groups based on Variable::schurGroup(). Variables returning 0 are placed in
+ * group 0 (eliminated first, e.g. landmarks in bundle adjustment). Variables
+ * returning 1 or -1 (unclassified) are placed in group 1 (kept in the reduced
+ * system, e.g. camera poses).
  *
- * The returned ordering is suitable for use with ceres::Solver::Options::linear_solver_ordering
- * when using DENSE_SCHUR, SPARSE_SCHUR, or ITERATIVE_SCHUR linear solver types.
+ * The returned ordering is suitable for use with
+ * ceres::Solver::Options::linear_solver_ordering when using DENSE_SCHUR,
+ * SPARSE_SCHUR, or ITERATIVE_SCHUR linear solver types.
  *
  * @param[in] graph The graph whose variables define the ordering
- * @return A shared_ptr to the ordering, or nullptr if no variables have schurGroup() == 0
+ * @return A shared_ptr to the ordering, or nullptr if no variables have
+ * schurGroup() == 0
  */
-std::shared_ptr<ceres::ParameterBlockOrdering> buildSchurOrdering(const Graph& graph);
+std::shared_ptr<ceres::ParameterBlockOrdering>
+buildSchurOrdering(const Graph &graph);
 
-}  // namespace vesta_core
-
+} // namespace vesta_core
