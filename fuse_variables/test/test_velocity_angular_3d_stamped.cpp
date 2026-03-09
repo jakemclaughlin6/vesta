@@ -32,8 +32,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <fuse_core/serialization.h>
-#include <fuse_variables/velocity_angular_3d_stamped.h>
-#include <fuse_variables/stamped.h>
+#include <fuse_variables/3d/velocity_angular_3d_stamped.h>
+#include <fuse_variables/common/stamped.h>
 #include <fuse_core/timestamp.h>
 
 #include <ceres/autodiff_cost_function.h>
