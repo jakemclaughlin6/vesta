@@ -1,6 +1,6 @@
 # Variables
 
-In the fuse stack, a Variable does two things:
+In the vesta stack, a Variable does two things:
 
 ## Variable Value
 
@@ -25,7 +25,7 @@ the system. There are several reasons multiple identities of a Variable will be 
 * Most commonly, a Variable will represent a time-varying process. A different identity will be required for each
   time instant for which the process value is to be estimated. For example, the pose of the robot will change over
   time, so we need a unique identity representing the robot pose at time `t1` **and** another unique identity
-  representing the robot pose at time `t2`. Any time-varying process must be discretized within the fuse stack.
+  representing the robot pose at time `t2`. Any time-varying process must be discretized within the vesta stack.
   ![time series](variables-time_series.png)
 
 The identity takes the form of a UUID or hash, and is generally derived from a set of additional properties that
@@ -34,7 +34,7 @@ likely involve the timestamp. In the case of a Variable that can describe multip
 serial number of the robot.
 
 An important aspect of the identity is that the same UUID must be generated when the same identity is referenced
-from different places in the distributed fuse stack. For example, a robot may estimate its pose at a specific time
+from different places in the distributed vesta stack. For example, a robot may estimate its pose at a specific time
 using wheel odometry measurements, and it may estimate its pose at the same time instant using some laserscan
 matching algorithm. Both measurements involve the same identity: the pose of robot `R` measured at time `t`, and
 thus both sensors must generate a Variable instance with the same identity.
@@ -51,15 +51,15 @@ This is one of those "Goldilocks principle" situations.
 
 Understanding how Variable interact with the rest of the system will help in the design of "good" Variable.
 
-* The fuse stack is designed to combine observations _of the same variable identity_ from multiple sources. As
+* The vesta stack is designed to combine observations _of the same variable identity_ from multiple sources. As
   described above, if a robot measures its current pose using wheel odometry as well as with a laserscan, then we have
-  two different measurements of the same pose. In order for these two measurements to be combined together in fuse,
+  two different measurements of the same pose. In order for these two measurements to be combined together in vesta,
   **they must use the same Variable class**. In a way, the Variables are analogous to message definitions in ROS.
   Much of the power of ROS comes from the use of common message types across the ROS ecosystem. While it is possible
   for someone to define a custom laserscan message that matches their use-case exactly, no other existing code would
   be compatible with that custom laserscan message. You would be unable to use the laser filters package, or visualize
   the laser data in RViz. Whenever possible, it is preferred to reused existing messages, even if they are not a
-  perfect fit. Similarly, because the fuse Variable class must match exactly to be combined together, it is always
+  perfect fit. Similarly, because the vesta Variable class must match exactly to be combined together, it is always
   better to reuse existing Variables.
 * A measurement can involve multiple Variable instances and multiple Variable classes. For example, a measurement could
   involve both a 2D pose **and** a 2D velocity. This allows a system with a large number of measured dimensions to be
@@ -84,14 +84,14 @@ Understanding how Variable interact with the rest of the system will help in the
 
 For the most part, reasonable Variables will be fairly obvious: 2D position, 2D velocity, 2D acceleration, etc.
 The biggest debate is generally whether to include the linear and angular information into a single Variable (e.g.
-a 2D pose consists of a 2D position and 2D orientation), or the if they should be separate. For fuse, it was decided
-to keep the linear and angular components separate. The [`fuse_variables`](../fuse_variables) package provides a set
+a 2D pose consists of a 2D position and 2D orientation), or the if they should be separate. For vesta, it was decided
+to keep the linear and angular components separate. The [`vesta_variables`](../vesta_variables) package provides a set
 of common, reusable 2D and 3D Variables. And submissions of new Variables are always welcome.
 
 ## Variable API
 
-Like basically everything in fuse, the Variable system is designed to be extensible. The
-[`fuse_core::Variable`](../fuse_core/include/fuse_core/variable.h) base class defines the minimum interface required
+Like basically everything in vesta, the Variable system is designed to be extensible. The
+[`vesta_core::Variable`](../vesta_core/include/vesta_core/variable.h) base class defines the minimum interface required
 for all derived Variables.
 
 * `Derived::type() -> std::string`
@@ -110,10 +110,10 @@ for all derived Variables.
   The value portion of the derived Variable must be accessible from a contiguous memory location of size
   `derived.size() * sizeof(double)`.
 
-* `Derived::uuid() -> fuse_core::UUID`
+* `Derived::uuid() -> vesta_core::UUID`
 
   Each derived class is required to return a unique ID to act as the identity of the Variable. Some functions for
-  generating UUIDs are provided [here](../fuse_core/include/fuse_core/uuid.h).
+  generating UUIDs are provided [here](../vesta_core/include/vesta_core/uuid.h).
 
 * `Derived::print(std::ostream& stream)`
 
@@ -121,7 +121,7 @@ for all derived Variables.
   implement a `print()` method, but the details of exactly what to print are left to the derived Variable class
   designer. At a minimum, the Variable `type()` and `uuid()` is suggested.
 
-* `Derived::clone() -> fuse_core::Variable::UniquePtr`
+* `Derived::clone() -> vesta_core::Variable::UniquePtr`
 
   All derived Variables are required to implement a `clone()` method. This should be implemented as
   `return Derived::make_unique(*this)`. Because this definition requires the use of the derived type, a common
@@ -141,32 +141,32 @@ for all derived Variables.
 
 Additional member properties and member functions may be added to the derived Variable. These can only be used
 when an object is created with a known type. Despite this limitation, providing some syntax sugar is encouraged, as
-it can make working with the derived Variable objects more satisfying. For example, `fuse_variables` classes provide
+it can make working with the derived Variable objects more satisfying. For example, `vesta_variables` classes provide
 named accessors for the individual dimension values. This allows use of `var.y()` in lieu of `var.data()[1]`.
 
 ## Example
 
 As a concrete example, we will review the details of `Position2dStamped` Variable class provided in the
-[`fuse_variables`](../fuse_variables) package. For illustrative purposes, some class hierarchies present in the actual
+[`vesta_variables`](../vesta_variables) package. For illustrative purposes, some class hierarchies present in the actual
 code have been collapsed in the code sample below.
 
 ```C++
-class Position2DStamped : public fuse_core::Variable
+class Position2DStamped : public vesta_core::Variable
 {
 private:
   std::array<double, 2> data_;
-  fuse_core::UUID device_id_;
+  vesta_core::UUID device_id_;
   ros::Time stamp_;
-  fuse_core::UUID uuid_;
+  vesta_core::UUID uuid_;
 
 public:
   SMART_PTR_DEFINITIONS(Position2DStamped);
 
-  Position2DStamped(const ros::Time& stamp, const fuse_core::UUID& device_id) :
+  Position2DStamped(const ros::Time& stamp, const vesta_core::UUID& device_id) :
     data{},
     device_id_(device_id),
     stamp_(stamp),
-    uuid_(fuse_core::uuid::generate(type(), stamp, device_id))
+    uuid_(vesta_core::uuid::generate(type(), stamp, device_id))
   {}
 
   size_t size() const override { return data_.size(); }
@@ -174,7 +174,7 @@ public:
   const double* data() const override { return data_.data(); }
   double* data() override { return data_.data(); }
 
-  fuse_core::UUID uuid() const override { return uuid_; }
+  vesta_core::UUID uuid() const override { return uuid_; }
 
   void print(std::ostream& stream = std::cout) const override
   {
@@ -188,7 +188,7 @@ public:
            << "  - y: " << data_[1] << "\n";
   }
 
-  fuse_core::Variable::UniquePtr clone() const override
+  vesta_core::Variable::UniquePtr clone() const override
   {
     return Position2DStamped::make_unique(*this);
   }
@@ -205,10 +205,10 @@ public:
 
 Now let's examine the class details step by step.
 
-All new Variables must derive from the fuse_core::Variable base class.
+All new Variables must derive from the vesta_core::Variable base class.
 
 ```C++
-class Position2DStamped : public fuse_core::Variable
+class Position2DStamped : public vesta_core::Variable
 ```
 
 We need to define to define a contiguous memory location to hold the Variable's value. This is a 2D position
@@ -223,23 +223,23 @@ private:
 
 Our Variable also needs to hold the identity information. For this Variable we want to support both multi-robot
 scenarios as well as time-varying processes, so we need some sort of "robot id" and a timestamp. Since this is a
-ROS library, we will use a `ros::Time` to hold the timestamp. And we will choose a `fuse_core::UUID` to act as a
-generic "robot id". fuse ships with several functions for converting strings and other types into a UUID
-([UUID functions](../fuse_core/include/fuse_core/uuid.h)), so this choice should support most use-cases.
+ROS library, we will use a `ros::Time` to hold the timestamp. And we will choose a `vesta_core::UUID` to act as a
+generic "robot id". vesta ships with several functions for converting strings and other types into a UUID
+([UUID functions](../vesta_core/include/vesta_core/uuid.h)), so this choice should support most use-cases.
 
 ```C++
 private:
-  fuse_core::UUID device_id_;
+  vesta_core::UUID device_id_;
   ros::Time stamp_;
 ```
 
-fuse expects the identity portion of the Variable to be distilled into a `fuse_core::UUID` value. We choose to make
+fuse expects the identity portion of the Variable to be distilled into a `vesta_core::UUID` value. We choose to make
 the Variable identity immutable so that the UUID may be computed once on construction. This allows us to cache the
 UUID as a class member variable.
 
 ```C++
 private:
-  fuse_core::UUID uuid_;
+  vesta_core::UUID uuid_;
 ```
 
 As a consequence, when we construct a Position2DStamped instance, we must specify the `stamp` and `device_id`. After
@@ -247,18 +247,18 @@ construction, these values cannot be changed.
 
 ```C++
 public:
-  Position2DStamped(const ros::Time& stamp, const fuse_core::UUID& device_id) :
+  Position2DStamped(const ros::Time& stamp, const vesta_core::UUID& device_id) :
     data{},
     device_id_(device_id),
     stamp_(stamp),
-    uuid_(fuse_core::uuid::generate(type(), stamp, device_id))
+    uuid_(vesta_core::uuid::generate(type(), stamp, device_id))
   {}
 ```
 
 Specifically note the function call:
 
 ```C++
-fuse_core::uuid::generate(type(), stamp, device_id)
+vesta_core::uuid::generate(type(), stamp, device_id)
 ```
 
 Here we are constructing the identity UUID from the type name itself, the value of `stamp` and the value of
@@ -271,7 +271,7 @@ And now for some less interesting things:
 size_t size() const override { return data_.size(); }
 ```
 
-The `fuse_core::Variable` interface requires read-only access to the number of dimensions of this Variable. Here, the
+The `vesta_core::Variable` interface requires read-only access to the number of dimensions of this Variable. Here, the
 container's `size()` method is used. We could have also just `return 2;`.
 
 ```C++
@@ -279,16 +279,16 @@ const double* data() const override { return data_.data(); }
 double* data() override { return data_.data(); }
 ```
 
-The `fuse_core::Variable` interface requires read-write access to the data array via a C-style pointer, an artifact of
+The `vesta_core::Variable` interface requires read-write access to the data array via a C-style pointer, an artifact of
 using Google Ceres under the hood for optimization. Again, we can use the built-in methods of our data container to
 implement this requirement. And we provide both read-only and read-write versions to support proper const-correctness
 in the surrounding code.
 
 ```C++
-fuse_core::UUID uuid() const override { return uuid_; }
+vesta_core::UUID uuid() const override { return uuid_; }
 ```
 
-The `fuse_core::Variable` interface requires read-only access to the identity UUID value. Since we computed the UUID
+The `vesta_core::Variable` interface requires read-only access to the identity UUID value. Since we computed the UUID
 during construction, we can just return our cached copy.
 
 ```C++
@@ -310,22 +310,22 @@ stream. The base class implements the C++ stream operator in terms of the polymo
 can be streamed to `std::cout` as well.
 
 ```C++
-fuse_core::Variable::UniquePtr clone() const override
+vesta_core::Variable::UniquePtr clone() const override
 {
   return Position2DStamped::make_unique(*this);
 }
 ```
 
 And finally a `clone()` method is required. Here we implement `clone()` exactly as suggested in the
-`fuse_core::Variable` documentation.
+`vesta_core::Variable` documentation.
 
-There are two method implementations inherited from the `fuse_core::Variable` base class.
+There are two method implementations inherited from the `vesta_core::Variable` base class.
 
 ```C++
 std::string type() const { return boost::core::demangle(typeid(*this).name()); }
 ```
 
-The base class implementation is smart enough to return the correct `fuse_variables::Position2dStamped` type string
+The base class implementation is smart enough to return the correct `vesta_variables::Position2dStamped` type string
 here, so we don't need to reimplement the `type()` method.
 
 And our "position" type behaves linearly, so there is no need to use a "local parameterization" inside the optimizer.

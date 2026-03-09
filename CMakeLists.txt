@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(fuse LANGUAGES CXX)
+project(vesta LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,8 +14,8 @@ find_package(Boost REQUIRED COMPONENTS serialization)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLOG REQUIRED libglog)
 
-# SuiteSparse (for CCOLAMD in fuse_constraints)
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/fuse_constraints/cmake)
+# SuiteSparse (for CCOLAMD in vesta_constraints)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/vesta_constraints/cmake)
 find_package(SuiteSparse REQUIRED COMPONENTS CCOLAMD)
 
 # Testing - must be before add_subdirectory for tests to register
@@ -24,9 +24,9 @@ if(BUILD_TESTING)
 endif()
 
 # Add sub-packages in dependency order
-add_subdirectory(fuse_core)
-add_subdirectory(fuse_variables)
-add_subdirectory(fuse_loss)
-add_subdirectory(fuse_graphs)
-add_subdirectory(fuse_constraints)
-add_subdirectory(fuse_optimizers)
+add_subdirectory(vesta_core)
+add_subdirectory(vesta_variables)
+add_subdirectory(vesta_loss)
+add_subdirectory(vesta_graphs)
+add_subdirectory(vesta_constraints)
+add_subdirectory(vesta_optimizers)

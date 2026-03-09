@@ -3,8 +3,8 @@
 The concept of a Constraint has many names: constraints, cost functions, factors, probably many others. At the most
 basic level, a Constraint accepts one or more Variable values and produces a score. The Optimizer will then search
 for the values of all the Variables that minimizes the total score. This search is performed by a nonlinear
-least-squares solver. The fuse stack employs [Google's Ceres Solver](http://ceres-solver.org/) as that least-squares
-solver. As a consequence, the fuse_core::Constraint plugin classes are basically just vehicles for creating the
+least-squares solver. The vesta stack employs [Google's Ceres Solver](http://ceres-solver.org/) as that least-squares
+solver. As a consequence, the vesta_core::Constraint plugin classes are basically just vehicles for creating the
 required Ceres Solver objects.
 
 ## Constraint Modeling
@@ -23,18 +23,18 @@ single-dimensional or multi-dimensional vectors. The least-squares system consis
 terms, and the solver's job is to find the specific values of all the inputs that minimize the sum of the squared
 costs.
 
-In fuse, a Constraint class models one of the &rho;(f()<sup>2</sup>) terms.
+In vesta, a Constraint class models one of the &rho;(f()<sup>2</sup>) terms.
 
 ### Parameter Blocks
 
-The concept of the "parameter block" is modeled by the [Variable](Variables.md) classes in fuse. The Constraint merely
+The concept of the "parameter block" is modeled by the [Variable](Variables.md) classes in vesta. The Constraint merely
 needs to define which specific Variable identities are to be used as the input to modeled cost function. This is done
 by accepting, at a minimum, the UUID of each involved Variable.
 
-The derived Constraints provided by the [fuse_constraints](../fuse_constraints) package go one step further, and
+The derived Constraints provided by the [vesta_constraints](../vesta_constraints) package go one step further, and
 require instances of full Variable types rather than just the Variable's UUID. This is done solely to enforce
 type-safety; e.g. a specific Constraint must involve two
-[Position2DStamped](../fuse_variables/include/fuse_variables/position_2d_stamped.h) variables, no other variable types
+[Position2DStamped](../vesta_variables/include/vesta_variables/position_2d_stamped.h) variables, no other variable types
 are acceptable.
 
 ### Cost Function
@@ -99,18 +99,18 @@ of the Ceres Solver documentation.
 
 ## Constraint API
 
-Like basically everything in fuse, the Constraint system is designed to be extensible. The
-[`fuse_core::Constraint`](../fuse_core/include/fuse_core/constraint.h) base class defines the minimum interface
+Like basically everything in vesta, the Constraint system is designed to be extensible. The
+[`vesta_core::Constraint`](../vesta_core/include/vesta_core/constraint.h) base class defines the minimum interface
 required for all derived Constraints.
 
-* `Constraint::uuid() -> fuse_core::UUID`
+* `Constraint::uuid() -> vesta_core::UUID`
 
   Each derived class is required to return a unique ID to act as the identity of the Constraint. Unlike the Variables,
   each generated derived Constraint object is unique. It is completely valid to produce two Constraints of the same
   type that involve the same Variables. Consequently, a random UUID is generated for each constructed Constraint. This
   is performed by the base class; derived classes do not need to implement this function..
 
-* `Constraint::variables() -> vector<fuse_core::UUID>`
+* `Constraint::variables() -> vector<vesta_core::UUID>`
 
   Each derived class is required to provide read-only access to the ordered collection of Variable UUIDs involved with
   the derived Constraint. The base class holds the collection, and provides the read-only accessor. Derived classes
@@ -128,7 +128,7 @@ required for all derived Constraints.
   implement a `print()` method, but the details of exactly what to print are left to the derived Constraint class
   designer. At a minimum, the Constraint `type()`, `uuid()`, and involved variables are suggested.
 
-* `Derived::clone() -> fuse_core::Constraint::UniquePtr`
+* `Derived::clone() -> vesta_core::Constraint::UniquePtr`
 
   All derived Constraints are required to implement a `clone()` method. This should be implemented as
   `return Derived::make_unique(*this)`. Because this definition requires the use of the derived type, a common
@@ -139,14 +139,14 @@ required for all derived Constraints.
   All derived classes must implement the `costFunction()` method, and return a valid Ceres Solver `CostFunction`
   pointer. Ceres Solver will take ownership of the loss function pointer and delete it when appropriate. There are
   a few `CostFunction` objects available within the Ceres Solver code base, and several additional ones available in
-  the [fuse_constraints](../fuse_constraints) package. However, it is expected that most derived classes will need to
+  the [vesta_constraints](../vesta_constraints) package. However, it is expected that most derived classes will need to
   implement their `ceres::CostFunction` as well. This is how the author of the derived class is able to model the
   specific behavior of a sensor or vehicle. See the
   [Ceres documentation](http://ceres-solver.org/nnls_modeling.html#costfunction) for details on implementing a
   `ceres::CostFunction`. Additionally, see the [documentation](http://ceres-solver.org/derivatives.html) about
   implementing derivatives within Ceres Solver. Ceres Solver supports a powerful automatic derivative system, in
   addition to numerical and analytic derivatives. This is one of the features that drove the selection of Ceres
-  Solver as the optimization engine in fuse.
+  Solver as the optimization engine in vesta.
 
 * `Derived::lossFunction() -> ceres::LossFunction*`
 
@@ -163,18 +163,18 @@ required for all derived Constraints.
 ## Example
 
 As a concrete example, we will review the details of `AbsolutePose2DStampedConstraint` class provided in the
-[`fuse_constraints`](../fuse_constraints) package. For illustrative purposes, some of the more advanced options of
+[`vesta_constraints`](../vesta_constraints) package. For illustrative purposes, some of the more advanced options of
 this constraint have been omitted in the code sample below.
 
 ```C++
 class AbsolutePose2DCostFunctor
 {
 private:
-  fuse_core::Matrix3d A_;
-  fuse_core::Vector3d b_;
+  vesta_core::Matrix3d A_;
+  vesta_core::Vector3d b_;
 
 public:
-  AbsolutePose2DCostFunctor(const fuse_core::Matrix3d& A, const fuse_core::Vector3d& b) :
+  AbsolutePose2DCostFunctor(const vesta_core::Matrix3d& A, const vesta_core::Vector3d& b) :
     A_(A),
     b_(b)
   {}
@@ -192,21 +192,21 @@ public:
   }
 };
 
-class AbsolutePose2DStampedConstraint : public fuse_core::Constraint
+class AbsolutePose2DStampedConstraint : public vesta_core::Constraint
 {
 private:
-  fuse_core::Vector3d mean_;
-  fuse_core::Matrix3d sqrt_information_;
+  vesta_core::Vector3d mean_;
+  vesta_core::Matrix3d sqrt_information_;
 
 public:
   SMART_PTR_DEFINITIONS(AbsolutePose2DStampedConstraint);
 
   AbsolutePose2DStampedConstraint(
-    const fuse_variables::Position2DStamped& position,
-    const fuse_variables::Orientation2DStamped& orientation,
-    const fuse_core::Vector3d& mean,
-    const fuse_core::Matrix3d& covariance) :
-      fuse_core::Constraint{position.uuid(), orientation.uuid()},
+    const vesta_variables::Position2DStamped& position,
+    const vesta_variables::Orientation2DStamped& orientation,
+    const vesta_core::Vector3d& mean,
+    const vesta_core::Matrix3d& covariance) :
+      vesta_core::Constraint{position.uuid(), orientation.uuid()},
       mean_(mean),
       sqrt_information_(covariance.inverse().llt().matrixU())
   {}
@@ -221,7 +221,7 @@ public:
           << "  sqrt_info: " << sqrtInformation() << "\n";
   }
 
-  fuse_core::Constraint::UniquePtr clone() const override
+  vesta_core::Constraint::UniquePtr clone() const override
   {
     return AbsolutePose2DStampedConstraint::make_unique(*this);
   }
@@ -232,8 +232,8 @@ public:
       new AbsolutePose2DCostFunctor(sqrt_information_, mean_));
   }
 
-  const fuse_core::Vector3d& mean() const { return mean_; }
-  const fuse_core::MatrixXd& sqrtInformation() const { return sqrt_information_; }
+  const vesta_core::Vector3d& mean() const { return mean_; }
+  const vesta_core::MatrixXd& sqrtInformation() const { return sqrt_information_; }
 };
 ```
 
@@ -258,18 +258,18 @@ named `A`.
 class AbsolutePose2DCostFunctor
 {
 private:
-  fuse_core::Matrix3d A_;
-  fuse_core::Vector3d b_;
+  vesta_core::Matrix3d A_;
+  vesta_core::Vector3d b_;
 
 public:
-  AbsolutePose2DCostFunctor(const fuse_core::Matrix3d& A, const fuse_core::Vector3d& b) :
+  AbsolutePose2DCostFunctor(const vesta_core::Matrix3d& A, const vesta_core::Vector3d& b) :
     A_(A),
     b_(b)
   {}
 ```
 
 Additionally, the functor's `operator()` method must be a template function, capable of accepting as least `double`
-and `ceres::Jet` objects as input. Since fuse uses separate Variables to hold the position and orientation data,
+and `ceres::Jet` objects as input. Since vesta uses separate Variables to hold the position and orientation data,
 our functor must accept two input "parameter blocks". It must also accept a mutable vector used to store the output
 costs/residuals.
 
@@ -313,11 +313,11 @@ wrapAngle2D(residuals_map(2));
 ```
 This ensures the orientation error is always minimum phase, treating &pi;/2 and 5&pi;/2 as the same error.
 
-Now that we have our Ceres Solver compatible cost functor implemented, we can create the fuse constraint. All new
-Constraints must derive from the fuse_core::Constraint base class.
+Now that we have our Ceres Solver compatible cost functor implemented, we can create the vesta constraint. All new
+Constraints must derive from the vesta_core::Constraint base class.
 
 ```C++
-class AbsolutePose2DStampedConstraint : public fuse_core::Constraint
+class AbsolutePose2DStampedConstraint : public vesta_core::Constraint
 ```
 
 In the derived class constructor, we specify the required input Variable types to enforce type-safety during
@@ -326,16 +326,16 @@ we pass in the measurement vector and measurement covariance, so that we can gen
 
 ```C++
 private:
-  fuse_core::Vector3d mean_;
-  fuse_core::Matrix3d sqrt_information_;
+  vesta_core::Vector3d mean_;
+  vesta_core::Matrix3d sqrt_information_;
 
 public:
   AbsolutePose2DStampedConstraint(
-    const fuse_variables::Position2DStamped& position,
-    const fuse_variables::Orientation2DStamped& orientation,
-    const fuse_core::Vector3d& mean,
-    const fuse_core::Matrix3d& covariance) :
-      fuse_core::Constraint{position.uuid(), orientation.uuid()},
+    const vesta_variables::Position2DStamped& position,
+    const vesta_variables::Orientation2DStamped& orientation,
+    const vesta_core::Vector3d& mean,
+    const vesta_core::Matrix3d& covariance) :
+      vesta_core::Constraint{position.uuid(), orientation.uuid()},
       mean_(mean),
       sqrt_information_(covariance.inverse().llt().matrixU())
   {}
@@ -367,7 +367,7 @@ We must also provide a `clone()` method. Here we used the recommended implementa
 
 ```C++
 public:
-  fuse_core::Constraint::UniquePtr clone() const override
+  vesta_core::Constraint::UniquePtr clone() const override
   {
     return AbsolutePose2DStampedConstraint::make_unique(*this);
   }
@@ -414,8 +414,8 @@ pointer creation functions, e.g.`AbsolutePose2DStampedConstraint::make_shared()`
 
 ```C++
 public:
-  const fuse_core::Vector3d& mean() const { return mean_; }
-  const fuse_core::MatrixXd& sqrtInformation() const { return sqrt_information_; }
+  const vesta_core::Vector3d& mean() const { return mean_; }
+  const vesta_core::MatrixXd& sqrtInformation() const { return sqrt_information_; }
 ```
 
 Providing accessor functions for the additional constructor arguments is also recommended.
