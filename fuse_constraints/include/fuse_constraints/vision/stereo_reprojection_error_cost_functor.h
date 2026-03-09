@@ -98,7 +98,7 @@ private:
   fuse_core::Vector4d b_;
 };
 
-StereoReprojectionErrorCostFunctor::StereoReprojectionErrorCostFunctor(
+inline StereoReprojectionErrorCostFunctor::StereoReprojectionErrorCostFunctor(
     const fuse_core::Matrix4d& A, const fuse_core::Vector4d& b)
   : A_(A), b_(b)
 {

@@ -379,8 +379,8 @@ protected:
   Variables variables_;  //!< The set of all variables
   VariableSet variables_on_hold_;  //!< The set of variables that should be held constant
 
-  //!< Persistent ceres::Problem for incremental optimization (mutable for lazy init in const-like contexts)
-  mutable std::unique_ptr<ceres::Problem> problem_;
+  //!< Persistent ceres::Problem for incremental optimization
+  std::unique_ptr<ceres::Problem> problem_;
   //!< Map from constraint UUID to ceres ResidualBlockId for incremental removal
   std::unordered_map<fuse_core::UUID, ceres::ResidualBlockId, fuse_core::uuid::hash> residual_block_ids_;
   bool problem_dirty_ = true;  //!< If true, problem_ must be rebuilt from scratch on next optimize
@@ -428,6 +428,9 @@ private:
       problem_.reset();
       residual_block_ids_.clear();
       problem_dirty_ = true;
+      // Ensure critical options are correct after deserialization
+      problem_options_.enable_fast_removal = true;
+      problem_options_.loss_function_ownership = fuse_core::Loss::Ownership;
     }
   }
 };

@@ -98,7 +98,7 @@ public:
   /**
    * @brief Destructor
    */
-  virtual ~StereoReprojectionErrorConstraint() = default;
+  ~StereoReprojectionErrorConstraint() override = default;
 
   /**
    * @brief Read-only access to the square root information matrix.

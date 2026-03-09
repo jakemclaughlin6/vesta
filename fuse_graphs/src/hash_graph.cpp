@@ -347,6 +347,10 @@ fuse_core::Graph::const_variable_range HashGraph::getVariables() const noexcept
 
 void HashGraph::holdVariable(const fuse_core::UUID& variable_uuid, bool hold_constant)
 {
+  if (variables_.find(variable_uuid) == variables_.end())
+  {
+    throw std::out_of_range("The variable UUID " + fuse_core::uuid::to_string(variable_uuid) + " does not exist.");
+  }
   // Adjust the variable setting in the Ceres Problem object
   if (hold_constant)
   {

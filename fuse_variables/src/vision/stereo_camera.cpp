@@ -43,21 +43,21 @@
 
 namespace fuse_variables
 {
-StereoCamera::StereoCamera(const fuse_core::UUID& uuid, const uint64_t& camera_id)
+StereoCamera::StereoCamera(const fuse_core::UUID& uuid, uint64_t camera_id)
   : BaseCamera(uuid, camera_id)
 {
 }
 
-StereoCamera::StereoCamera(const uint64_t& camera_id)
+StereoCamera::StereoCamera(uint64_t camera_id)
   : StereoCamera(fuse_core::uuid::generate(detail::type(), camera_id), camera_id)
 {
 }
 
-StereoCamera::StereoCamera(const fuse_core::UUID& uuid, const uint64_t& camera_id,
-                            const double& fx, const double& fy,
-                            const double& cx, const double& cy,
-                            const double& baseline)
-  : StereoCamera(fuse_core::uuid::generate(detail::type(), camera_id), camera_id)
+StereoCamera::StereoCamera(const fuse_core::UUID& uuid, uint64_t camera_id,
+                            double fx, double fy,
+                            double cx, double cy,
+                            double baseline)
+  : StereoCamera(uuid, camera_id)
 {
   data_[FX] = fx;
   data_[FY] = fy;

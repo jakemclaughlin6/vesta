@@ -85,7 +85,7 @@ public:
    *
    * @param[in] camera_id  The id associated to a camera
    */
-  explicit StereoCamera(const uint64_t& camera_id);
+  explicit StereoCamera(uint64_t camera_id);
 
   /**
    * @brief Construct a stereo camera variable given a uuid, camera id and intrinsic parameters
@@ -98,10 +98,10 @@ public:
    * @param[in] cy         Principal point y
    * @param[in] baseline   Stereo baseline (distance between left and right camera centers)
    */
-  explicit StereoCamera(const fuse_core::UUID& uuid, const uint64_t& camera_id,
-                        const double& fx, const double& fy,
-                        const double& cx, const double& cy,
-                        const double& baseline);
+  explicit StereoCamera(const fuse_core::UUID& uuid, uint64_t camera_id,
+                        double fx, double fy,
+                        double cx, double cy,
+                        double baseline);
 
   /**
    * @brief Read-write access to the fx parameter.
@@ -168,7 +168,7 @@ protected:
    * @param[in] uuid       The UUID for this variable
    * @param[in] camera_id  The id associated to a camera_id
    */
-  StereoCamera(const fuse_core::UUID& uuid, const uint64_t& camera_id);
+  StereoCamera(const fuse_core::UUID& uuid, uint64_t camera_id);
 
 private:
   // Allow Boost Serialization access to private methods
