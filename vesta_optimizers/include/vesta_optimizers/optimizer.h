@@ -35,12 +35,13 @@
  */
 
 #include <ceres/solver.h>
-#include <memory>
-#include <string>
 #include <vesta_core/graph.h>
 #include <vesta_core/transaction.h>
+#include <memory>
+#include <string>
 
-namespace vesta_optimizers {
+namespace vesta_optimizers
+{
 
 /**
  * @brief A simple abstract base class for vesta optimizers
@@ -54,7 +55,8 @@ namespace vesta_optimizers {
  * threads, and no plugin loading. The client is responsible for calling
  * optimize() when desired.
  */
-class Optimizer {
+class Optimizer
+{
 public:
   virtual ~Optimizer() = default;
 
@@ -64,9 +66,7 @@ public:
    * @param[in] sensor_name The name of the sensor that produced the Transaction
    * @param[in] transaction The populated Transaction object
    */
-  virtual void
-  addTransaction(const std::string &sensor_name,
-                 vesta_core::Transaction::SharedPtr transaction) = 0;
+  virtual void addTransaction(const std::string& sensor_name, vesta_core::Transaction::SharedPtr transaction) = 0;
 
   /**
    * @brief Run the optimization
@@ -88,7 +88,7 @@ public:
    *
    * @return A const reference to the graph
    */
-  virtual const vesta_core::Graph &graph() const = 0;
+  virtual const vesta_core::Graph& graph() const = 0;
 };
 
-} // namespace vesta_optimizers
+}  // namespace vesta_optimizers

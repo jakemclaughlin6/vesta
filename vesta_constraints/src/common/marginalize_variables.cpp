@@ -37,10 +37,10 @@
 #include <vesta_constraints/common/variable_constraints.h>
 #include <vesta_core/uuid.h>
 
+#include <suitesparse/ccolamd.h>
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <boost/iterator/transform_iterator.hpp>
-#include <suitesparse/ccolamd.h>
 
 #include <algorithm>
 #include <iterator>
@@ -51,11 +51,12 @@
 #include <utility>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
-UuidOrdering computeEliminationOrder(
-    const std::vector<vesta_core::UUID> &marginalized_variables,
-    const vesta_core::Graph &graph) {
+UuidOrdering computeEliminationOrder(const std::vector<vesta_core::UUID>& marginalized_variables,
+                                     const vesta_core::Graph& graph)
+{
   // COLAMD wants a somewhat weird structure
   // Variables are numbered sequentially in some arbitrary order. We call this
   // the "variable index" order. Similarly, the Constraints are numbered
@@ -76,23 +77,28 @@ UuidOrdering computeEliminationOrder(
   auto variable_order = UuidOrdering();
   auto constraint_order = UuidOrdering();
   auto variable_constraints = VariableConstraints();
-  for (const auto &variable_uuid : marginalized_variables) {
+  for (const auto& variable_uuid : marginalized_variables)
+  {
     // Get all connected constraints to this variable
     const auto constraints = graph.getConnectedConstraints(variable_uuid);
 
     // If the variable is orphan (it has no constraints), add it to the
     // VariableConstraints object without constraints New variable index is
     // automatically generated
-    if (constraints.empty()) {
+    if (constraints.empty())
+    {
       variable_constraints.insert(variable_order[variable_uuid]);
-    } else {
+    }
+    else
+    {
       // Add each constraint to the VariableConstraints object
       // New constraint and variable indices are automatically generated
-      for (const auto &constraint : constraints) {
+      for (const auto& constraint : constraints)
+      {
         unsigned int constraint_index = constraint_order[constraint.uuid()];
-        for (const auto &constraint_variable_uuid : constraint.variables()) {
-          variable_constraints.insert(constraint_index,
-                                      variable_order[constraint_variable_uuid]);
+        for (const auto& constraint_variable_uuid : constraint.variables())
+        {
+          variable_constraints.insert(constraint_index, variable_order[constraint_variable_uuid]);
         }
       }
     }
@@ -100,8 +106,7 @@ UuidOrdering computeEliminationOrder(
 
   // Construct the CCOLAMD input structures
   auto recommended_size =
-      ccolamd_recommended(variable_constraints.size(), constraint_order.size(),
-                          variable_order.size());
+      ccolamd_recommended(variable_constraints.size(), constraint_order.size(), variable_order.size());
   auto A = std::vector<int>(recommended_size);
   auto p = std::vector<int>(variable_order.size() + 1);
 
@@ -110,8 +115,8 @@ UuidOrdering computeEliminationOrder(
   auto p_iter = p.begin();
   *p_iter = 0;
   ++p_iter;
-  for (unsigned int variable_index = 0u; variable_index < variable_order.size();
-       ++variable_index) {
+  for (unsigned int variable_index = 0u; variable_index < variable_order.size(); ++variable_index)
+  {
     A_iter = variable_constraints.getConstraints(variable_index, A_iter);
     *p_iter = std::distance(A.begin(), A_iter);
     ++p_iter;
@@ -120,8 +125,9 @@ UuidOrdering computeEliminationOrder(
   // Define the variable groups used by CCOLAMD. All of the marginalized
   // variables should be group0, all the rest should be group1.
   std::vector<int> variable_groups(variable_order.size(),
-                                   1); // Default all variables to group1
-  for (const auto &variable_uuid : marginalized_variables) {
+                                   1);  // Default all variables to group1
+  for (const auto& variable_uuid : marginalized_variables)
+  {
     // Reassign the marginalized variables to group0
     variable_groups[variable_order.at(variable_uuid)] = 0;
   }
@@ -132,12 +138,11 @@ UuidOrdering computeEliminationOrder(
   int stats[CCOLAMD_STATS];
 
   // Finally call CCOLAMD
-  auto success =
-      ccolamd(constraint_order.size(), variable_order.size(), recommended_size,
-              A.data(), p.data(), knobs, stats, variable_groups.data());
-  if (!success) {
-    throw std::runtime_error(
-        "Failed to call CCOLAMD to generate the elimination order.");
+  auto success = ccolamd(constraint_order.size(), variable_order.size(), recommended_size, A.data(), p.data(), knobs,
+                         stats, variable_groups.data());
+  if (!success)
+  {
+    throw std::runtime_error("Failed to call CCOLAMD to generate the elimination order.");
   }
 
   // Extract the elimination order from CCOLAMD.
@@ -145,27 +150,27 @@ UuidOrdering computeEliminationOrder(
   // with the variable index Remember that p is larger than
   // variable_order.size()
   auto elimination_order = UuidOrdering();
-  for (size_t i = 0ul; i < variable_order.size(); ++i) {
+  for (size_t i = 0ul; i < variable_order.size(); ++i)
+  {
     elimination_order.push_back(variable_order[p[i]]);
   }
 
   return elimination_order;
 }
 
-vesta_core::Transaction marginalizeVariables(
-    const std::string &source,
-    const std::vector<vesta_core::UUID> &marginalized_variables,
-    const vesta_core::Graph &graph) {
-  return marginalizeVariables(
-      source, marginalized_variables, graph,
-      computeEliminationOrder(marginalized_variables, graph));
+vesta_core::Transaction marginalizeVariables(const std::string& source,
+                                             const std::vector<vesta_core::UUID>& marginalized_variables,
+                                             const vesta_core::Graph& graph)
+{
+  return marginalizeVariables(source, marginalized_variables, graph,
+                              computeEliminationOrder(marginalized_variables, graph));
 }
 
-vesta_core::Transaction marginalizeVariables(
-    const std::string &source,
-    const std::vector<vesta_core::UUID> &marginalized_variables,
-    const vesta_core::Graph &graph,
-    const vesta_constraints::UuidOrdering &elimination_order) {
+vesta_core::Transaction marginalizeVariables(const std::string& source,
+                                             const std::vector<vesta_core::UUID>& marginalized_variables,
+                                             const vesta_core::Graph& graph,
+                                             const vesta_constraints::UuidOrdering& elimination_order)
+{
   // TODO(swilliams) The method used to marginalize variables assumes that all
   // variables are fully constrained.
   //                 However, with the introduction of "variables held
@@ -175,19 +180,17 @@ vesta_core::Transaction marginalizeVariables(
   //                 linearization and solve steps. A similar approach should be
   //                 implemented here, but that will require a major refactor.
 
-  assert(std::all_of(marginalized_variables.begin(),
-                     marginalized_variables.end(),
-                     [&elimination_order, &marginalized_variables](
-                         const vesta_core::UUID &variable_uuid) {
+  assert(std::all_of(marginalized_variables.begin(), marginalized_variables.end(),
+                     [&elimination_order, &marginalized_variables](const vesta_core::UUID& variable_uuid) {
                        return elimination_order.exists(variable_uuid) &&
-                              elimination_order.at(variable_uuid) <
-                                  marginalized_variables.size();
-                     })); // NOLINT
+                              elimination_order.at(variable_uuid) < marginalized_variables.size();
+                     }));  // NOLINT
 
   vesta_core::Transaction transaction;
 
   // Mark all of the marginalized variables for removal
-  for (const auto &variable_uuid : marginalized_variables) {
+  for (const auto& variable_uuid : marginalized_variables)
+  {
     transaction.removeVariable(variable_uuid);
   }
 
@@ -196,23 +199,24 @@ vesta_core::Transaction marginalizeVariables(
 
   // Linearize all involved constraints, and store them with the variable where
   // they will be used
-  auto used_constraints =
-      std::unordered_set<vesta_core::UUID, vesta_core::uuid::hash>();
-  std::vector<std::vector<detail::LinearTerm>> linear_terms(
-      variable_order.size());
-  for (size_t i = 0ul; i < marginalized_variables.size(); ++i) {
+  auto used_constraints = std::unordered_set<vesta_core::UUID, vesta_core::uuid::hash>();
+  std::vector<std::vector<detail::LinearTerm>> linear_terms(variable_order.size());
+  for (size_t i = 0ul; i < marginalized_variables.size(); ++i)
+  {
     const auto constraints = graph.getConnectedConstraints(variable_order[i]);
-    for (const auto &constraint : constraints) {
-      if (used_constraints.find(constraint.uuid()) == used_constraints.end()) {
+    for (const auto& constraint : constraints)
+    {
+      if (used_constraints.find(constraint.uuid()) == used_constraints.end())
+      {
         used_constraints.insert(constraint.uuid());
         // Ensure all connected variables are added to the ordering
-        for (const auto &variable_uuid : constraint.variables()) {
+        for (const auto& variable_uuid : constraint.variables())
+        {
           variable_order.push_back(variable_uuid);
         }
         // Add the linearized constraint to the lowest-ordered connected
         // variable
-        linear_terms[i].push_back(
-            detail::linearize(constraint, graph, variable_order));
+        linear_terms[i].push_back(detail::linearize(constraint, graph, variable_order));
         // And mark the constraint for removal from the graph
         transaction.removeConstraint(constraint.uuid());
       }
@@ -227,20 +231,22 @@ vesta_core::Transaction marginalizeVariables(
   // Use the linearized constraints to marginalize each variable in order
   // Place the resulting marginal in the linear constraint bucket associated
   // with the lowest-ordered remaining variable
-  for (size_t i = 0ul; i < marginalized_variables.size(); ++i) {
+  for (size_t i = 0ul; i < marginalized_variables.size(); ++i)
+  {
     auto linear_marginal = detail::marginalizeNext(linear_terms[i]);
-    if (!linear_marginal.variables.empty()) {
+    if (!linear_marginal.variables.empty())
+    {
       auto lowest_ordered_variable = linear_marginal.variables.front();
-      linear_terms[lowest_ordered_variable].push_back(
-          std::move(linear_marginal));
+      linear_terms[lowest_ordered_variable].push_back(std::move(linear_marginal));
     }
   }
 
   // Convert all remaining linear marginals into marginal constraints
-  for (size_t i = marginalized_variables.size(); i < linear_terms.size(); ++i) {
-    for (const auto &linear_term : linear_terms[i]) {
-      auto marginal_constraint = detail::createMarginalConstraint(
-          source, linear_term, graph, variable_order);
+  for (size_t i = marginalized_variables.size(); i < linear_terms.size(); ++i)
+  {
+    for (const auto& linear_term : linear_terms[i])
+    {
+      auto marginal_constraint = detail::createMarginalConstraint(source, linear_term, graph, variable_order);
       transaction.addConstraint(std::move(marginal_constraint));
     }
   }
@@ -248,7 +254,8 @@ vesta_core::Transaction marginalizeVariables(
   return transaction;
 }
 
-namespace detail {
+namespace detail
+{
 // TODO(swilliams) There are more graph lookups of each Variable than needed.
 // Refactor so that each Variable is only
 //                 accessed once. This will mean storing the current variable
@@ -272,9 +279,9 @@ namespace detail {
  *  -
  * https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/corrector.cc
  */
-LinearTerm linearize(const vesta_core::Constraint &constraint,
-                     const vesta_core::Graph &graph,
-                     const UuidOrdering &elimination_order) {
+LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core::Graph& graph,
+                     const UuidOrdering& elimination_order)
+{
   LinearTerm result;
 
   // Generate the cost function from the input constraint
@@ -287,16 +294,17 @@ LinearTerm linearize(const vesta_core::Constraint &constraint,
   // * Allocate a matrix for each jacobian block. We will have Ceres populate
   // the matrix.
   // * Generate a vector of jacobian pointers. This is needed for the Ceres API.
-  const auto &variable_uuids = constraint.variables();
+  const auto& variable_uuids = constraint.variables();
   const size_t variable_count = variable_uuids.size();
-  std::vector<const double *> variable_values;
+  std::vector<const double*> variable_values;
   variable_values.reserve(variable_count);
-  std::vector<double *> jacobians;
+  std::vector<double*> jacobians;
   jacobians.reserve(variable_count);
   result.variables.reserve(variable_count);
   result.A.reserve(variable_count);
-  for (const auto &variable_uuid : variable_uuids) {
-    const auto &variable = graph.getVariable(variable_uuid);
+  for (const auto& variable_uuid : variable_uuids)
+  {
+    const auto& variable = graph.getVariable(variable_uuid);
     variable_values.push_back(variable.data());
     result.variables.push_back(elimination_order.at(variable_uuid));
     result.A.push_back(vesta_core::MatrixXd(row_count, variable.size()));
@@ -305,14 +313,15 @@ LinearTerm linearize(const vesta_core::Constraint &constraint,
   result.b = vesta_core::VectorXd(row_count);
 
   // Evaluate the cost function, populating the A matrices and b vector
-  bool success = cost_function->Evaluate(variable_values.data(),
-                                         result.b.data(), jacobians.data());
+  bool success = cost_function->Evaluate(variable_values.data(), result.b.data(), jacobians.data());
   delete cost_function;
   success = success && result.b.array().isFinite().all();
-  for (const auto &A : result.A) {
+  for (const auto& A : result.A)
+  {
     success = success && A.array().isFinite().all();
   }
-  if (!success) {
+  if (!success)
+  {
     throw std::runtime_error("Error in evaluating the cost function. There are "
                              "two possible reasons. "
                              "Either the CostFunction did not evaluate and "
@@ -328,52 +337,63 @@ LinearTerm linearize(const vesta_core::Constraint &constraint,
   // transformed from 4 columns to 3 columns after the manifold is applied. We
   // also check for variables that have been marked as constants. Since these
   // variables cannot change value, their derivatives/Jacobians should be zero.
-  for (size_t index = 0ul; index < variable_count; ++index) {
-    const auto &variable_uuid = variable_uuids[index];
-    const auto &variable = graph.getVariable(variable_uuid);
+  for (size_t index = 0ul; index < variable_count; ++index)
+  {
+    const auto& variable_uuid = variable_uuids[index];
+    const auto& variable = graph.getVariable(variable_uuid);
     auto manifold = variable.manifold();
-    auto &jacobian = result.A[index];
-    if (variable.holdConstant()) {
-      if (manifold) {
+    auto& jacobian = result.A[index];
+    if (variable.holdConstant())
+    {
+      if (manifold)
+      {
         jacobian.resize(Eigen::NoChange, manifold->TangentSize());
       }
       jacobian.setZero();
-    } else if (manifold) {
+    }
+    else if (manifold)
+    {
       vesta_core::MatrixXd J(manifold->AmbientSize(), manifold->TangentSize());
       manifold->PlusJacobian(variable_values[index], J.data());
       jacobian *= J;
     }
-    if (manifold) {
+    if (manifold)
+    {
       delete manifold;
     }
   }
 
   // Correct A and b for the effects of the loss function
   auto loss_function = constraint.lossFunction();
-  if (loss_function) {
+  if (loss_function)
+  {
     double squared_norm = result.b.squaredNorm();
     double rho[3];
     loss_function->Evaluate(squared_norm, rho);
-    if (vesta_core::Loss::Ownership == ceres::Ownership::TAKE_OWNERSHIP) {
+    if (vesta_core::Loss::Ownership == ceres::Ownership::TAKE_OWNERSHIP)
+    {
       delete loss_function;
     }
     double sqrt_rho1 = std::sqrt(rho[1]);
     double alpha = 0.0;
-    if ((squared_norm > 0.0) && (rho[2] > 0.0)) {
+    if ((squared_norm > 0.0) && (rho[2] > 0.0))
+    {
       const double D = 1.0 + 2.0 * squared_norm * rho[2] / rho[1];
       alpha = 1.0 - std::sqrt(D);
     }
 
     // Correct the Jacobians
-    for (auto &jacobian : result.A) {
-      if (alpha == 0.0) {
+    for (auto& jacobian : result.A)
+    {
+      if (alpha == 0.0)
+      {
         jacobian *= sqrt_rho1;
-      } else {
+      }
+      else
+      {
         // TODO(swilliams) This may be inefficient, at least according to notes
         // in the Ceres codebase.
-        jacobian =
-            sqrt_rho1 * (jacobian - (alpha / squared_norm) * result.b *
-                                        (result.b.transpose() * jacobian));
+        jacobian = sqrt_rho1 * (jacobian - (alpha / squared_norm) * result.b * (result.b.transpose() * jacobian));
       }
     }
 
@@ -384,8 +404,10 @@ LinearTerm linearize(const vesta_core::Constraint &constraint,
   return result;
 }
 
-LinearTerm marginalizeNext(const std::vector<LinearTerm> &linear_terms) {
-  if (linear_terms.empty()) {
+LinearTerm marginalizeNext(const std::vector<LinearTerm>& linear_terms)
+{
+  if (linear_terms.empty())
+  {
     return {};
   }
 
@@ -397,18 +419,17 @@ LinearTerm marginalizeNext(const std::vector<LinearTerm> &linear_terms) {
   // because the number of variables is assumed to be small. You need 1000s of
   // variables before the std::set outperforms the std::vector.
   auto dense_to_index = std::vector<unsigned int>();
-  for (const auto &linear_term : linear_terms) {
-    std::copy(linear_term.variables.begin(), linear_term.variables.end(),
-              std::back_inserter(dense_to_index));
+  for (const auto& linear_term : linear_terms)
+  {
+    std::copy(linear_term.variables.begin(), linear_term.variables.end(), std::back_inserter(dense_to_index));
   }
   std::sort(dense_to_index.begin(), dense_to_index.end());
-  dense_to_index.erase(
-      std::unique(dense_to_index.begin(), dense_to_index.end()),
-      dense_to_index.end());
+  dense_to_index.erase(std::unique(dense_to_index.begin(), dense_to_index.end()), dense_to_index.end());
 
   // Construct the inverse mapping
   auto index_to_dense = std::vector<unsigned int>(dense_to_index.back() + 1, 0);
-  for (size_t dense = 0ul; dense < dense_to_index.size(); ++dense) {
+  for (size_t dense = 0ul; dense < dense_to_index.size(); ++dense)
+  {
     index_to_dense[dense_to_index[dense]] = dense;
   }
 
@@ -416,15 +437,17 @@ LinearTerm marginalizeNext(const std::vector<LinearTerm> &linear_terms) {
   auto row_offsets = std::vector<unsigned int>();
   row_offsets.reserve(linear_terms.size() + 1ul);
   row_offsets.push_back(0u);
-  for (const auto &linear_term : linear_terms) {
+  for (const auto& linear_term : linear_terms)
+  {
     row_offsets.push_back(row_offsets.back() + linear_term.b.rows());
   }
 
   // Compute the column offsets
-  auto index_to_cols =
-      std::vector<unsigned int>(dense_to_index.back() + 1u, 0u);
-  for (const auto &linear_term : linear_terms) {
-    for (size_t i = 0ul; i < linear_term.variables.size(); ++i) {
+  auto index_to_cols = std::vector<unsigned int>(dense_to_index.back() + 1u, 0u);
+  for (const auto& linear_term : linear_terms)
+  {
+    for (size_t i = 0ul; i < linear_term.variables.size(); ++i)
+    {
       auto index = linear_term.variables[i];
       index_to_cols[index] = linear_term.A[i].cols();
     }
@@ -433,31 +456,34 @@ LinearTerm marginalizeNext(const std::vector<LinearTerm> &linear_terms) {
   auto column_offsets = std::vector<unsigned int>();
   column_offsets.reserve(dense_to_index.size() + 1ul);
   column_offsets.push_back(0u);
-  for (size_t dense = 0; dense < dense_to_index.size(); ++dense) {
-    column_offsets.push_back(column_offsets.back() +
-                             index_to_cols[dense_to_index[dense]]);
+  for (size_t dense = 0; dense < dense_to_index.size(); ++dense)
+  {
+    column_offsets.push_back(column_offsets.back() + index_to_cols[dense_to_index[dense]]);
   }
 
   // Construct the Ab matrix
-  vesta_core::MatrixXd Ab = vesta_core::MatrixXd::Zero(
-      row_offsets.back(), column_offsets.back() + 1u);
-  for (size_t term_index = 0ul; term_index < linear_terms.size();
-       ++term_index) {
-    const auto &linear_term = linear_terms[term_index];
+  vesta_core::MatrixXd Ab = vesta_core::MatrixXd::Zero(row_offsets.back(), column_offsets.back() + 1u);
+  for (size_t term_index = 0ul; term_index < linear_terms.size(); ++term_index)
+  {
+    const auto& linear_term = linear_terms[term_index];
     auto row_offset = row_offsets[term_index];
-    for (size_t i = 0ul; i < linear_term.variables.size(); ++i) {
-      const auto &A = linear_term.A[i];
+    for (size_t i = 0ul; i < linear_term.variables.size(); ++i)
+    {
+      const auto& A = linear_term.A[i];
       auto dense = index_to_dense[linear_term.variables[i]];
       auto column_offset = column_offsets[dense];
-      for (int row = 0; row < A.rows(); ++row) {
-        for (int col = 0; col < A.cols(); ++col) {
+      for (int row = 0; row < A.rows(); ++row)
+      {
+        for (int col = 0; col < A.cols(); ++col)
+        {
           Ab(row_offset + row, column_offset + col) = A(row, col);
         }
       }
     }
-    const auto &b = linear_term.b;
+    const auto& b = linear_term.b;
     int column_offset = column_offsets.back();
-    for (int row = 0; row < b.rows(); ++row) {
+    for (int row = 0; row < b.rows(); ++row)
+    {
       Ab(row_offset + row, column_offset) = b(row);
     }
   }
@@ -476,10 +502,8 @@ LinearTerm marginalizeNext(const std::vector<LinearTerm> &linear_terms) {
     auto size = std::min(rows, cols);
     auto hCoeffs = HCoeffsType(size);
     auto temp = RowVectorType(cols);
-    Eigen::internal::householder_qr_inplace_blocked<
-        MatrixType, HCoeffsType>::run(Ab, hCoeffs, 48, temp.data());
-    Ab.triangularView<Eigen::StrictlyLower>()
-        .setZero(); // Zero out the below-diagonal elements
+    Eigen::internal::householder_qr_inplace_blocked<MatrixType, HCoeffsType>::run(Ab, hCoeffs, 48, temp.data());
+    Ab.triangularView<Eigen::StrictlyLower>().setZero();  // Zero out the below-diagonal elements
   }
 
   // Extract the marginal term from R (now stored in Ab)
@@ -488,24 +512,24 @@ LinearTerm marginalizeNext(const std::vector<LinearTerm> &linear_terms) {
   // variables: P(y, z, ...)
   auto min_row = column_offsets[1];
   // However, depending on the input, not all rows may be usable.
-  auto max_row =
-      std::min(Ab.rows(), Ab.cols() - 1); // -1 for the included b vector
+  auto max_row = std::min(Ab.rows(), Ab.cols() - 1);  // -1 for the included b vector
   auto marginal_rows = max_row - min_row;
   auto marginal_term = LinearTerm();
-  if (marginal_rows > 0) {
+  if (marginal_rows > 0)
+  {
     auto variable_count = dense_to_index.size() - 1;
     marginal_term.variables.reserve(variable_count);
     marginal_term.A.reserve(variable_count);
-    for (size_t dense = 1ul; dense < dense_to_index.size();
-         ++dense) // Skipping the marginalized variable
+    for (size_t dense = 1ul; dense < dense_to_index.size(); ++dense)  // Skipping the marginalized variable
     {
       auto index = dense_to_index[dense];
       marginal_term.variables.push_back(index);
-      vesta_core::MatrixXd A =
-          vesta_core::MatrixXd::Zero(marginal_rows, index_to_cols[index]);
+      vesta_core::MatrixXd A = vesta_core::MatrixXd::Zero(marginal_rows, index_to_cols[index]);
       auto column_offset = column_offsets[dense];
-      for (int row = 0; row < A.rows(); ++row) {
-        for (int col = 0; col < A.cols(); ++col) {
+      for (int row = 0; row < A.rows(); ++row)
+      {
+        for (int col = 0; col < A.cols(); ++col)
+        {
           A(row, col) = Ab(min_row + row, column_offset + col);
         }
       }
@@ -513,31 +537,28 @@ LinearTerm marginalizeNext(const std::vector<LinearTerm> &linear_terms) {
     }
     marginal_term.b = vesta_core::VectorXd::Zero(marginal_rows);
     auto column_offset = column_offsets.back();
-    for (int row = 0; row < marginal_term.b.rows(); ++row) {
+    for (int row = 0; row < marginal_term.b.rows(); ++row)
+    {
       marginal_term.b(row) = Ab(min_row + row, column_offset);
     }
   }
   return marginal_term;
 }
 
-MarginalConstraint::SharedPtr createMarginalConstraint(
-    const std::string &source, const LinearTerm &linear_term,
-    const vesta_core::Graph &graph, const UuidOrdering &elimination_order) {
-  auto index_to_variable =
-      [&graph, &elimination_order](
-          const unsigned int index) -> const vesta_core::Variable & {
+MarginalConstraint::SharedPtr createMarginalConstraint(const std::string& source, const LinearTerm& linear_term,
+                                                       const vesta_core::Graph& graph,
+                                                       const UuidOrdering& elimination_order)
+{
+  auto index_to_variable = [&graph, &elimination_order](const unsigned int index) -> const vesta_core::Variable& {
     return graph.getVariable(elimination_order.at(index));
   };
 
   return MarginalConstraint::make_shared(
-      source,
-      boost::make_transform_iterator(linear_term.variables.begin(),
-                                     index_to_variable),
-      boost::make_transform_iterator(linear_term.variables.end(),
-                                     index_to_variable),
-      linear_term.A.begin(), linear_term.A.end(), linear_term.b);
+      source, boost::make_transform_iterator(linear_term.variables.begin(), index_to_variable),
+      boost::make_transform_iterator(linear_term.variables.end(), index_to_variable), linear_term.A.begin(),
+      linear_term.A.end(), linear_term.b);
 }
 
-} // namespace detail
+}  // namespace detail
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

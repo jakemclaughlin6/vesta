@@ -40,7 +40,8 @@
 
 #include <string>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief The interface class for publisher plugins in the vesta ecosystem.
@@ -55,7 +56,8 @@ namespace vesta_core {
  * instead. It offers additional features making it act similar to a standard
  * node or nodelet.
  */
-class Publisher {
+class Publisher
+{
 public:
   VESTA_SMART_PTR_ALIASES_ONLY(Publisher);
 
@@ -83,12 +85,12 @@ public:
    *
    * @param[in] name A unique name to give this plugin instance
    */
-  virtual void initialize(const std::string &name) = 0;
+  virtual void initialize(const std::string& name) = 0;
 
   /**
    * @brief Get the unique name of this publisher
    */
-  virtual const std::string &name() const = 0;
+  virtual const std::string& name() const = 0;
 
   /**
    * @brief Notify the publisher that an optimization cycle is complete, and
@@ -107,8 +109,7 @@ public:
    * @param[in] graph       A read-only pointer to the graph object, allowing
    * queries to be performed whenever needed
    */
-  virtual void notify(Transaction::ConstSharedPtr transaction,
-                      Graph::ConstSharedPtr graph) = 0;
+  virtual void notify(Transaction::ConstSharedPtr transaction, Graph::ConstSharedPtr graph) = 0;
 
   /**
    * @brief Function to be executed whenever the optimizer is ready to receive
@@ -121,7 +122,9 @@ public:
    * reset any internal state before the optimizer begins processing after a
    * reset. No calls to notify() will happen before the optimizer calls start().
    */
-  virtual void start() {}
+  virtual void start()
+  {
+  }
 
   /**
    * @brief Function to be executed whenever the optimizer is no longer ready to
@@ -134,7 +137,9 @@ public:
    * begins processing after a reset. No calls to notify() will happen until
    * start() has been called again.
    */
-  virtual void stop() {}
+  virtual void stop()
+  {
+  }
 };
 
-} // namespace vesta_core
+}  // namespace vesta_core

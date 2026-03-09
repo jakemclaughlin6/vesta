@@ -20,7 +20,8 @@
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief A constraint that represents prior information about the full 3D IMU
@@ -34,7 +35,8 @@ namespace vesta_constraints {
  * Mean vector (16x1): [qw, qx, qy, qz, px, py, pz, vx, vy, vz, bgx, bgy, bgz,
  * bax, bay, baz]
  */
-class AbsoluteImuState3DStampedConstraint : public vesta_core::Constraint {
+class AbsoluteImuState3DStampedConstraint : public vesta_core::Constraint
+{
 public:
   VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(AbsoluteImuState3DStampedConstraint);
 
@@ -62,15 +64,14 @@ public:
    * @param[in] covariance  The measurement/prior covariance (15x15 in
    * error-state order: Q, P, V, BG, BA)
    */
-  AbsoluteImuState3DStampedConstraint(
-      const std::string &source,
-      const vesta_variables::Orientation3DStamped &orientation,
-      const vesta_variables::Position3DStamped &position,
-      const vesta_variables::VelocityLinear3DStamped &velocity,
-      const vesta_variables::GyroscopeBias3DStamped &gyro_bias,
-      const vesta_variables::AccelerationBias3DStamped &accel_bias,
-      const Eigen::Matrix<double, 16, 1> &mean,
-      const Eigen::Matrix<double, 15, 15> &covariance);
+  AbsoluteImuState3DStampedConstraint(const std::string& source,
+                                      const vesta_variables::Orientation3DStamped& orientation,
+                                      const vesta_variables::Position3DStamped& position,
+                                      const vesta_variables::VelocityLinear3DStamped& velocity,
+                                      const vesta_variables::GyroscopeBias3DStamped& gyro_bias,
+                                      const vesta_variables::AccelerationBias3DStamped& accel_bias,
+                                      const Eigen::Matrix<double, 16, 1>& mean,
+                                      const Eigen::Matrix<double, 15, 15>& covariance);
 
   /**
    * @brief Destructor
@@ -83,14 +84,18 @@ public:
    * Order is (qw, qx, qy, qz, px, py, pz, vx, vy, vz, bgx, bgy, bgz, bax, bay,
    * baz)
    */
-  const Eigen::Matrix<double, 16, 1> &mean() const { return mean_; }
+  const Eigen::Matrix<double, 16, 1>& mean() const
+  {
+    return mean_;
+  }
 
   /**
    * @brief Read-only access to the square root information matrix.
    *
    * Order is (qx, qy, qz, px, py, pz, vx, vy, vz, bgx, bgy, bgz, bax, bay, baz)
    */
-  const Eigen::Matrix<double, 15, 15> &sqrtInformation() const {
+  const Eigen::Matrix<double, 15, 15>& sqrtInformation() const
+  {
     return sqrt_information_;
   }
 
@@ -99,7 +104,8 @@ public:
    *
    * Order is (qx, qy, qz, px, py, pz, vx, vy, vz, bgx, bgy, bgz, bax, bay, baz)
    */
-  Eigen::Matrix<double, 15, 15> covariance() const {
+  Eigen::Matrix<double, 15, 15> covariance() const
+  {
     return (sqrt_information_.transpose() * sqrt_information_).inverse();
   }
 
@@ -109,7 +115,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
@@ -122,13 +128,11 @@ public:
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction *costFunction() const override;
+  ceres::CostFunction* costFunction() const override;
 
 protected:
-  Eigen::Matrix<double, 16, 1>
-      mean_; //!< The measured/prior mean vector for this variable
-  Eigen::Matrix<double, 15, 15>
-      sqrt_information_; //!< The square root information matrix
+  Eigen::Matrix<double, 16, 1> mean_;               //!< The measured/prior mean vector for this variable
+  Eigen::Matrix<double, 15, 15> sqrt_information_;  //!< The square root information matrix
 
 private:
   // Allow Boost Serialization access to private methods
@@ -144,13 +148,14 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & mean_;
     archive & sqrt_information_;
   }
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::AbsoluteImuState3DStampedConstraint);

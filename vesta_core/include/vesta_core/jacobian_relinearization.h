@@ -41,19 +41,21 @@
 #include <memory>
 #include <vector>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief Policy controlling how often Jacobians are recomputed during
  * optimization.
  */
-enum class JacobianPolicy {
-  kDefault, ///< Recompute every iteration (standard Ceres behavior, zero
-            ///< overhead)
-  kEveryN,  ///< Recompute every N iterations, use cached Jacobians otherwise
-  kFirstEstimate, ///< Freeze Jacobians at first linearization (full FEJ)
-  kAdaptive       ///< Relinearize only when parameter values change beyond a
-                  ///< threshold
+enum class JacobianPolicy
+{
+  kDefault,        ///< Recompute every iteration (standard Ceres behavior, zero
+                   ///< overhead)
+  kEveryN,         ///< Recompute every N iterations, use cached Jacobians otherwise
+  kFirstEstimate,  ///< Freeze Jacobians at first linearization (full FEJ)
+  kAdaptive        ///< Relinearize only when parameter values change beyond a
+                   ///< threshold
 };
 
 /**
@@ -64,7 +66,8 @@ enum class JacobianPolicy {
  * CachedJacobianCostFunction instances (which read state during parallel
  * evaluation).
  */
-class JacobianRelinearizationController {
+class JacobianRelinearizationController
+{
 public:
   /**
    * @brief Constructor
@@ -75,9 +78,7 @@ public:
    * parameter block's L2 norm of change exceeds this value (ignored for other
    * policies)
    */
-  explicit JacobianRelinearizationController(JacobianPolicy policy,
-                                             int period = 1,
-                                             double threshold = 0.01);
+  explicit JacobianRelinearizationController(JacobianPolicy policy, int period = 1, double threshold = 0.01);
 
   /**
    * @brief Called by EvaluationCallback::PrepareForEvaluation before each
@@ -116,23 +117,32 @@ public:
   /**
    * @brief Returns the configured policy.
    */
-  JacobianPolicy policy() const { return policy_; }
+  JacobianPolicy policy() const
+  {
+    return policy_;
+  }
 
   /**
    * @brief Returns the configured period.
    */
-  int period() const { return period_; }
+  int period() const
+  {
+    return period_;
+  }
 
   /**
    * @brief Returns the configured adaptive threshold.
    */
-  double threshold() const { return threshold_; }
+  double threshold() const
+  {
+    return threshold_;
+  }
 
 private:
   JacobianPolicy policy_;
   int period_;
   double threshold_;
-  std::atomic<bool> recompute_jacobians_{true};
+  std::atomic<bool> recompute_jacobians_{ true };
   int jacobian_eval_count_ = 0;
   bool first_jacobian_done_ = false;
 };
@@ -145,13 +155,12 @@ private:
  * PrepareForEvaluation() once (single-threaded) before each batch of
  * CostFunction::Evaluate() calls.
  */
-class JacobianEvaluationCallback : public ceres::EvaluationCallback {
+class JacobianEvaluationCallback : public ceres::EvaluationCallback
+{
 public:
-  explicit JacobianEvaluationCallback(
-      std::shared_ptr<JacobianRelinearizationController> controller);
+  explicit JacobianEvaluationCallback(std::shared_ptr<JacobianRelinearizationController> controller);
 
-  void PrepareForEvaluation(bool evaluate_jacobians,
-                            bool new_evaluation_point) override;
+  void PrepareForEvaluation(bool evaluate_jacobians, bool new_evaluation_point) override;
 
 private:
   std::shared_ptr<JacobianRelinearizationController> controller_;
@@ -169,7 +178,8 @@ private:
  * CostFunction including AutoDiffCostFunction, NumericDiffCostFunction, and
  * analytic cost functions.
  */
-class CachedJacobianCostFunction : public ceres::CostFunction {
+class CachedJacobianCostFunction : public ceres::CostFunction
+{
 public:
   /**
    * @brief Constructor
@@ -178,14 +188,11 @@ public:
    * @param[in] controller Shared controller that signals cache/recompute
    * decisions
    */
-  CachedJacobianCostFunction(
-      ceres::CostFunction *inner,
-      std::shared_ptr<JacobianRelinearizationController> controller);
+  CachedJacobianCostFunction(ceres::CostFunction* inner, std::shared_ptr<JacobianRelinearizationController> controller);
 
   ~CachedJacobianCostFunction() override = default;
 
-  bool Evaluate(const double *const *parameters, double *residuals,
-                double **jacobians) const override;
+  bool Evaluate(const double* const* parameters, double* residuals, double** jacobians) const override;
 
 private:
   std::unique_ptr<ceres::CostFunction> inner_;
@@ -199,7 +206,7 @@ private:
    * values for each block. Returns true if any block's change exceeds the
    * controller's threshold.
    */
-  bool parametersChangedSignificantly(const double *const *parameters) const;
+  bool parametersChangedSignificantly(const double* const* parameters) const;
 
   // Thread-safety note: These mutable members are safe because each residual
   // block in the ceres::Problem gets its own CachedJacobianCostFunction
@@ -210,4 +217,4 @@ private:
   mutable std::vector<std::vector<double>> cached_parameters_;
 };
 
-} // namespace vesta_core
+}  // namespace vesta_core

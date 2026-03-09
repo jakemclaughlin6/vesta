@@ -46,37 +46,30 @@
 
 using vesta_variables::VelocityAngular2DStamped;
 
-TEST(VelocityAngular2DStamped, Type) {
+TEST(VelocityAngular2DStamped, Type)
+{
   VelocityAngular2DStamped variable(vesta_core::Timestamp(12345678, 910111213));
   EXPECT_EQ("vesta_variables::VelocityAngular2DStamped", variable.type());
 }
 
-TEST(VelocityAngular2DStamped, UUID) {
+TEST(VelocityAngular2DStamped, UUID)
+{
   // Verify two velocities at the same timestamp produce the same UUID
   {
-    VelocityAngular2DStamped variable1(
-        vesta_core::Timestamp(12345678, 910111213));
-    VelocityAngular2DStamped variable2(
-        vesta_core::Timestamp(12345678, 910111213));
+    VelocityAngular2DStamped variable1(vesta_core::Timestamp(12345678, 910111213));
+    VelocityAngular2DStamped variable2(vesta_core::Timestamp(12345678, 910111213));
     EXPECT_EQ(variable1.uuid(), variable2.uuid());
 
-    VelocityAngular2DStamped variable3(
-        vesta_core::Timestamp(12345678, 910111213),
-        vesta_core::uuid::generate("c3po"));
-    VelocityAngular2DStamped variable4(
-        vesta_core::Timestamp(12345678, 910111213),
-        vesta_core::uuid::generate("c3po"));
+    VelocityAngular2DStamped variable3(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("c3po"));
+    VelocityAngular2DStamped variable4(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("c3po"));
     EXPECT_EQ(variable3.uuid(), variable4.uuid());
   }
 
   // Verify two velocities at different timestamps produce different UUIDs
   {
-    VelocityAngular2DStamped variable1(
-        vesta_core::Timestamp(12345678, 910111213));
-    VelocityAngular2DStamped variable2(
-        vesta_core::Timestamp(12345678, 910111214));
-    VelocityAngular2DStamped variable3(
-        vesta_core::Timestamp(12345679, 910111213));
+    VelocityAngular2DStamped variable1(vesta_core::Timestamp(12345678, 910111213));
+    VelocityAngular2DStamped variable2(vesta_core::Timestamp(12345678, 910111214));
+    VelocityAngular2DStamped variable3(vesta_core::Timestamp(12345679, 910111213));
     EXPECT_NE(variable1.uuid(), variable2.uuid());
     EXPECT_NE(variable1.uuid(), variable3.uuid());
     EXPECT_NE(variable2.uuid(), variable3.uuid());
@@ -84,20 +77,16 @@ TEST(VelocityAngular2DStamped, UUID) {
 
   // Verify two velocities with different hardware IDs produce different UUIDs
   {
-    VelocityAngular2DStamped variable1(
-        vesta_core::Timestamp(12345678, 910111213),
-        vesta_core::uuid::generate("r2d2"));
-    VelocityAngular2DStamped variable2(
-        vesta_core::Timestamp(12345678, 910111213),
-        vesta_core::uuid::generate("bb8"));
+    VelocityAngular2DStamped variable1(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("r2d2"));
+    VelocityAngular2DStamped variable2(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("bb8"));
     EXPECT_NE(variable1.uuid(), variable2.uuid());
   }
 }
 
-TEST(VelocityAngular2DStamped, Stamped) {
+TEST(VelocityAngular2DStamped, Stamped)
+{
   vesta_core::Variable::SharedPtr base = VelocityAngular2DStamped::make_shared(
-      vesta_core::Timestamp(12345678, 910111213),
-      vesta_core::uuid::generate("mo"));
+      vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("mo"));
   auto derived = std::dynamic_pointer_cast<VelocityAngular2DStamped>(base);
   ASSERT_TRUE(static_cast<bool>(derived));
   EXPECT_EQ(vesta_core::Timestamp(12345678, 910111213), derived->stamp());
@@ -109,30 +98,33 @@ TEST(VelocityAngular2DStamped, Stamped) {
   EXPECT_EQ(vesta_core::uuid::generate("mo"), stamped->deviceId());
 }
 
-struct CostFunctor {
-  CostFunctor() {}
+struct CostFunctor
+{
+  CostFunctor()
+  {
+  }
 
-  template <typename T> bool operator()(const T *const x, T *residual) const {
+  template <typename T>
+  bool operator()(const T* const x, T* residual) const
+  {
     residual[0] = x[0] - T(2.7);
     return true;
   }
 };
 
-TEST(VelocityAngular2DStamped, Optimization) {
+TEST(VelocityAngular2DStamped, Optimization)
+{
   // Create a VelocityAngular2DStamped
-  VelocityAngular2DStamped velocity(vesta_core::Timestamp(12345678, 910111213),
-                                    vesta_core::uuid::generate("hal9000"));
+  VelocityAngular2DStamped velocity(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("hal9000"));
   velocity.yaw() = 1.5;
 
   // Create a simple a constraint
-  ceres::CostFunction *cost_function =
-      new ceres::AutoDiffCostFunction<CostFunctor, 1, 1>(new CostFunctor());
+  ceres::CostFunction* cost_function = new ceres::AutoDiffCostFunction<CostFunctor, 1, 1>(new CostFunctor());
 
   // Build the problem.
   ceres::Problem problem;
-  problem.AddParameterBlock(velocity.data(), velocity.size(),
-                            velocity.manifold());
-  std::vector<double *> parameter_blocks;
+  problem.AddParameterBlock(velocity.data(), velocity.size(), velocity.manifold());
+  std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(velocity.data());
   problem.AddResidualBlock(cost_function, nullptr, parameter_blocks);
 
@@ -145,10 +137,10 @@ TEST(VelocityAngular2DStamped, Optimization) {
   EXPECT_NEAR(2.7, velocity.yaw(), 1.0e-5);
 }
 
-TEST(VelocityAngular2DStamped, Serialization) {
+TEST(VelocityAngular2DStamped, Serialization)
+{
   // Create a VelocityAngular2DStamped
-  VelocityAngular2DStamped expected(vesta_core::Timestamp(12345678, 910111213),
-                                    vesta_core::uuid::generate("hal9000"));
+  VelocityAngular2DStamped expected(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("hal9000"));
   expected.yaw() = 1.5;
 
   // Serialize the variable into an archive
@@ -171,7 +163,8 @@ TEST(VelocityAngular2DStamped, Serialization) {
   EXPECT_EQ(expected.yaw(), actual.yaw());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

@@ -46,7 +46,8 @@
 #include <map>
 #include <vector>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief A utility class that manages the set of timestamps that have been used
@@ -63,7 +64,8 @@ namespace vesta_core {
  * to include a TimestampManager object and provide a function capable of
  * generating motion model constraints between arbitrary timestamps.
  */
-class TimestampManager {
+class TimestampManager
+{
 public:
   VESTA_SMART_PTR_DEFINITIONS(TimestampManager);
 
@@ -87,10 +89,8 @@ public:
    * values for the optimizer.
    */
   using MotionModelFunction =
-      std::function<void(const vesta_core::Timestamp &beginning_stamp,
-                         const vesta_core::Timestamp &ending_stamp,
-                         std::vector<Constraint::SharedPtr> &constraints,
-                         std::vector<Variable::SharedPtr> &variables)>;
+      std::function<void(const vesta_core::Timestamp& beginning_stamp, const vesta_core::Timestamp& ending_stamp,
+                         std::vector<Constraint::SharedPtr>& constraints, std::vector<Variable::SharedPtr>& variables)>;
 
   /**
    * @brief A range of timestamps
@@ -101,8 +101,7 @@ public:
    * member. When dereferenced, an iterator returns a const
    * vesta_core::Timestamp&.
    */
-  using const_stamp_range = boost::any_range<const vesta_core::Timestamp,
-                                             boost::forward_traversal_tag>;
+  using const_stamp_range = boost::any_range<const vesta_core::Timestamp, boost::forward_traversal_tag>;
 
   /**
    * @brief Constructor that accepts the motion model generator as a
@@ -114,9 +113,8 @@ public:
    * arrive involving timestamps that are older than the buffer length, an
    * exception will be thrown.
    */
-  explicit TimestampManager(
-      MotionModelFunction generator,
-      const vesta_core::Duration &buffer_length = vesta_core::Duration::MAX);
+  explicit TimestampManager(MotionModelFunction generator,
+                            const vesta_core::Duration& buffer_length = vesta_core::Duration::MAX);
 
   /**
    * @brief Constructor that accepts the motion model generator as a member
@@ -133,13 +131,11 @@ public:
    * exception will be thrown.
    */
   template <class T>
-  TimestampManager(
-      void (T::*fp)(const vesta_core::Timestamp &beginning_stamp,
-                    const vesta_core::Timestamp &ending_stamp,
-                    std::vector<Constraint::SharedPtr> &constraints,
-                    std::vector<Variable::SharedPtr> &variables),
-      T *obj,
-      const vesta_core::Duration &buffer_length = vesta_core::Duration::MAX);
+  TimestampManager(void (T::*fp)(const vesta_core::Timestamp& beginning_stamp,
+                                 const vesta_core::Timestamp& ending_stamp,
+                                 std::vector<Constraint::SharedPtr>& constraints,
+                                 std::vector<Variable::SharedPtr>& variables),
+                   T* obj, const vesta_core::Duration& buffer_length = vesta_core::Duration::MAX);
 
   /**
    * @brief Constructor that accepts the motion model generator as a const
@@ -157,13 +153,11 @@ public:
    * exception will be thrown.
    */
   template <class T>
-  TimestampManager(
-      void (T::*fp)(const vesta_core::Timestamp &beginning_stamp,
-                    const vesta_core::Timestamp &ending_stamp,
-                    std::vector<Constraint::SharedPtr> &constraints,
-                    std::vector<Variable::SharedPtr> &variables) const,
-      T *obj,
-      const vesta_core::Duration &buffer_length = vesta_core::Duration::MAX);
+  TimestampManager(void (T::*fp)(const vesta_core::Timestamp& beginning_stamp,
+                                 const vesta_core::Timestamp& ending_stamp,
+                                 std::vector<Constraint::SharedPtr>& constraints,
+                                 std::vector<Variable::SharedPtr>& variables) const,
+                   T* obj, const vesta_core::Duration& buffer_length = vesta_core::Duration::MAX);
 
   /**
    * @brief Destructor
@@ -173,19 +167,26 @@ public:
   /**
    * @brief Read-only access to the buffer length
    */
-  const vesta_core::Duration &bufferLength() const { return buffer_length_; }
+  const vesta_core::Duration& bufferLength() const
+  {
+    return buffer_length_;
+  }
 
   /**
    * @brief Write access to the buffer length
    */
-  void bufferLength(const vesta_core::Duration &buffer_length) {
+  void bufferLength(const vesta_core::Duration& buffer_length)
+  {
     buffer_length_ = buffer_length;
   }
 
   /**
    * @brief Clear all timestamps from the motion model history
    */
-  void clear() { motion_model_history_.clear(); }
+  void clear()
+  {
+    motion_model_history_.clear();
+  }
 
   /**
    * @brief Update a transaction structure such that the involved timestamps are
@@ -207,7 +208,7 @@ public:
    * with the newly generated values
    * @throws
    */
-  void query(Transaction &transaction, bool update_variables = false);
+  void query(Transaction& transaction, bool update_variables = false);
 
   /**
    * @brief Read-only access to the current set of timestamps
@@ -222,7 +223,8 @@ protected:
    * @brief Structure used to represent a previously generated motion model
    * constraint
    */
-  struct MotionModelSegment {
+  struct MotionModelSegment
+  {
     vesta_core::Timestamp beginning_stamp;
     vesta_core::Timestamp ending_stamp;
     std::vector<Constraint::SharedPtr> constraints;
@@ -230,12 +232,12 @@ protected:
 
     MotionModelSegment() = default;
 
-    MotionModelSegment(const vesta_core::Timestamp &beginning_stamp,
-                       const vesta_core::Timestamp &ending_stamp,
-                       const std::vector<Constraint::SharedPtr> &constraints,
-                       const std::vector<Variable::SharedPtr> &variables)
-        : beginning_stamp(beginning_stamp), ending_stamp(ending_stamp),
-          constraints(constraints), variables(variables) {}
+    MotionModelSegment(const vesta_core::Timestamp& beginning_stamp, const vesta_core::Timestamp& ending_stamp,
+                       const std::vector<Constraint::SharedPtr>& constraints,
+                       const std::vector<Variable::SharedPtr>& variables)
+      : beginning_stamp(beginning_stamp), ending_stamp(ending_stamp), constraints(constraints), variables(variables)
+    {
+    }
   };
 
   /**
@@ -246,18 +248,15 @@ protected:
    * very last entry will be the ending time of the previous MotionModelSegment,
    * and the very last entry will be an empty MotionModelSegment.
    */
-  using MotionModelHistory =
-      std::map<vesta_core::Timestamp, MotionModelSegment>;
+  using MotionModelHistory = std::map<vesta_core::Timestamp, MotionModelSegment>;
 
-  MotionModelFunction generator_; //!< Users upplied function that generates
-                                  //!< motion model constraints
-  vesta_core::Duration
-      buffer_length_; //!< The length of the motion model history. Segments
-                      //!< older than \p buffer_length_ will be removed from the
-                      //!< motion model history
-  MotionModelHistory
-      motion_model_history_; //!< Container that stores all previously generated
-                             //!< motion models
+  MotionModelFunction generator_;            //!< Users upplied function that generates
+                                             //!< motion model constraints
+  vesta_core::Duration buffer_length_;       //!< The length of the motion model history. Segments
+                                             //!< older than \p buffer_length_ will be removed from the
+                                             //!< motion model history
+  MotionModelHistory motion_model_history_;  //!< Container that stores all previously generated
+                                             //!< motion models
 
   /**
    * @brief Create a new MotionModelSegment, updating the provided transaction.
@@ -269,9 +268,8 @@ protected:
    * @param[out] transaction     A transaction object to be updated with the
    * changes caused by addSegment
    */
-  void addSegment(const vesta_core::Timestamp &beginning_stamp,
-                  const vesta_core::Timestamp &ending_stamp,
-                  Transaction &transaction);
+  void addSegment(const vesta_core::Timestamp& beginning_stamp, const vesta_core::Timestamp& ending_stamp,
+                  Transaction& transaction);
 
   /**
    * @brief Remove an existing MotionModelSegment, updating the provided
@@ -284,8 +282,7 @@ protected:
    * @param[out] transaction A transaction object to be updated with the changes
    * caused by removeSegment
    */
-  void removeSegment(MotionModelHistory::iterator &iter,
-                     Transaction &transaction);
+  void removeSegment(MotionModelHistory::iterator& iter, Transaction& transaction);
 
   /**
    * @brief Split an existing MotionModelSegment into two pieces at the provided
@@ -300,9 +297,7 @@ protected:
    * @param[out] transaction A transaction object to be updated with the changes
    * caused by splitSegment
    */
-  void splitSegment(MotionModelHistory::iterator &iter,
-                    const vesta_core::Timestamp &stamp,
-                    Transaction &transaction);
+  void splitSegment(MotionModelHistory::iterator& iter, const vesta_core::Timestamp& stamp, Transaction& transaction);
 
   /**
    * @brief Remove any motion model segments that are older than \p
@@ -312,27 +307,27 @@ protected:
 };
 
 template <class T>
-TimestampManager::TimestampManager(
-    void (T::*fp)(const vesta_core::Timestamp &beginning_stamp,
-                  const vesta_core::Timestamp &ending_stamp,
-                  std::vector<Constraint::SharedPtr> &constraints,
-                  std::vector<Variable::SharedPtr> &variables),
-    T *obj, const vesta_core::Duration &buffer_length)
-    : TimestampManager(std::bind(fp, obj, std::placeholders::_1,
-                                 std::placeholders::_2, std::placeholders::_3,
-                                 std::placeholders::_4),
-                       buffer_length) {}
+TimestampManager::TimestampManager(void (T::*fp)(const vesta_core::Timestamp& beginning_stamp,
+                                                 const vesta_core::Timestamp& ending_stamp,
+                                                 std::vector<Constraint::SharedPtr>& constraints,
+                                                 std::vector<Variable::SharedPtr>& variables),
+                                   T* obj, const vesta_core::Duration& buffer_length)
+  : TimestampManager(
+        std::bind(fp, obj, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4),
+        buffer_length)
+{
+}
 
 template <class T>
-TimestampManager::TimestampManager(
-    void (T::*fp)(const vesta_core::Timestamp &beginning_stamp,
-                  const vesta_core::Timestamp &ending_stamp,
-                  std::vector<Constraint::SharedPtr> &constraints,
-                  std::vector<Variable::SharedPtr> &variables) const,
-    T *obj, const vesta_core::Duration &buffer_length)
-    : TimestampManager(std::bind(fp, obj, std::placeholders::_1,
-                                 std::placeholders::_2, std::placeholders::_3,
-                                 std::placeholders::_4),
-                       buffer_length) {}
+TimestampManager::TimestampManager(void (T::*fp)(const vesta_core::Timestamp& beginning_stamp,
+                                                 const vesta_core::Timestamp& ending_stamp,
+                                                 std::vector<Constraint::SharedPtr>& constraints,
+                                                 std::vector<Variable::SharedPtr>& variables) const,
+                                   T* obj, const vesta_core::Duration& buffer_length)
+  : TimestampManager(
+        std::bind(fp, obj, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4),
+        buffer_length)
+{
+}
 
-} // namespace vesta_core
+}  // namespace vesta_core

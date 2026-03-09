@@ -40,10 +40,10 @@
 #include <vesta_optimizers/variable_stamp_index.h>
 #include <vesta_variables/common/stamped.h>
 
+#include <gtest/gtest.h>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
-#include <gtest/gtest.h>
 
 #include <algorithm>
 #include <iterator>
@@ -54,23 +54,34 @@
 /**
  * @brief Create a simple stamped Variable for testing
  */
-class StampedVariable : public vesta_core::Variable,
-                        public vesta_variables::Stamped {
+class StampedVariable : public vesta_core::Variable, public vesta_variables::Stamped
+{
 public:
   VESTA_VARIABLE_DEFINITIONS(StampedVariable);
 
-  explicit StampedVariable(
-      const vesta_core::Timestamp &stamp = vesta_core::Timestamp(0, 0))
-      : vesta_core::Variable(vesta_core::uuid::generate()),
-        vesta_variables::Stamped(stamp), data_{} {}
+  explicit StampedVariable(const vesta_core::Timestamp& stamp = vesta_core::Timestamp(0, 0))
+    : vesta_core::Variable(vesta_core::uuid::generate()), vesta_variables::Stamped(stamp), data_{}
+  {
+  }
 
-  size_t size() const override { return 1; }
+  size_t size() const override
+  {
+    return 1;
+  }
 
-  const double *data() const override { return &data_; }
+  const double* data() const override
+  {
+    return &data_;
+  }
 
-  double *data() override { return &data_; }
+  double* data() override
+  {
+    return &data_;
+  }
 
-  void print(std::ostream & /*stream = std::cout*/) const override {}
+  void print(std::ostream& /*stream = std::cout*/) const override
+  {
+  }
 
 private:
   double data_;
@@ -88,9 +99,10 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Variable>(*this);
-    archive &boost::serialization::base_object<vesta_variables::Stamped>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Variable>(*this);
+    archive& boost::serialization::base_object<vesta_variables::Stamped>(*this);
     archive & data_;
   }
 };
@@ -100,20 +112,33 @@ BOOST_CLASS_EXPORT(StampedVariable);
 /**
  * @brief Create a simple unstamped Variable for testing
  */
-class UnstampedVariable : public vesta_core::Variable {
+class UnstampedVariable : public vesta_core::Variable
+{
 public:
   VESTA_VARIABLE_DEFINITIONS(UnstampedVariable);
 
-  UnstampedVariable()
-      : vesta_core::Variable(vesta_core::uuid::generate()), data_{} {}
+  UnstampedVariable() : vesta_core::Variable(vesta_core::uuid::generate()), data_{}
+  {
+  }
 
-  size_t size() const override { return 1; }
+  size_t size() const override
+  {
+    return 1;
+  }
 
-  const double *data() const override { return &data_; }
+  const double* data() const override
+  {
+    return &data_;
+  }
 
-  double *data() override { return &data_; }
+  double* data() override
+  {
+    return &data_;
+  }
 
-  void print(std::ostream & /*stream = std::cout*/) const override {}
+  void print(std::ostream& /*stream = std::cout*/) const override
+  {
+  }
 
 private:
   double data_;
@@ -131,8 +156,9 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Variable>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Variable>(*this);
     archive & data_;
   }
 };
@@ -142,34 +168,42 @@ BOOST_CLASS_EXPORT(UnstampedVariable);
 /**
  * @brief Create a simple Constraint for testing
  */
-class GenericConstraint : public vesta_core::Constraint {
+class GenericConstraint : public vesta_core::Constraint
+{
 public:
   VESTA_CONSTRAINT_DEFINITIONS(GenericConstraint);
 
   GenericConstraint() = default;
 
-  GenericConstraint(const std::string &source,
-                    std::initializer_list<vesta_core::UUID> variable_uuids)
-      : Constraint(source, variable_uuids) {}
+  GenericConstraint(const std::string& source, std::initializer_list<vesta_core::UUID> variable_uuids)
+    : Constraint(source, variable_uuids)
+  {
+  }
 
-  explicit GenericConstraint(const std::string &source,
-                             const vesta_core::UUID &variable1)
-      : vesta_core::Constraint(source, {variable1}) {}
+  explicit GenericConstraint(const std::string& source, const vesta_core::UUID& variable1)
+    : vesta_core::Constraint(source, { variable1 })
+  {
+  }
 
-  GenericConstraint(const std::string &source,
-                    const vesta_core::UUID &variable1,
-                    const vesta_core::UUID &variable2)
-      : vesta_core::Constraint(source, {variable1, variable2}) {}
+  GenericConstraint(const std::string& source, const vesta_core::UUID& variable1, const vesta_core::UUID& variable2)
+    : vesta_core::Constraint(source, { variable1, variable2 })
+  {
+  }
 
-  GenericConstraint(const std::string &source,
-                    const vesta_core::UUID &variable1,
-                    const vesta_core::UUID &variable2,
-                    const vesta_core::UUID &variable3)
-      : vesta_core::Constraint(source, {variable1, variable2, variable3}) {}
+  GenericConstraint(const std::string& source, const vesta_core::UUID& variable1, const vesta_core::UUID& variable2,
+                    const vesta_core::UUID& variable3)
+    : vesta_core::Constraint(source, { variable1, variable2, variable3 })
+  {
+  }
 
-  void print(std::ostream & /*stream = std::cout*/) const override {}
+  void print(std::ostream& /*stream = std::cout*/) const override
+  {
+  }
 
-  ceres::CostFunction *costFunction() const override { return nullptr; }
+  ceres::CostFunction* costFunction() const override
+  {
+    return nullptr;
+  }
 
 private:
   // Allow Boost Serialization access to private methods
@@ -185,14 +219,16 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
   }
 };
 
 BOOST_CLASS_EXPORT(GenericConstraint);
 
-TEST(VariableStampIndex, Size) {
+TEST(VariableStampIndex, Size)
+{
   // Create an empty index
   auto index = vesta_optimizers::VariableStampIndex();
   EXPECT_TRUE(index.empty());
@@ -216,7 +252,8 @@ TEST(VariableStampIndex, Size) {
   EXPECT_EQ(0u, index.size());
 }
 
-TEST(VariableStampIndex, CurrentStamp) {
+TEST(VariableStampIndex, CurrentStamp)
+{
   // Create an empty index
   auto index = vesta_optimizers::VariableStampIndex();
 
@@ -242,7 +279,8 @@ TEST(VariableStampIndex, CurrentStamp) {
   EXPECT_EQ(vesta_core::Timestamp(1, 0), index.currentStamp());
 }
 
-TEST(VariableStampIndex, Query) {
+TEST(VariableStampIndex, Query)
+{
   // Create an empty index
   auto index = vesta_optimizers::VariableStampIndex();
 
@@ -277,7 +315,7 @@ TEST(VariableStampIndex, Query) {
   index.query(vesta_core::Timestamp(1, 500000), std::back_inserter(actual1));
   EXPECT_EQ(expected1, actual1);
 
-  auto expected2 = std::vector<vesta_core::UUID>{x1->uuid(), l1->uuid()};
+  auto expected2 = std::vector<vesta_core::UUID>{ x1->uuid(), l1->uuid() };
   std::sort(expected2.begin(), expected2.end());
   auto actual2 = std::vector<vesta_core::UUID>();
   index.query(vesta_core::Timestamp(2, 500000), std::back_inserter(actual2));
@@ -285,7 +323,8 @@ TEST(VariableStampIndex, Query) {
   EXPECT_EQ(expected2, actual2);
 }
 
-TEST(VariableStampIndex, MarginalTransaction) {
+TEST(VariableStampIndex, MarginalTransaction)
+{
   // Create an empty index
   auto index = vesta_optimizers::VariableStampIndex();
 
@@ -329,7 +368,7 @@ TEST(VariableStampIndex, MarginalTransaction) {
   EXPECT_EQ(4u, index.size());
 
   // And the marginal constraint x3->l1 should not affect future queries
-  auto expected = std::vector<vesta_core::UUID>{l1->uuid()};
+  auto expected = std::vector<vesta_core::UUID>{ l1->uuid() };
   std::sort(expected.begin(), expected.end());
   auto actual = std::vector<vesta_core::UUID>();
   index.query(vesta_core::Timestamp(2, 500000), std::back_inserter(actual));
@@ -337,7 +376,8 @@ TEST(VariableStampIndex, MarginalTransaction) {
   EXPECT_EQ(expected, actual);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

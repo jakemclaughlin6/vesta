@@ -35,17 +35,10 @@
 
 #include <boost/serialization/export.hpp>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(
-    vesta_constraints::RelativeAccelerationAngular2DStampedConstraint);
-BOOST_CLASS_EXPORT_IMPLEMENT(
-    vesta_constraints::RelativeAccelerationLinear2DStampedConstraint);
-BOOST_CLASS_EXPORT_IMPLEMENT(
-    vesta_constraints::RelativeOrientation2DStampedConstraint);
-BOOST_CLASS_EXPORT_IMPLEMENT(
-    vesta_constraints::RelativePosition2DStampedConstraint);
-BOOST_CLASS_EXPORT_IMPLEMENT(
-    vesta_constraints::RelativePosition3DStampedConstraint);
-BOOST_CLASS_EXPORT_IMPLEMENT(
-    vesta_constraints::RelativeVelocityAngular2DStampedConstraint);
-BOOST_CLASS_EXPORT_IMPLEMENT(
-    vesta_constraints::RelativeVelocityLinear2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::RelativeAccelerationAngular2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::RelativeAccelerationLinear2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::RelativeOrientation2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::RelativePosition2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::RelativePosition3DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::RelativeVelocityAngular2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::RelativeVelocityLinear2DStampedConstraint);

@@ -47,7 +47,8 @@
 
 #include <ostream>
 
-namespace vesta_variables {
+namespace vesta_variables
+{
 
 /**
  * @brief Variable representing a 3D angular acceleration (aroll, apitch, ayaw)
@@ -57,15 +58,20 @@ namespace vesta_variables {
  * class is static after construction. As such, the timestamp and device id
  * cannot be modified. The value of the acceleration can be modified.
  */
-class AccelerationAngular3DStamped : public FixedSizeVariable<3>,
-                                     public Stamped {
+class AccelerationAngular3DStamped : public FixedSizeVariable<3>, public Stamped
+{
 public:
   VESTA_VARIABLE_DEFINITIONS(AccelerationAngular3DStamped);
 
   /**
    * @brief Can be used to directly index variables in the data array
    */
-  enum : size_t { ROLL = 0, PITCH = 1, YAW = 2 };
+  enum : size_t
+  {
+    ROLL = 0,
+    PITCH = 1,
+    YAW = 2
+  };
 
   /**
    * @brief Default constructor
@@ -79,39 +85,56 @@ public:
    * @param[in] device_id An optional device id, for use when variables
    * originate from multiple robots or devices
    */
-  explicit AccelerationAngular3DStamped(
-      const vesta_core::Timestamp &stamp,
-      const vesta_core::UUID &device_id = vesta_core::uuid::NIL);
+  explicit AccelerationAngular3DStamped(const vesta_core::Timestamp& stamp,
+                                        const vesta_core::UUID& device_id = vesta_core::uuid::NIL);
 
   /**
    * @brief Read-write access to the roll (X-axis) angular acceleration.
    */
-  double &roll() { return data_[ROLL]; }
+  double& roll()
+  {
+    return data_[ROLL];
+  }
 
   /**
    * @brief Read-only access to the roll (X-axis) angular acceleration.
    */
-  const double &roll() const { return data_[ROLL]; }
+  const double& roll() const
+  {
+    return data_[ROLL];
+  }
 
   /**
    * @brief Read-write access to the pitch (Y-axis) angular acceleration.
    */
-  double &pitch() { return data_[PITCH]; }
+  double& pitch()
+  {
+    return data_[PITCH];
+  }
 
   /**
    * @brief Read-only access to the pitch (Y-axis) angular acceleration.
    */
-  const double &pitch() const { return data_[PITCH]; }
+  const double& pitch() const
+  {
+    return data_[PITCH];
+  }
 
   /**
    * @brief Read-write access to the yaw (Z-axis) angular acceleration.
    */
-  double &yaw() { return data_[YAW]; }
+  double& yaw()
+  {
+    return data_[YAW];
+  }
 
   /**
    * @brief Read-only access to the yaw (Z-axis) angular acceleration.
    */
-  const double &yaw() const { return data_[YAW]; }
+  const double& yaw() const
+  {
+    return data_[YAW];
+  }
 
   /**
    * @brief Print a human-readable description of the variable to the provided
@@ -119,7 +142,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
 private:
   // Allow Boost Serialization access to private methods
@@ -135,12 +158,13 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
-    archive &boost::serialization::base_object<Stamped>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
+    archive& boost::serialization::base_object<Stamped>(*this);
   }
 };
 
-} // namespace vesta_variables
+}  // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_KEY(vesta_variables::AccelerationAngular3DStamped);

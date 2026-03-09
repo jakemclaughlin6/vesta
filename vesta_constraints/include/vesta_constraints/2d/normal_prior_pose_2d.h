@@ -38,7 +38,8 @@
 
 #include <ceres/sized_cost_function.h>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Create a prior cost function on both the position and orientation
@@ -65,8 +66,8 @@ namespace vesta_constraints {
  * the matrix A is the square root information matrix (the inverse of the
  * covariance).
  */
-class NormalPriorPose2D
-    : public ceres::SizedCostFunction<ceres::DYNAMIC, 2, 1> {
+class NormalPriorPose2D : public ceres::SizedCostFunction<ceres::DYNAMIC, 2, 1>
+{
 public:
   /**
    * @brief Construct a cost function instance
@@ -81,8 +82,7 @@ public:
    * information matrix in order (x, y, yaw)
    * @param[in] b The pose measurement or prior in order (x, y, yaw)
    */
-  NormalPriorPose2D(const vesta_core::MatrixXd &A,
-                    const vesta_core::Vector3d &b);
+  NormalPriorPose2D(const vesta_core::MatrixXd& A, const vesta_core::Vector3d& b);
 
   /**
    * @brief Destructor
@@ -93,13 +93,12 @@ public:
    * @brief Compute the cost values/residuals, and optionally the Jacobians,
    * using the provided variable/parameter values
    */
-  virtual bool Evaluate(double const *const *parameters, double *residuals,
-                        double **jacobians) const;
+  virtual bool Evaluate(double const* const* parameters, double* residuals, double** jacobians) const;
 
 private:
-  vesta_core::MatrixXd A_; //!< The residual weighting matrix, most likely the
-                           //!< square root information matrix
-  vesta_core::Vector3d b_; //!< The measured 2D pose value
+  vesta_core::MatrixXd A_;  //!< The residual weighting matrix, most likely the
+                            //!< square root information matrix
+  vesta_core::Vector3d b_;  //!< The measured 2D pose value
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

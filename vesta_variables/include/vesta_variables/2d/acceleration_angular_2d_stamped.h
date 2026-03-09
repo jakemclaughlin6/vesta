@@ -47,7 +47,8 @@
 
 #include <ostream>
 
-namespace vesta_variables {
+namespace vesta_variables
+{
 
 /**
  * @brief Variable representing a 2D angular acceleration at a specific time,
@@ -57,15 +58,18 @@ namespace vesta_variables {
  * class is constant after construction. As such, the timestamp and device id
  * cannot be modified. The value of the acceleration can be modified.
  */
-class AccelerationAngular2DStamped : public FixedSizeVariable<1>,
-                                     public Stamped {
+class AccelerationAngular2DStamped : public FixedSizeVariable<1>, public Stamped
+{
 public:
   VESTA_VARIABLE_DEFINITIONS(AccelerationAngular2DStamped);
 
   /**
    * @brief Can be used to directly index variables in the data array
    */
-  enum : size_t { YAW = 0 };
+  enum : size_t
+  {
+    YAW = 0
+  };
 
   /**
    * @brief Default constructor
@@ -79,19 +83,24 @@ public:
    * @param[in] device_id An optional device id, for use when variables
    * originate from multiple robots or devices
    */
-  explicit AccelerationAngular2DStamped(
-      const vesta_core::Timestamp &stamp,
-      const vesta_core::UUID &device_id = vesta_core::uuid::NIL);
+  explicit AccelerationAngular2DStamped(const vesta_core::Timestamp& stamp,
+                                        const vesta_core::UUID& device_id = vesta_core::uuid::NIL);
 
   /**
    * @brief Read-write access to the angular acceleration.
    */
-  double &yaw() { return data_[YAW]; }
+  double& yaw()
+  {
+    return data_[YAW];
+  }
 
   /**
    * @brief Read-only access to the angular acceleration.
    */
-  const double &yaw() const { return data_[YAW]; }
+  const double& yaw() const
+  {
+    return data_[YAW];
+  }
 
   /**
    * @brief Print a human-readable description of the variable to the provided
@@ -99,7 +108,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
 private:
   // Allow Boost Serialization access to private methods
@@ -115,12 +124,13 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
-    archive &boost::serialization::base_object<Stamped>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
+    archive& boost::serialization::base_object<Stamped>(*this);
   }
 };
 
-} // namespace vesta_variables
+}  // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_KEY(vesta_variables::AccelerationAngular2DStamped);

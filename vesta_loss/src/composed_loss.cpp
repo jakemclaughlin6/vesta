@@ -39,32 +39,36 @@
 #include <memory>
 #include <ostream>
 
-namespace vesta_loss {
+namespace vesta_loss
+{
 
-ComposedLoss::ComposedLoss(const std::shared_ptr<vesta_core::Loss> &f_loss,
-                           const std::shared_ptr<vesta_core::Loss> &g_loss)
-    : f_loss_(f_loss), g_loss_(g_loss) {}
+ComposedLoss::ComposedLoss(const std::shared_ptr<vesta_core::Loss>& f_loss,
+                           const std::shared_ptr<vesta_core::Loss>& g_loss)
+  : f_loss_(f_loss), g_loss_(g_loss)
+{
+}
 
-void ComposedLoss::print(std::ostream &stream) const {
+void ComposedLoss::print(std::ostream& stream) const
+{
   stream << type() << "\n";
 
-  if (f_loss_) {
+  if (f_loss_)
+  {
     stream << "  f_loss: " << f_loss_ << "\n";
   }
 
-  if (g_loss_) {
+  if (g_loss_)
+  {
     stream << "  g_loss: " << g_loss_ << "\n";
   }
 }
 
-ceres::LossFunction *ComposedLoss::lossFunction() const {
-  return new ceres::ComposedLoss(
-      f_loss_ ? f_loss_->lossFunction() : TrivialLoss().lossFunction(),
-      Ownership,
-      g_loss_ ? g_loss_->lossFunction() : TrivialLoss().lossFunction(),
-      Ownership);
+ceres::LossFunction* ComposedLoss::lossFunction() const
+{
+  return new ceres::ComposedLoss(f_loss_ ? f_loss_->lossFunction() : TrivialLoss().lossFunction(), Ownership,
+                                 g_loss_ ? g_loss_->lossFunction() : TrivialLoss().lossFunction(), Ownership);
 }
 
-} // namespace vesta_loss
+}  // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::ComposedLoss);

@@ -51,7 +51,8 @@
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief A constraint that represents either prior information about a 2D pose,
@@ -67,7 +68,8 @@ namespace vesta_constraints {
  * uncertainty/covariance. It also permits measurement of a subset of the pose
  * provided in the position and orientation varables.
  */
-class AbsolutePose2DStampedConstraint : public vesta_core::Constraint {
+class AbsolutePose2DStampedConstraint : public vesta_core::Constraint
+{
 public:
   VESTA_CONSTRAINT_DEFINITIONS(AbsolutePose2DStampedConstraint);
 
@@ -108,16 +110,12 @@ public:
    * "{vesta_variables::Orientation2DStamped::Yaw}"
    */
   AbsolutePose2DStampedConstraint(
-      const std::string &source,
-      const vesta_variables::Position2DStamped &position,
-      const vesta_variables::Orientation2DStamped &orientation,
-      const vesta_core::VectorXd &partial_mean,
-      const vesta_core::MatrixXd &partial_covariance,
-      const std::vector<size_t> &linear_indices =
-          {vesta_variables::Position2DStamped::X,
-           vesta_variables::Position2DStamped::Y}, // NOLINT
-      const std::vector<size_t> &angular_indices = {
-          vesta_variables::Orientation2DStamped::YAW}); // NOLINT
+      const std::string& source, const vesta_variables::Position2DStamped& position,
+      const vesta_variables::Orientation2DStamped& orientation, const vesta_core::VectorXd& partial_mean,
+      const vesta_core::MatrixXd& partial_covariance,
+      const std::vector<size_t>& linear_indices = { vesta_variables::Position2DStamped::X,
+                                                    vesta_variables::Position2DStamped::Y },         // NOLINT
+      const std::vector<size_t>& angular_indices = { vesta_variables::Orientation2DStamped::YAW });  // NOLINT
 
   /**
    * @brief Destructor
@@ -130,7 +128,10 @@ public:
    * Order is (x, y, yaw). Note that the returned vector will be full sized
    * (3x1) and in the stated order.
    */
-  const vesta_core::Vector3d &mean() const { return mean_; }
+  const vesta_core::Vector3d& mean() const
+  {
+    return mean_;
+  }
 
   /**
    * @brief Read-only access to the square root information matrix.
@@ -138,7 +139,8 @@ public:
    * If only a partial covariance matrix was provided in the constructor, this
    * covariance matrix will not be square.
    */
-  const vesta_core::MatrixXd &sqrtInformation() const {
+  const vesta_core::MatrixXd& sqrtInformation() const
+  {
     return sqrt_information_;
   }
 
@@ -158,7 +160,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
@@ -171,13 +173,11 @@ public:
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction *costFunction() const override;
+  ceres::CostFunction* costFunction() const override;
 
 protected:
-  vesta_core::Vector3d
-      mean_; //!< The measured/prior mean vector for this variable
-  vesta_core::MatrixXd
-      sqrt_information_; //!< The square root information matrix
+  vesta_core::Vector3d mean_;              //!< The measured/prior mean vector for this variable
+  vesta_core::MatrixXd sqrt_information_;  //!< The square root information matrix
 
 private:
   // Allow Boost Serialization access to private methods
@@ -193,13 +193,14 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & mean_;
     archive & sqrt_information_;
   }
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::AbsolutePose2DStampedConstraint);

@@ -44,7 +44,8 @@
 
 #include <array>
 
-namespace vesta_variables {
+namespace vesta_variables
+{
 
 /**
  * @brief A Variable base class for fixed-sized variables
@@ -59,7 +60,9 @@ namespace vesta_variables {
  * should be almost all variable types. The dimension of typical variable types
  * (points, poses, calibration parameters) are all known at design/compile time.
  */
-template <size_t N> class FixedSizeVariable : public vesta_core::Variable {
+template <size_t N>
+class FixedSizeVariable : public vesta_core::Variable
+{
 public:
   VESTA_SMART_PTR_ALIASES_ONLY(FixedSizeVariable<N>);
 
@@ -76,9 +79,10 @@ public:
   /**
    * @brief Constructor
    */
-  explicit FixedSizeVariable(const vesta_core::UUID &uuid)
-      : vesta_core::Variable(uuid), data_{} // zero-initialize the data array
-  {}
+  explicit FixedSizeVariable(const vesta_core::UUID& uuid)
+    : vesta_core::Variable(uuid), data_{}  // zero-initialize the data array
+  {
+  }
 
   /**
    * @brief Destructor
@@ -91,31 +95,46 @@ public:
    * The number of scalar values contained by this variable type is defined by
    * the class template parameter \p N.
    */
-  size_t size() const override { return N; }
+  size_t size() const override
+  {
+    return N;
+  }
 
   /**
    * @brief Read-only access to the variable data
    */
-  const double *data() const override { return data_.data(); }
+  const double* data() const override
+  {
+    return data_.data();
+  }
 
   /**
    * @brief Read-write access to the variable data
    */
-  double *data() override { return data_.data(); }
+  double* data() override
+  {
+    return data_.data();
+  }
 
   /**
    * @brief Read-only access to the variable data as a std::array
    */
-  const std::array<double, N> &array() const { return data_; }
+  const std::array<double, N>& array() const
+  {
+    return data_;
+  }
 
   /**
    * @brief Read-write access to the variable data as a std::array
    */
-  std::array<double, N> &array() { return data_; }
+  std::array<double, N>& array()
+  {
+    return data_;
+  }
 
 protected:
-  std::array<double, N> data_; //!< Fixed-sized, contiguous memory for holding
-                               //!< the variable data members
+  std::array<double, N> data_;  //!< Fixed-sized, contiguous memory for holding
+                                //!< the variable data members
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
@@ -130,12 +149,14 @@ protected:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Variable>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Variable>(*this);
     archive & data_;
   }
 };
 
 // Define the constant that was declared above
-template <size_t N> constexpr size_t FixedSizeVariable<N>::SIZE;
-} // namespace vesta_variables
+template <size_t N>
+constexpr size_t FixedSizeVariable<N>::SIZE;
+}  // namespace vesta_variables

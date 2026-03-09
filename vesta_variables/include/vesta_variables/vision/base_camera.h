@@ -48,7 +48,8 @@
 
 #include <ostream>
 
-namespace vesta_variables {
+namespace vesta_variables
+{
 /**
  * @brief Variable representing intrinsic parameters of a camera.
  *
@@ -56,7 +57,9 @@ namespace vesta_variables {
  * construction and dependent on a user input database id. As such, the database
  * id cannot be altered after construction.
  */
-template <size_t N> class BaseCamera : public FixedSizeVariable<N> {
+template <size_t N>
+class BaseCamera : public FixedSizeVariable<N>
+{
 public:
   VESTA_VARIABLE_DEFINITIONS(BaseCamera);
 
@@ -72,8 +75,10 @@ public:
    * @param[in] uuid        The UUID of the sensor
    * @param[in] camera_id  The id associated to a camera
    */
-  explicit BaseCamera(const vesta_core::UUID &uuid, const uint64_t &camera_id)
-      : FixedSizeVariable<N>(uuid), id_(camera_id) {}
+  explicit BaseCamera(const vesta_core::UUID& uuid, const uint64_t& camera_id)
+    : FixedSizeVariable<N>(uuid), id_(camera_id)
+  {
+  }
 
   /**
    * @brief Construct a pinhole camera variable given a camera id
@@ -83,15 +88,18 @@ public:
    * @param[in] device_id  The device_id associated to the camera (e.g. which
    * robot)
    */
-  explicit BaseCamera(const uint64_t &camera_id,
-                      const vesta_core::UUID &device_id = vesta_core::uuid::NIL)
-      : BaseCamera(
-            vesta_core::uuid::generate(detail::type(), camera_id, device_id)) {}
+  explicit BaseCamera(const uint64_t& camera_id, const vesta_core::UUID& device_id = vesta_core::uuid::NIL)
+    : BaseCamera(vesta_core::uuid::generate(detail::type(), camera_id, device_id))
+  {
+  }
 
   /**
    * @brief Read-only access to the id
    */
-  const uint64_t &id() const { return id_; }
+  const uint64_t& id() const
+  {
+    return id_;
+  }
 
   /**
    * @brief Print a human-readable description of the variable to the provided
@@ -99,7 +107,8 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override {
+  void print(std::ostream& stream = std::cout) const override
+  {
     stream << type() << ":\n"
            << "  uuid: " << this->uuid() << "\n"
            << "  size: " << this->size() << "\n"
@@ -109,7 +118,7 @@ public:
 private:
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
-  uint64_t id_{0};
+  uint64_t id_{ 0 };
 
   /**
    * @brief The Boost Serialize method that serializes all of the data members
@@ -121,10 +130,11 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<FixedSizeVariable<N>>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<FixedSizeVariable<N>>(*this);
     archive & id_;
   }
 };
 
-} // namespace vesta_variables
+}  // namespace vesta_variables

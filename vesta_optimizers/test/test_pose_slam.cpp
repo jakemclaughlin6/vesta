@@ -28,44 +28,43 @@
 // Ground truth 2D poses: square trajectory
 // Poses: (0,0,0), (1,0,0), (2,0,0), (2,1,pi/2), (2,2,pi/2),
 //        (1,2,pi), (0,2,pi), (0,1,-pi/2), (0,0,-pi/2), (1,0,0)
-struct Pose2D {
+struct Pose2D
+{
   double x, y, yaw;
 };
 
-static std::vector<Pose2D> generateSquareTrajectory2D() {
+static std::vector<Pose2D> generateSquareTrajectory2D()
+{
   return {
-      {0.0, 0.0, 0.0},
-      {1.0, 0.0, 0.0},
-      {2.0, 0.0, M_PI / 2.0},
-      {2.0, 1.0, M_PI / 2.0},
-      {2.0, 2.0, M_PI},
-      {1.0, 2.0, M_PI},
-      {0.0, 2.0, -M_PI / 2.0},
-      {0.0, 1.0, -M_PI / 2.0},
-      {0.0, 0.0, 0.0},
-      {1.0, 0.0, 0.0},
+    { 0.0, 0.0, 0.0 },  { 1.0, 0.0, 0.0 },  { 2.0, 0.0, M_PI / 2.0 },  { 2.0, 1.0, M_PI / 2.0 },
+    { 2.0, 2.0, M_PI }, { 1.0, 2.0, M_PI }, { 0.0, 2.0, -M_PI / 2.0 }, { 0.0, 1.0, -M_PI / 2.0 },
+    { 0.0, 0.0, 0.0 },  { 1.0, 0.0, 0.0 },
   };
 }
 
-static double normalizeAngle(double a) {
-  while (a > M_PI) a -= 2.0 * M_PI;
-  while (a < -M_PI) a += 2.0 * M_PI;
+static double normalizeAngle(double a)
+{
+  while (a > M_PI)
+    a -= 2.0 * M_PI;
+  while (a < -M_PI)
+    a += 2.0 * M_PI;
   return a;
 }
 
 // Ground truth 3D poses: linear trajectory along x-axis with identity
 // orientation
-struct Pose3D {
+struct Pose3D
+{
   Eigen::Vector3d position;
   Eigen::Quaterniond orientation;
 };
 
-static std::vector<Pose3D> generateLinearTrajectory3D() {
+static std::vector<Pose3D> generateLinearTrajectory3D()
+{
   std::vector<Pose3D> poses;
-  for (int i = 0; i < 10; ++i) {
-    poses.push_back(
-        {Eigen::Vector3d(static_cast<double>(i), 0.0, 0.0),
-         Eigen::Quaterniond::Identity()});
+  for (int i = 0; i < 10; ++i)
+  {
+    poses.push_back({ Eigen::Vector3d(static_cast<double>(i), 0.0, 0.0), Eigen::Quaterniond::Identity() });
   }
   return poses;
 }
@@ -73,7 +72,8 @@ static std::vector<Pose3D> generateLinearTrajectory3D() {
 // =============================================================================
 // Test 1: 2D Pose SLAM with BatchOptimizer
 // =============================================================================
-TEST(PoseSlam, Batch2D) {
+TEST(PoseSlam, Batch2D)
+{
   auto gt = generateSquareTrajectory2D();
   const int n = static_cast<int>(gt.size());
   const auto device_id = vesta_core::uuid::generate("robot");
@@ -85,14 +85,12 @@ TEST(PoseSlam, Batch2D) {
 
   // Create variables
   std::vector<std::shared_ptr<vesta_variables::Position2DStamped>> positions;
-  std::vector<std::shared_ptr<vesta_variables::Orientation2DStamped>>
-      orientations;
-  for (int i = 0; i < n; ++i) {
+  std::vector<std::shared_ptr<vesta_variables::Orientation2DStamped>> orientations;
+  for (int i = 0; i < n; ++i)
+  {
     auto stamp = vesta_core::Timestamp(static_cast<int64_t>(i) * 1000000000LL);
-    auto pos =
-        std::make_shared<vesta_variables::Position2DStamped>(stamp, device_id);
-    auto ori = std::make_shared<vesta_variables::Orientation2DStamped>(
-        stamp, device_id);
+    auto pos = std::make_shared<vesta_variables::Position2DStamped>(stamp, device_id);
+    auto ori = std::make_shared<vesta_variables::Orientation2DStamped>(stamp, device_id);
     // Initialize with perturbed ground truth
     pos->x() = gt[i].x + init_noise(rng);
     pos->y() = gt[i].y + init_noise(rng);
@@ -103,10 +101,10 @@ TEST(PoseSlam, Batch2D) {
 
   // Build transaction
   auto txn = std::make_shared<vesta_core::Transaction>();
-  txn->stamp(
-      vesta_core::Timestamp(static_cast<int64_t>(n - 1) * 1000000000LL));
+  txn->stamp(vesta_core::Timestamp(static_cast<int64_t>(n - 1) * 1000000000LL));
 
-  for (int i = 0; i < n; ++i) {
+  for (int i = 0; i < n; ++i)
+  {
     txn->addVariable(positions[i]);
     txn->addVariable(orientations[i]);
   }
@@ -116,14 +114,14 @@ TEST(PoseSlam, Batch2D) {
     vesta_core::VectorXd mean(3);
     mean << gt[0].x, gt[0].y, gt[0].yaw;
     vesta_core::MatrixXd cov = vesta_core::MatrixXd::Identity(3, 3) * 1e-6;
-    auto prior = std::make_shared<
-        vesta_constraints::AbsolutePose2DStampedConstraint>(
-        "prior", *positions[0], *orientations[0], mean, cov);
+    auto prior = std::make_shared<vesta_constraints::AbsolutePose2DStampedConstraint>("prior", *positions[0],
+                                                                                      *orientations[0], mean, cov);
     txn->addConstraint(prior);
   }
 
   // Relative pose constraints between consecutive poses
-  for (int i = 0; i < n - 1; ++i) {
+  for (int i = 0; i < n - 1; ++i)
+  {
     double dx = gt[i + 1].x - gt[i].x;
     double dy = gt[i + 1].y - gt[i].y;
     double dyaw = normalizeAngle(gt[i + 1].yaw - gt[i].yaw);
@@ -134,13 +132,10 @@ TEST(PoseSlam, Batch2D) {
     double local_dy = -s * dx + c * dy;
 
     vesta_core::VectorXd delta(3);
-    delta << local_dx + noise_pos(rng), local_dy + noise_pos(rng),
-        dyaw + noise_yaw(rng);
+    delta << local_dx + noise_pos(rng), local_dy + noise_pos(rng), dyaw + noise_yaw(rng);
     vesta_core::MatrixXd cov = vesta_core::MatrixXd::Identity(3, 3) * 0.01;
-    auto rel = std::make_shared<
-        vesta_constraints::RelativePose2DStampedConstraint>(
-        "odom", *positions[i], *orientations[i], *positions[i + 1],
-        *orientations[i + 1], delta, cov);
+    auto rel = std::make_shared<vesta_constraints::RelativePose2DStampedConstraint>(
+        "odom", *positions[i], *orientations[i], *positions[i + 1], *orientations[i + 1], delta, cov);
     txn->addConstraint(rel);
   }
 
@@ -156,10 +151,10 @@ TEST(PoseSlam, Batch2D) {
   EXPECT_TRUE(summary.IsSolutionUsable());
 
   // Check convergence
-  const auto &g = optimizer.graph();
-  for (int i = 0; i < n; ++i) {
-    const auto &pos = dynamic_cast<const vesta_variables::Position2DStamped &>(
-        g.getVariable(positions[i]->uuid()));
+  const auto& g = optimizer.graph();
+  for (int i = 0; i < n; ++i)
+  {
+    const auto& pos = dynamic_cast<const vesta_variables::Position2DStamped&>(g.getVariable(positions[i]->uuid()));
     EXPECT_NEAR(pos.x(), gt[i].x, 0.15) << "Pose " << i << " x";
     EXPECT_NEAR(pos.y(), gt[i].y, 0.15) << "Pose " << i << " y";
   }
@@ -168,7 +163,8 @@ TEST(PoseSlam, Batch2D) {
 // =============================================================================
 // Test 2: 3D Pose SLAM with BatchOptimizer
 // =============================================================================
-TEST(PoseSlam, Batch3D) {
+TEST(PoseSlam, Batch3D)
+{
   auto gt = generateLinearTrajectory3D();
   const int n = static_cast<int>(gt.size());
   const auto device_id = vesta_core::uuid::generate("robot");
@@ -178,14 +174,12 @@ TEST(PoseSlam, Batch3D) {
   std::normal_distribution<double> init_noise(0.0, 0.1);
 
   std::vector<std::shared_ptr<vesta_variables::Position3DStamped>> positions;
-  std::vector<std::shared_ptr<vesta_variables::Orientation3DStamped>>
-      orientations;
-  for (int i = 0; i < n; ++i) {
+  std::vector<std::shared_ptr<vesta_variables::Orientation3DStamped>> orientations;
+  for (int i = 0; i < n; ++i)
+  {
     auto stamp = vesta_core::Timestamp(static_cast<int64_t>(i) * 1000000000LL);
-    auto pos =
-        std::make_shared<vesta_variables::Position3DStamped>(stamp, device_id);
-    auto ori = std::make_shared<vesta_variables::Orientation3DStamped>(
-        stamp, device_id);
+    auto pos = std::make_shared<vesta_variables::Position3DStamped>(stamp, device_id);
+    auto ori = std::make_shared<vesta_variables::Orientation3DStamped>(stamp, device_id);
     pos->x() = gt[i].position.x() + init_noise(rng);
     pos->y() = gt[i].position.y() + init_noise(rng);
     pos->z() = gt[i].position.z() + init_noise(rng);
@@ -198,10 +192,10 @@ TEST(PoseSlam, Batch3D) {
   }
 
   auto txn = std::make_shared<vesta_core::Transaction>();
-  txn->stamp(
-      vesta_core::Timestamp(static_cast<int64_t>(n - 1) * 1000000000LL));
+  txn->stamp(vesta_core::Timestamp(static_cast<int64_t>(n - 1) * 1000000000LL));
 
-  for (int i = 0; i < n; ++i) {
+  for (int i = 0; i < n; ++i)
+  {
     txn->addVariable(positions[i]);
     txn->addVariable(orientations[i]);
   }
@@ -209,31 +203,25 @@ TEST(PoseSlam, Batch3D) {
   // Prior on first pose
   {
     vesta_core::Vector7d mean;
-    mean << gt[0].position.x(), gt[0].position.y(), gt[0].position.z(),
-        gt[0].orientation.w(), gt[0].orientation.x(), gt[0].orientation.y(),
-        gt[0].orientation.z();
+    mean << gt[0].position.x(), gt[0].position.y(), gt[0].position.z(), gt[0].orientation.w(), gt[0].orientation.x(),
+        gt[0].orientation.y(), gt[0].orientation.z();
     vesta_core::Matrix6d cov = vesta_core::Matrix6d::Identity() * 1e-6;
-    auto prior = std::make_shared<
-        vesta_constraints::AbsolutePose3DStampedConstraint>(
-        "prior", *positions[0], *orientations[0], mean, cov);
+    auto prior = std::make_shared<vesta_constraints::AbsolutePose3DStampedConstraint>("prior", *positions[0],
+                                                                                      *orientations[0], mean, cov);
     txn->addConstraint(prior);
   }
 
   // Relative pose constraints
-  for (int i = 0; i < n - 1; ++i) {
-    Eigen::Vector3d dp =
-        gt[i].orientation.inverse() * (gt[i + 1].position - gt[i].position);
-    Eigen::Quaterniond dq =
-        gt[i].orientation.inverse() * gt[i + 1].orientation;
+  for (int i = 0; i < n - 1; ++i)
+  {
+    Eigen::Vector3d dp = gt[i].orientation.inverse() * (gt[i + 1].position - gt[i].position);
+    Eigen::Quaterniond dq = gt[i].orientation.inverse() * gt[i + 1].orientation;
 
     vesta_core::Vector7d delta;
-    delta << dp.x() + noise_pos(rng), dp.y() + noise_pos(rng),
-        dp.z() + noise_pos(rng), dq.w(), dq.x(), dq.y(), dq.z();
+    delta << dp.x() + noise_pos(rng), dp.y() + noise_pos(rng), dp.z() + noise_pos(rng), dq.w(), dq.x(), dq.y(), dq.z();
     vesta_core::Matrix6d cov = vesta_core::Matrix6d::Identity() * 0.01;
-    auto rel = std::make_shared<
-        vesta_constraints::RelativePose3DStampedConstraint>(
-        "odom", *positions[i], *orientations[i], *positions[i + 1],
-        *orientations[i + 1], delta, cov);
+    auto rel = std::make_shared<vesta_constraints::RelativePose3DStampedConstraint>(
+        "odom", *positions[i], *orientations[i], *positions[i + 1], *orientations[i + 1], delta, cov);
     txn->addConstraint(rel);
   }
 
@@ -247,10 +235,10 @@ TEST(PoseSlam, Batch3D) {
 
   EXPECT_TRUE(summary.IsSolutionUsable());
 
-  const auto &g = optimizer.graph();
-  for (int i = 0; i < n; ++i) {
-    const auto &pos = dynamic_cast<const vesta_variables::Position3DStamped &>(
-        g.getVariable(positions[i]->uuid()));
+  const auto& g = optimizer.graph();
+  for (int i = 0; i < n; ++i)
+  {
+    const auto& pos = dynamic_cast<const vesta_variables::Position3DStamped&>(g.getVariable(positions[i]->uuid()));
     EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.15) << "Pose " << i;
     EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.15) << "Pose " << i;
     EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.15) << "Pose " << i;
@@ -260,7 +248,8 @@ TEST(PoseSlam, Batch3D) {
 // =============================================================================
 // Test 3: 2D Pose SLAM with FixedLagSmoother
 // =============================================================================
-TEST(PoseSlam, FixedLag2D) {
+TEST(PoseSlam, FixedLag2D)
+{
   auto gt = generateSquareTrajectory2D();
   const int n = static_cast<int>(gt.size());
   const auto device_id = vesta_core::uuid::generate("robot");
@@ -272,14 +261,12 @@ TEST(PoseSlam, FixedLag2D) {
 
   // Create variables
   std::vector<std::shared_ptr<vesta_variables::Position2DStamped>> positions;
-  std::vector<std::shared_ptr<vesta_variables::Orientation2DStamped>>
-      orientations;
-  for (int i = 0; i < n; ++i) {
+  std::vector<std::shared_ptr<vesta_variables::Orientation2DStamped>> orientations;
+  for (int i = 0; i < n; ++i)
+  {
     auto stamp = vesta_core::Timestamp(static_cast<int64_t>(i) * 1000000000LL);
-    auto pos =
-        std::make_shared<vesta_variables::Position2DStamped>(stamp, device_id);
-    auto ori = std::make_shared<vesta_variables::Orientation2DStamped>(
-        stamp, device_id);
+    auto pos = std::make_shared<vesta_variables::Position2DStamped>(stamp, device_id);
+    auto ori = std::make_shared<vesta_variables::Orientation2DStamped>(stamp, device_id);
     pos->x() = gt[i].x + init_noise(rng);
     pos->y() = gt[i].y + init_noise(rng);
     ori->yaw() = gt[i].yaw + init_noise(rng) * 0.1;
@@ -307,23 +294,21 @@ TEST(PoseSlam, FixedLag2D) {
     vesta_core::VectorXd mean(3);
     mean << gt[0].x, gt[0].y, gt[0].yaw;
     vesta_core::MatrixXd cov = vesta_core::MatrixXd::Identity(3, 3) * 1e-6;
-    auto prior = std::make_shared<
-        vesta_constraints::AbsolutePose2DStampedConstraint>(
-        "prior", *positions[0], *orientations[0], mean, cov);
+    auto prior = std::make_shared<vesta_constraints::AbsolutePose2DStampedConstraint>("prior", *positions[0],
+                                                                                      *orientations[0], mean, cov);
     txn->addConstraint(prior);
     smoother.addTransaction("prior", txn);
     smoother.optimize();
   }
 
   // Add odometry constraints incrementally
-  for (int i = 0; i < n - 1; ++i) {
+  for (int i = 0; i < n - 1; ++i)
+  {
     auto txn = std::make_shared<vesta_core::Transaction>();
-    auto stamp =
-        vesta_core::Timestamp(static_cast<int64_t>(i + 1) * 1000000000LL);
+    auto stamp = vesta_core::Timestamp(static_cast<int64_t>(i + 1) * 1000000000LL);
     txn->stamp(stamp);
     txn->addInvolvedStamp(stamp);
-    txn->addInvolvedStamp(
-        vesta_core::Timestamp(static_cast<int64_t>(i) * 1000000000LL));
+    txn->addInvolvedStamp(vesta_core::Timestamp(static_cast<int64_t>(i) * 1000000000LL));
 
     txn->addVariable(positions[i + 1]);
     txn->addVariable(orientations[i + 1]);
@@ -337,26 +322,23 @@ TEST(PoseSlam, FixedLag2D) {
     double local_dy = -s * dx + c * dy;
 
     vesta_core::VectorXd delta(3);
-    delta << local_dx + noise_pos(rng), local_dy + noise_pos(rng),
-        dyaw + noise_yaw(rng);
+    delta << local_dx + noise_pos(rng), local_dy + noise_pos(rng), dyaw + noise_yaw(rng);
     vesta_core::MatrixXd cov = vesta_core::MatrixXd::Identity(3, 3) * 0.01;
-    auto rel = std::make_shared<
-        vesta_constraints::RelativePose2DStampedConstraint>(
-        "odom", *positions[i], *orientations[i], *positions[i + 1],
-        *orientations[i + 1], delta, cov);
+    auto rel = std::make_shared<vesta_constraints::RelativePose2DStampedConstraint>(
+        "odom", *positions[i], *orientations[i], *positions[i + 1], *orientations[i + 1], delta, cov);
     txn->addConstraint(rel);
     smoother.addTransaction("odom", txn);
     auto summary = smoother.optimize();
-    ASSERT_TRUE(summary.IsSolutionUsable())
-        << "FLS optimize failed at step " << i;
+    ASSERT_TRUE(summary.IsSolutionUsable()) << "FLS optimize failed at step " << i;
   }
 
   // Check that recent poses are close to ground truth
-  const auto &g = smoother.graph();
-  for (int i = n - 3; i < n; ++i) {
-    if (!g.variableExists(positions[i]->uuid())) continue;
-    const auto &pos = dynamic_cast<const vesta_variables::Position2DStamped &>(
-        g.getVariable(positions[i]->uuid()));
+  const auto& g = smoother.graph();
+  for (int i = n - 3; i < n; ++i)
+  {
+    if (!g.variableExists(positions[i]->uuid()))
+      continue;
+    const auto& pos = dynamic_cast<const vesta_variables::Position2DStamped&>(g.getVariable(positions[i]->uuid()));
     EXPECT_NEAR(pos.x(), gt[i].x, 0.3) << "Pose " << i << " x";
     EXPECT_NEAR(pos.y(), gt[i].y, 0.3) << "Pose " << i << " y";
   }
@@ -365,7 +347,8 @@ TEST(PoseSlam, FixedLag2D) {
 // =============================================================================
 // Test 4: 3D Pose SLAM with FixedLagSmoother
 // =============================================================================
-TEST(PoseSlam, FixedLag3D) {
+TEST(PoseSlam, FixedLag3D)
+{
   auto gt = generateLinearTrajectory3D();
   const int n = static_cast<int>(gt.size());
   const auto device_id = vesta_core::uuid::generate("robot");
@@ -375,14 +358,12 @@ TEST(PoseSlam, FixedLag3D) {
   std::normal_distribution<double> init_noise(0.0, 0.1);
 
   std::vector<std::shared_ptr<vesta_variables::Position3DStamped>> positions;
-  std::vector<std::shared_ptr<vesta_variables::Orientation3DStamped>>
-      orientations;
-  for (int i = 0; i < n; ++i) {
+  std::vector<std::shared_ptr<vesta_variables::Orientation3DStamped>> orientations;
+  for (int i = 0; i < n; ++i)
+  {
     auto stamp = vesta_core::Timestamp(static_cast<int64_t>(i) * 1000000000LL);
-    auto pos =
-        std::make_shared<vesta_variables::Position3DStamped>(stamp, device_id);
-    auto ori = std::make_shared<vesta_variables::Orientation3DStamped>(
-        stamp, device_id);
+    auto pos = std::make_shared<vesta_variables::Position3DStamped>(stamp, device_id);
+    auto ori = std::make_shared<vesta_variables::Orientation3DStamped>(stamp, device_id);
     pos->x() = gt[i].position.x() + init_noise(rng);
     pos->y() = gt[i].position.y() + init_noise(rng);
     pos->z() = gt[i].position.z() + init_noise(rng);
@@ -411,63 +392,56 @@ TEST(PoseSlam, FixedLag3D) {
     txn->addVariable(orientations[0]);
 
     vesta_core::Vector7d mean;
-    mean << gt[0].position.x(), gt[0].position.y(), gt[0].position.z(),
-        gt[0].orientation.w(), gt[0].orientation.x(), gt[0].orientation.y(),
-        gt[0].orientation.z();
+    mean << gt[0].position.x(), gt[0].position.y(), gt[0].position.z(), gt[0].orientation.w(), gt[0].orientation.x(),
+        gt[0].orientation.y(), gt[0].orientation.z();
     vesta_core::Matrix6d cov = vesta_core::Matrix6d::Identity() * 1e-6;
-    auto prior = std::make_shared<
-        vesta_constraints::AbsolutePose3DStampedConstraint>(
-        "prior", *positions[0], *orientations[0], mean, cov);
+    auto prior = std::make_shared<vesta_constraints::AbsolutePose3DStampedConstraint>("prior", *positions[0],
+                                                                                      *orientations[0], mean, cov);
     txn->addConstraint(prior);
     smoother.addTransaction("prior", txn);
     smoother.optimize();
   }
 
   // Add odometry incrementally
-  for (int i = 0; i < n - 1; ++i) {
+  for (int i = 0; i < n - 1; ++i)
+  {
     auto txn = std::make_shared<vesta_core::Transaction>();
-    auto stamp =
-        vesta_core::Timestamp(static_cast<int64_t>(i + 1) * 1000000000LL);
+    auto stamp = vesta_core::Timestamp(static_cast<int64_t>(i + 1) * 1000000000LL);
     txn->stamp(stamp);
     txn->addInvolvedStamp(stamp);
-    txn->addInvolvedStamp(
-        vesta_core::Timestamp(static_cast<int64_t>(i) * 1000000000LL));
+    txn->addInvolvedStamp(vesta_core::Timestamp(static_cast<int64_t>(i) * 1000000000LL));
 
     txn->addVariable(positions[i + 1]);
     txn->addVariable(orientations[i + 1]);
 
-    Eigen::Vector3d dp =
-        gt[i].orientation.inverse() * (gt[i + 1].position - gt[i].position);
-    Eigen::Quaterniond dq =
-        gt[i].orientation.inverse() * gt[i + 1].orientation;
+    Eigen::Vector3d dp = gt[i].orientation.inverse() * (gt[i + 1].position - gt[i].position);
+    Eigen::Quaterniond dq = gt[i].orientation.inverse() * gt[i + 1].orientation;
 
     vesta_core::Vector7d delta;
-    delta << dp.x() + noise_pos(rng), dp.y() + noise_pos(rng),
-        dp.z() + noise_pos(rng), dq.w(), dq.x(), dq.y(), dq.z();
+    delta << dp.x() + noise_pos(rng), dp.y() + noise_pos(rng), dp.z() + noise_pos(rng), dq.w(), dq.x(), dq.y(), dq.z();
     vesta_core::Matrix6d cov = vesta_core::Matrix6d::Identity() * 0.01;
-    auto rel = std::make_shared<
-        vesta_constraints::RelativePose3DStampedConstraint>(
-        "odom", *positions[i], *orientations[i], *positions[i + 1],
-        *orientations[i + 1], delta, cov);
+    auto rel = std::make_shared<vesta_constraints::RelativePose3DStampedConstraint>(
+        "odom", *positions[i], *orientations[i], *positions[i + 1], *orientations[i + 1], delta, cov);
     txn->addConstraint(rel);
     smoother.addTransaction("odom", txn);
     auto summary = smoother.optimize();
-    ASSERT_TRUE(summary.IsSolutionUsable())
-        << "FLS optimize failed at step " << i;
+    ASSERT_TRUE(summary.IsSolutionUsable()) << "FLS optimize failed at step " << i;
   }
 
-  const auto &g = smoother.graph();
-  for (int i = n - 3; i < n; ++i) {
-    if (!g.variableExists(positions[i]->uuid())) continue;
-    const auto &pos = dynamic_cast<const vesta_variables::Position3DStamped &>(
-        g.getVariable(positions[i]->uuid()));
+  const auto& g = smoother.graph();
+  for (int i = n - 3; i < n; ++i)
+  {
+    if (!g.variableExists(positions[i]->uuid()))
+      continue;
+    const auto& pos = dynamic_cast<const vesta_variables::Position3DStamped&>(g.getVariable(positions[i]->uuid()));
     EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.3) << "Pose " << i;
     EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.3) << "Pose " << i;
     EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.3) << "Pose " << i;
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

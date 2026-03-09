@@ -38,13 +38,15 @@
 
 #include <ceres/problem.h>
 
-namespace vesta_graphs {
+namespace vesta_graphs
+{
 
 /**
  * @brief Defines the set of parameters required by the vesta_graphs::HashGraph
  * class
  */
-struct HashGraphParams {
+struct HashGraphParams
+{
 public:
   /**
    * @brief Ceres Problem::Options object that controls various aspects of the
@@ -64,8 +66,7 @@ public:
    * - kFirstEstimate: Full First Estimate Jacobian (FEJ) — freeze after first
    * linearization
    */
-  vesta_core::JacobianPolicy jacobian_policy =
-      vesta_core::JacobianPolicy::kDefault;
+  vesta_core::JacobianPolicy jacobian_policy = vesta_core::JacobianPolicy::kDefault;
 
   /**
    * @brief Relinearization period for JacobianPolicy::kEveryN.
@@ -86,4 +87,4 @@ public:
   double jacobian_relinearization_threshold = 0.01;
 };
 
-} // namespace vesta_graphs
+}  // namespace vesta_graphs

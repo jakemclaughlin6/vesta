@@ -16,7 +16,8 @@ using vesta_constraints::ImuPreintegrationParams;
 using vesta_constraints::kGravityNominal;
 using vesta_constraints::kGravityWorld;
 
-TEST(ImuPreintegration, BasicWorkflow) {
+TEST(ImuPreintegration, BasicWorkflow)
+{
   // Test the basic API workflow:
   // Create, setStart, addImuData, createPreintegratedFactor
   ImuPreintegrationParams params;
@@ -31,10 +32,10 @@ TEST(ImuPreintegration, BasicWorkflow) {
   const Eigen::Vector3d zero_gyro = Eigen::Vector3d::Zero();
   const Eigen::Vector3d gravity_compensating_accel(0.0, 0.0, kGravityNominal);
 
-  for (int i = 0; i <= num_steps; ++i) {
+  for (int i = 0; i <= num_steps; ++i)
+  {
     int64_t ns = static_cast<int64_t>(i * dt * 1e9);
-    imu_preint.addImuData(ImuData(vesta_core::Timestamp(ns), zero_gyro,
-                                  gravity_compensating_accel));
+    imu_preint.addImuData(ImuData(vesta_core::Timestamp(ns), zero_gyro, gravity_compensating_accel));
   }
 
   // Set start at t=0
@@ -45,7 +46,7 @@ TEST(ImuPreintegration, BasicWorkflow) {
 
   // Verify non-null constraints and variables
   EXPECT_NE(nullptr, result.relative_constraint);
-  EXPECT_NE(nullptr, result.prior_constraint); // first window should have prior
+  EXPECT_NE(nullptr, result.prior_constraint);  // first window should have prior
   EXPECT_NE(nullptr, result.orientation);
   EXPECT_NE(nullptr, result.position);
   EXPECT_NE(nullptr, result.velocity);
@@ -63,7 +64,8 @@ TEST(ImuPreintegration, BasicWorkflow) {
   EXPECT_NEAR(0.0, result.predicted_state.velocity.z(), 1e-3);
 }
 
-TEST(ImuPreintegration, ConstantVelocityTrajectory) {
+TEST(ImuPreintegration, ConstantVelocityTrajectory)
+{
   // Feed IMU data simulating constant velocity motion with accel=[1,0,g] for 1
   // second. Build an optimization problem with prior + relative constraints.
   // Fix first state, optimize second, verify convergence.
@@ -80,14 +82,14 @@ TEST(ImuPreintegration, ConstantVelocityTrajectory) {
   const Eigen::Vector3d zero_gyro = Eigen::Vector3d::Zero();
   const Eigen::Vector3d accel(1.0, 0.0, kGravityNominal);
 
-  for (int i = 0; i <= num_steps; ++i) {
+  for (int i = 0; i <= num_steps; ++i)
+  {
     int64_t ns = static_cast<int64_t>(i * dt * 1e9);
     imu_preint.addImuData(ImuData(vesta_core::Timestamp(ns), zero_gyro, accel));
   }
 
   // Initialize at origin
-  imu_preint.setStart(stamp0, Eigen::Quaterniond::Identity(),
-                      Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero(),
+  imu_preint.setStart(stamp0, Eigen::Quaterniond::Identity(), Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero(),
                       device_id);
 
   // Create preintegrated factor
@@ -115,11 +117,11 @@ TEST(ImuPreintegration, ConstantVelocityTrajectory) {
   ceres::Problem problem(problem_options);
 
   // Get the prior constraint's variables (state1)
-  const auto &ori1 = imu_preint.currentOrientation();
-  const auto &pos1 = imu_preint.currentPosition();
-  const auto &vel1 = imu_preint.currentVelocity();
-  const auto &gbias1 = imu_preint.currentGyroBias();
-  const auto &abias1 = imu_preint.currentAccelBias();
+  const auto& ori1 = imu_preint.currentOrientation();
+  const auto& pos1 = imu_preint.currentPosition();
+  const auto& vel1 = imu_preint.currentVelocity();
+  const auto& gbias1 = imu_preint.currentGyroBias();
+  const auto& abias1 = imu_preint.currentAccelBias();
 
   // Wait -- after createPreintegratedFactor, the internal state has advanced to
   // state2. The prior and relative constraints reference the OLD state1
@@ -137,42 +139,35 @@ TEST(ImuPreintegration, ConstantVelocityTrajectory) {
 
   // Let's rebuild with a simpler approach: manually create state1 variables and
   // use them directly.
-  auto ori1_var =
-      vesta_variables::Orientation3DStamped::make_shared(stamp0, device_id);
+  auto ori1_var = vesta_variables::Orientation3DStamped::make_shared(stamp0, device_id);
   ori1_var->w() = 1.0;
   ori1_var->x() = 0.0;
   ori1_var->y() = 0.0;
   ori1_var->z() = 0.0;
 
-  auto pos1_var =
-      vesta_variables::Position3DStamped::make_shared(stamp0, device_id);
+  auto pos1_var = vesta_variables::Position3DStamped::make_shared(stamp0, device_id);
   pos1_var->x() = 0.0;
   pos1_var->y() = 0.0;
   pos1_var->z() = 0.0;
 
-  auto vel1_var =
-      vesta_variables::VelocityLinear3DStamped::make_shared(stamp0, device_id);
+  auto vel1_var = vesta_variables::VelocityLinear3DStamped::make_shared(stamp0, device_id);
   vel1_var->x() = 0.0;
   vel1_var->y() = 0.0;
   vel1_var->z() = 0.0;
 
-  auto gbias1_var =
-      vesta_variables::GyroscopeBias3DStamped::make_shared(stamp0, device_id);
+  auto gbias1_var = vesta_variables::GyroscopeBias3DStamped::make_shared(stamp0, device_id);
   gbias1_var->x() = 0.0;
   gbias1_var->y() = 0.0;
   gbias1_var->z() = 0.0;
 
-  auto abias1_var = vesta_variables::AccelerationBias3DStamped::make_shared(
-      stamp0, device_id);
+  auto abias1_var = vesta_variables::AccelerationBias3DStamped::make_shared(stamp0, device_id);
   abias1_var->x() = 0.0;
   abias1_var->y() = 0.0;
   abias1_var->z() = 0.0;
 
   // Add state1 parameter blocks
-  problem.AddParameterBlock(ori1_var->data(), ori1_var->size(),
-                            ori1_var->manifold());
-  problem.AddParameterBlock(pos1_var->data(), pos1_var->size(),
-                            pos1_var->manifold());
+  problem.AddParameterBlock(ori1_var->data(), ori1_var->size(), ori1_var->manifold());
+  problem.AddParameterBlock(pos1_var->data(), pos1_var->size(), pos1_var->manifold());
   problem.AddParameterBlock(vel1_var->data(), vel1_var->size());
   problem.AddParameterBlock(gbias1_var->data(), gbias1_var->size());
   problem.AddParameterBlock(abias1_var->data(), abias1_var->size());
@@ -185,33 +180,28 @@ TEST(ImuPreintegration, ConstantVelocityTrajectory) {
   problem.SetParameterBlockConstant(abias1_var->data());
 
   // Add state2 parameter blocks
-  problem.AddParameterBlock(result.orientation->data(),
-                            result.orientation->size(),
-                            result.orientation->manifold());
-  problem.AddParameterBlock(result.position->data(), result.position->size(),
-                            result.position->manifold());
+  problem.AddParameterBlock(result.orientation->data(), result.orientation->size(), result.orientation->manifold());
+  problem.AddParameterBlock(result.position->data(), result.position->size(), result.position->manifold());
   problem.AddParameterBlock(result.velocity->data(), result.velocity->size());
   problem.AddParameterBlock(result.gyro_bias->data(), result.gyro_bias->size());
-  problem.AddParameterBlock(result.accel_bias->data(),
-                            result.accel_bias->size());
+  problem.AddParameterBlock(result.accel_bias->data(), result.accel_bias->size());
 
   // Add prior constraint on state1
   {
-    std::vector<double *> prior_blocks;
+    std::vector<double*> prior_blocks;
     prior_blocks.push_back(ori1_var->data());
     prior_blocks.push_back(pos1_var->data());
     prior_blocks.push_back(vel1_var->data());
     prior_blocks.push_back(gbias1_var->data());
     prior_blocks.push_back(abias1_var->data());
 
-    problem.AddResidualBlock(result.prior_constraint->costFunction(),
-                             result.prior_constraint->lossFunction(),
+    problem.AddResidualBlock(result.prior_constraint->costFunction(), result.prior_constraint->lossFunction(),
                              prior_blocks);
   }
 
   // Add relative constraint
   {
-    std::vector<double *> rel_blocks;
+    std::vector<double*> rel_blocks;
     rel_blocks.push_back(ori1_var->data());
     rel_blocks.push_back(pos1_var->data());
     rel_blocks.push_back(vel1_var->data());
@@ -223,8 +213,7 @@ TEST(ImuPreintegration, ConstantVelocityTrajectory) {
     rel_blocks.push_back(result.gyro_bias->data());
     rel_blocks.push_back(result.accel_bias->data());
 
-    problem.AddResidualBlock(result.relative_constraint->costFunction(),
-                             result.relative_constraint->lossFunction(),
+    problem.AddResidualBlock(result.relative_constraint->costFunction(), result.relative_constraint->lossFunction(),
                              rel_blocks);
   }
 
@@ -244,11 +233,12 @@ TEST(ImuPreintegration, ConstantVelocityTrajectory) {
   EXPECT_NEAR(0.0, result.velocity->z(), 0.05);
 }
 
-TEST(ImuPreintegration, BiasEstimation) {
+TEST(ImuPreintegration, BiasEstimation)
+{
   // Add a systematic gyro bias to synthetic IMU data.
   // Create constraints, build optimization, verify bias converges near truth.
   ImuPreintegrationParams params;
-  params.cov_prior_noise = 1e-2; // Looser prior to allow bias to be estimated
+  params.cov_prior_noise = 1e-2;  // Looser prior to allow bias to be estimated
   ImuPreintegration imu_preint(params);
 
   auto stamp0 = vesta_core::Timestamp(0);
@@ -263,18 +253,17 @@ TEST(ImuPreintegration, BiasEstimation) {
   // when stationary) Acceleration: gravity compensation (stationary)
   const double dt = 0.01;
   const int num_steps = 100;
-  const Eigen::Vector3d measured_gyro = true_gyro_bias; // stationary + bias
+  const Eigen::Vector3d measured_gyro = true_gyro_bias;  // stationary + bias
   const Eigen::Vector3d measured_accel(0.0, 0.0, kGravityNominal);
 
-  for (int i = 0; i <= num_steps; ++i) {
+  for (int i = 0; i <= num_steps; ++i)
+  {
     int64_t ns = static_cast<int64_t>(i * dt * 1e9);
-    imu_preint.addImuData(
-        ImuData(vesta_core::Timestamp(ns), measured_gyro, measured_accel));
+    imu_preint.addImuData(ImuData(vesta_core::Timestamp(ns), measured_gyro, measured_accel));
   }
 
   // Initialize at origin with zero biases (wrong bias estimate)
-  imu_preint.setStart(stamp0, Eigen::Quaterniond::Identity(),
-                      Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero(),
+  imu_preint.setStart(stamp0, Eigen::Quaterniond::Identity(), Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero(),
                       device_id);
 
   auto result = imu_preint.createPreintegratedFactor(stamp1, device_id, true);
@@ -285,33 +274,28 @@ TEST(ImuPreintegration, BiasEstimation) {
   ceres::Problem problem(problem_options);
 
   // State1 variables
-  auto ori1 =
-      vesta_variables::Orientation3DStamped::make_shared(stamp0, device_id);
+  auto ori1 = vesta_variables::Orientation3DStamped::make_shared(stamp0, device_id);
   ori1->w() = 1.0;
   ori1->x() = 0.0;
   ori1->y() = 0.0;
   ori1->z() = 0.0;
 
-  auto pos1 =
-      vesta_variables::Position3DStamped::make_shared(stamp0, device_id);
+  auto pos1 = vesta_variables::Position3DStamped::make_shared(stamp0, device_id);
   pos1->x() = 0.0;
   pos1->y() = 0.0;
   pos1->z() = 0.0;
 
-  auto vel1 =
-      vesta_variables::VelocityLinear3DStamped::make_shared(stamp0, device_id);
+  auto vel1 = vesta_variables::VelocityLinear3DStamped::make_shared(stamp0, device_id);
   vel1->x() = 0.0;
   vel1->y() = 0.0;
   vel1->z() = 0.0;
 
-  auto gbias1 =
-      vesta_variables::GyroscopeBias3DStamped::make_shared(stamp0, device_id);
+  auto gbias1 = vesta_variables::GyroscopeBias3DStamped::make_shared(stamp0, device_id);
   gbias1->x() = 0.0;
   gbias1->y() = 0.0;
   gbias1->z() = 0.0;
 
-  auto abias1 = vesta_variables::AccelerationBias3DStamped::make_shared(
-      stamp0, device_id);
+  auto abias1 = vesta_variables::AccelerationBias3DStamped::make_shared(stamp0, device_id);
   abias1->x() = 0.0;
   abias1->y() = 0.0;
   abias1->z() = 0.0;
@@ -342,15 +326,11 @@ TEST(ImuPreintegration, BiasEstimation) {
   result.velocity->y() = 0.0;
   result.velocity->z() = 0.0;
 
-  problem.AddParameterBlock(result.orientation->data(),
-                            result.orientation->size(),
-                            result.orientation->manifold());
-  problem.AddParameterBlock(result.position->data(), result.position->size(),
-                            result.position->manifold());
+  problem.AddParameterBlock(result.orientation->data(), result.orientation->size(), result.orientation->manifold());
+  problem.AddParameterBlock(result.position->data(), result.position->size(), result.position->manifold());
   problem.AddParameterBlock(result.velocity->data(), result.velocity->size());
   problem.AddParameterBlock(result.gyro_bias->data(), result.gyro_bias->size());
-  problem.AddParameterBlock(result.accel_bias->data(),
-                            result.accel_bias->size());
+  problem.AddParameterBlock(result.accel_bias->data(), result.accel_bias->size());
 
   // Fix state2 pose and velocity as well (stationary)
   problem.SetParameterBlockConstant(result.orientation->data());
@@ -359,21 +339,20 @@ TEST(ImuPreintegration, BiasEstimation) {
 
   // Add prior on state1
   {
-    std::vector<double *> prior_blocks;
+    std::vector<double*> prior_blocks;
     prior_blocks.push_back(ori1->data());
     prior_blocks.push_back(pos1->data());
     prior_blocks.push_back(vel1->data());
     prior_blocks.push_back(gbias1->data());
     prior_blocks.push_back(abias1->data());
 
-    problem.AddResidualBlock(result.prior_constraint->costFunction(),
-                             result.prior_constraint->lossFunction(),
+    problem.AddResidualBlock(result.prior_constraint->costFunction(), result.prior_constraint->lossFunction(),
                              prior_blocks);
   }
 
   // Add relative constraint
   {
-    std::vector<double *> rel_blocks;
+    std::vector<double*> rel_blocks;
     rel_blocks.push_back(ori1->data());
     rel_blocks.push_back(pos1->data());
     rel_blocks.push_back(vel1->data());
@@ -385,8 +364,7 @@ TEST(ImuPreintegration, BiasEstimation) {
     rel_blocks.push_back(result.gyro_bias->data());
     rel_blocks.push_back(result.accel_bias->data());
 
-    problem.AddResidualBlock(result.relative_constraint->costFunction(),
-                             result.relative_constraint->lossFunction(),
+    problem.AddResidualBlock(result.relative_constraint->costFunction(), result.relative_constraint->lossFunction(),
                              rel_blocks);
   }
 
@@ -403,11 +381,12 @@ TEST(ImuPreintegration, BiasEstimation) {
   // right direction. The biases are linked via the random-walk model (bg2 - bg1
   // ~ 0), so both should be similar.
   double avg_gyro_bias_x = (gbias1->x() + result.gyro_bias->x()) / 2.0;
-  EXPECT_GT(avg_gyro_bias_x, 0.0);  // Should be positive (true bias is 0.01)
-  EXPECT_LT(avg_gyro_bias_x, 0.05); // Should be reasonable (not diverged)
+  EXPECT_GT(avg_gyro_bias_x, 0.0);   // Should be positive (true bias is 0.01)
+  EXPECT_LT(avg_gyro_bias_x, 0.05);  // Should be reasonable (not diverged)
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

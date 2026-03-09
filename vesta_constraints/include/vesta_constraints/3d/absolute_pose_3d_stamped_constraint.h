@@ -51,7 +51,8 @@
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief A constraint that represents either prior information about a 3D pose,
@@ -67,7 +68,8 @@ namespace vesta_constraints {
  * the measurement uncertainty/covariance. Orientations are represented as
  * quaternions.
  */
-class AbsolutePose3DStampedConstraint : public vesta_core::Constraint {
+class AbsolutePose3DStampedConstraint : public vesta_core::Constraint
+{
 public:
   VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(AbsolutePose3DStampedConstraint);
 
@@ -90,11 +92,9 @@ public:
    * @param[in] covariance  The measurement/prior covariance (6x6 matrix: x, y,
    * z, qx, qy, qz)
    */
-  AbsolutePose3DStampedConstraint(
-      const std::string &source,
-      const vesta_variables::Position3DStamped &position,
-      const vesta_variables::Orientation3DStamped &orientation,
-      const vesta_core::Vector7d &mean, const vesta_core::Matrix6d &covariance);
+  AbsolutePose3DStampedConstraint(const std::string& source, const vesta_variables::Position3DStamped& position,
+                                  const vesta_variables::Orientation3DStamped& orientation,
+                                  const vesta_core::Vector7d& mean, const vesta_core::Matrix6d& covariance);
 
   /**
    * @brief Destructor
@@ -106,14 +106,18 @@ public:
    *
    * Order is (x, y, z, qw, qx, qy, qz)
    */
-  const vesta_core::Vector7d &mean() const { return mean_; }
+  const vesta_core::Vector7d& mean() const
+  {
+    return mean_;
+  }
 
   /**
    * @brief Read-only access to the square root information matrix.
    *
    * Order is (x, y, z, qx, qy, qz)
    */
-  const vesta_core::Matrix6d &sqrtInformation() const {
+  const vesta_core::Matrix6d& sqrtInformation() const
+  {
     return sqrt_information_;
   }
 
@@ -122,7 +126,8 @@ public:
    *
    * Order is (x, y, z, qx, qy, qz)
    */
-  vesta_core::Matrix6d covariance() const {
+  vesta_core::Matrix6d covariance() const
+  {
     return (sqrt_information_.transpose() * sqrt_information_).inverse();
   }
 
@@ -132,7 +137,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
@@ -145,13 +150,11 @@ public:
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction *costFunction() const override;
+  ceres::CostFunction* costFunction() const override;
 
 protected:
-  vesta_core::Vector7d
-      mean_; //!< The measured/prior mean vector for this variable
-  vesta_core::Matrix6d
-      sqrt_information_; //!< The square root information matrix
+  vesta_core::Vector7d mean_;              //!< The measured/prior mean vector for this variable
+  vesta_core::Matrix6d sqrt_information_;  //!< The square root information matrix
 
 private:
   // Allow Boost Serialization access to private methods
@@ -167,13 +170,14 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & mean_;
     archive & sqrt_information_;
   }
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::AbsolutePose3DStampedConstraint);

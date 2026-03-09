@@ -51,7 +51,8 @@
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief A constraint that represents a measurement on the difference between
@@ -62,7 +63,8 @@ namespace vesta_constraints {
  * not the pose directly. This constraint holds the measured 3D pose change and
  * the measurement uncertainty/covariance.
  */
-class RelativePose3DStampedConstraint : public vesta_core::Constraint {
+class RelativePose3DStampedConstraint : public vesta_core::Constraint
+{
 public:
   VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(RelativePose3DStampedConstraint);
 
@@ -89,14 +91,11 @@ public:
    * @param[in] covariance   The measurement covariance (6x6 matrix: dx, dy, dz,
    * dqx, dqy, dqz)
    */
-  RelativePose3DStampedConstraint(
-      const std::string &source,
-      const vesta_variables::Position3DStamped &position1,
-      const vesta_variables::Orientation3DStamped &orientation1,
-      const vesta_variables::Position3DStamped &position2,
-      const vesta_variables::Orientation3DStamped &orientation2,
-      const vesta_core::Vector7d &delta,
-      const vesta_core::Matrix6d &covariance);
+  RelativePose3DStampedConstraint(const std::string& source, const vesta_variables::Position3DStamped& position1,
+                                  const vesta_variables::Orientation3DStamped& orientation1,
+                                  const vesta_variables::Position3DStamped& position2,
+                                  const vesta_variables::Orientation3DStamped& orientation2,
+                                  const vesta_core::Vector7d& delta, const vesta_core::Matrix6d& covariance);
 
   /**
    * @brief Destructor
@@ -106,19 +105,24 @@ public:
   /**
    * @brief Read-only access to the measured pose change.
    */
-  const vesta_core::Vector7d &delta() const { return delta_; }
+  const vesta_core::Vector7d& delta() const
+  {
+    return delta_;
+  }
 
   /**
    * @brief Read-only access to the square root information matrix.
    */
-  const vesta_core::Matrix6d &sqrtInformation() const {
+  const vesta_core::Matrix6d& sqrtInformation() const
+  {
     return sqrt_information_;
   }
 
   /**
    * @brief Compute the measurement covariance matrix.
    */
-  vesta_core::Matrix6d covariance() const {
+  vesta_core::Matrix6d covariance() const
+  {
     return (sqrt_information_.transpose() * sqrt_information_).inverse();
   }
 
@@ -128,7 +132,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Access the cost function for this constraint
@@ -141,14 +145,12 @@ public:
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction *costFunction() const override;
+  ceres::CostFunction* costFunction() const override;
 
 protected:
-  vesta_core::Vector7d
-      delta_; //!< The measured pose change (dx, dy, dz, dqw, dqx, dqy, dqz)
-  vesta_core::Matrix6d
-      sqrt_information_; //!< The square root information matrix (derived from
-                         //!< the covariance matrix)
+  vesta_core::Vector7d delta_;             //!< The measured pose change (dx, dy, dz, dqw, dqx, dqy, dqz)
+  vesta_core::Matrix6d sqrt_information_;  //!< The square root information matrix (derived from
+                                           //!< the covariance matrix)
 
 private:
   // Allow Boost Serialization access to private methods
@@ -164,13 +166,14 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & delta_;
     archive & sqrt_information_;
   }
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::RelativePose3DStampedConstraint);

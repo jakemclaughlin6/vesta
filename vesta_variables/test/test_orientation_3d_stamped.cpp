@@ -38,25 +38,27 @@
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/common/stamped.h>
 
-#include <Eigen/Core>
 #include <ceres/autodiff_cost_function.h>
 #include <ceres/cost_function_to_functor.h>
 #include <ceres/problem.h>
 #include <ceres/rotation.h>
 #include <ceres/solver.h>
 #include <gtest/gtest.h>
+#include <Eigen/Core>
 
 #include <sstream>
 #include <vector>
 
 using vesta_variables::Orientation3DStamped;
 
-TEST(Orientation3DStamped, Type) {
+TEST(Orientation3DStamped, Type)
+{
   Orientation3DStamped variable(vesta_core::Timestamp(12345678, 910111213));
   EXPECT_EQ("vesta_variables::Orientation3DStamped", variable.type());
 }
 
-TEST(Orientation3DStamped, UUID) {
+TEST(Orientation3DStamped, UUID)
+{
   // Verify two orientations at the same timestamp produce the same UUID
   {
     Orientation3DStamped variable1(vesta_core::Timestamp(12345678, 910111213));
@@ -70,59 +72,49 @@ TEST(Orientation3DStamped, UUID) {
   // Verify two orientations at the same timestamp and same hardware ID produce
   // the same UUID
   {
-    Orientation3DStamped variable1(vesta_core::Timestamp(12345678, 910111213),
-                                   uuid_1);
-    Orientation3DStamped variable2(vesta_core::Timestamp(12345678, 910111213),
-                                   uuid_1);
+    Orientation3DStamped variable1(vesta_core::Timestamp(12345678, 910111213), uuid_1);
+    Orientation3DStamped variable2(vesta_core::Timestamp(12345678, 910111213), uuid_1);
     EXPECT_EQ(variable1.uuid(), variable2.uuid());
   }
 
   // Verify two orientations with the same timestamp but different hardware IDs
   // generate different UUIDs
   {
-    Orientation3DStamped variable1(vesta_core::Timestamp(12345678, 910111213),
-                                   uuid_1);
-    Orientation3DStamped variable2(vesta_core::Timestamp(12345678, 910111213),
-                                   uuid_2);
+    Orientation3DStamped variable1(vesta_core::Timestamp(12345678, 910111213), uuid_1);
+    Orientation3DStamped variable2(vesta_core::Timestamp(12345678, 910111213), uuid_2);
     EXPECT_NE(variable1.uuid(), variable2.uuid());
   }
 
   // Verify two orientations with the same hardware ID and different timestamps
   // produce different UUIDs
   {
-    Orientation3DStamped variable1(vesta_core::Timestamp(12345678, 910111213),
-                                   uuid_1);
-    Orientation3DStamped variable2(vesta_core::Timestamp(12345678, 910111214),
-                                   uuid_1);
+    Orientation3DStamped variable1(vesta_core::Timestamp(12345678, 910111213), uuid_1);
+    Orientation3DStamped variable2(vesta_core::Timestamp(12345678, 910111214), uuid_1);
     EXPECT_NE(variable1.uuid(), variable2.uuid());
 
-    Orientation3DStamped variable3(vesta_core::Timestamp(12345678, 910111213),
-                                   uuid_1);
-    Orientation3DStamped variable4(vesta_core::Timestamp(12345679, 910111213),
-                                   uuid_1);
+    Orientation3DStamped variable3(vesta_core::Timestamp(12345678, 910111213), uuid_1);
+    Orientation3DStamped variable4(vesta_core::Timestamp(12345679, 910111213), uuid_1);
     EXPECT_NE(variable3.uuid(), variable4.uuid());
   }
 
   // Verify two orientations with different hardware IDs and different
   // timestamps produce different UUIDs
   {
-    Orientation3DStamped variable1(vesta_core::Timestamp(12345678, 910111213),
-                                   uuid_1);
-    Orientation3DStamped variable2(vesta_core::Timestamp(12345678, 910111214),
-                                   uuid_2);
+    Orientation3DStamped variable1(vesta_core::Timestamp(12345678, 910111213), uuid_1);
+    Orientation3DStamped variable2(vesta_core::Timestamp(12345678, 910111214), uuid_2);
     EXPECT_NE(variable1.uuid(), variable2.uuid());
 
-    Orientation3DStamped variable3(vesta_core::Timestamp(12345678, 910111213),
-                                   uuid_1);
-    Orientation3DStamped variable4(vesta_core::Timestamp(12345679, 910111213),
-                                   uuid_2);
+    Orientation3DStamped variable3(vesta_core::Timestamp(12345678, 910111213), uuid_1);
+    Orientation3DStamped variable4(vesta_core::Timestamp(12345679, 910111213), uuid_2);
     EXPECT_NE(variable3.uuid(), variable4.uuid());
   }
 }
 
-struct Orientation3DPlus {
+struct Orientation3DPlus
+{
   template <typename T>
-  bool operator()(const T *x, const T *delta, T *x_plus_delta) const {
+  bool operator()(const T* x, const T* delta, T* x_plus_delta) const
+  {
     T q_delta[4];
     ceres::AngleAxisToQuaternion(delta, q_delta);
     ceres::QuaternionProduct(x, q_delta, x_plus_delta);
@@ -130,9 +122,11 @@ struct Orientation3DPlus {
   }
 };
 
-struct Orientation3DMinus {
+struct Orientation3DMinus
+{
   template <typename T>
-  bool operator()(const T *q1, const T *q2, T *delta) const {
+  bool operator()(const T* q1, const T* q2, T* delta) const
+  {
     T q1_inverse[4];
     q1_inverse[0] = q1[0];
     q1_inverse[1] = -q1[1];
@@ -145,16 +139,15 @@ struct Orientation3DMinus {
   }
 };
 
-using Orientation3DManifold =
-    vesta_core::AutoDiffManifold<Orientation3DPlus, Orientation3DMinus, 4, 3>;
+using Orientation3DManifold = vesta_core::AutoDiffManifold<Orientation3DPlus, Orientation3DMinus, 4, 3>;
 
-TEST(Orientation3DStamped, Plus) {
-  auto parameterization =
-      Orientation3DStamped(vesta_core::Timestamp(0, 0)).manifold();
+TEST(Orientation3DStamped, Plus)
+{
+  auto parameterization = Orientation3DStamped(vesta_core::Timestamp(0, 0)).manifold();
 
-  double x[4] = {0.842614977, 0.2, 0.3, 0.4};
-  double delta[3] = {0.15, -0.2, 0.433012702};
-  double result[4] = {0.0, 0.0, 0.0, 0.0};
+  double x[4] = { 0.842614977, 0.2, 0.3, 0.4 };
+  double delta[3] = { 0.15, -0.2, 0.433012702 };
+  double result[4] = { 0.0, 0.0, 0.0, 0.0 };
   bool success = parameterization->Plus(x, delta, result);
 
   EXPECT_TRUE(success);
@@ -166,13 +159,13 @@ TEST(Orientation3DStamped, Plus) {
   delete parameterization;
 }
 
-TEST(Orientation3DStamped, Minus) {
-  auto parameterization =
-      Orientation3DStamped(vesta_core::Timestamp(0, 0)).manifold();
+TEST(Orientation3DStamped, Minus)
+{
+  auto parameterization = Orientation3DStamped(vesta_core::Timestamp(0, 0)).manifold();
 
-  double x1[4] = {0.842614977, 0.2, 0.3, 0.4};
-  double x2[4] = {0.745561, 0.360184, 0.194124, 0.526043};
-  double result[3] = {0.0, 0.0, 0.0};
+  double x1[4] = { 0.842614977, 0.2, 0.3, 0.4 };
+  double x2[4] = { 0.745561, 0.360184, 0.194124, 0.526043 };
+  double result[3] = { 0.0, 0.0, 0.0 };
   bool success = parameterization->Minus(x1, x2, result);
 
   EXPECT_TRUE(success);
@@ -183,17 +176,20 @@ TEST(Orientation3DStamped, Minus) {
   delete parameterization;
 }
 
-TEST(Orientation3DStamped, PlusJacobian) {
-  auto parameterization =
-      Orientation3DStamped(vesta_core::Timestamp(0, 0)).manifold();
+TEST(Orientation3DStamped, PlusJacobian)
+{
+  auto parameterization = Orientation3DStamped(vesta_core::Timestamp(0, 0)).manifold();
   auto reference = Orientation3DManifold();
 
-  for (double qx = -0.5; qx < 0.5; qx += 0.1) {
-    for (double qy = -0.5; qy < 0.5; qy += 0.1) {
-      for (double qz = -0.5; qz < 0.5; qz += 0.1) {
+  for (double qx = -0.5; qx < 0.5; qx += 0.1)
+  {
+    for (double qy = -0.5; qy < 0.5; qy += 0.1)
+    {
+      for (double qz = -0.5; qz < 0.5; qz += 0.1)
+      {
         double qw = std::sqrt(1.0 - qx * qx - qy * qy - qz * qz);
 
-        double x[4] = {qw, qx, qy, qz};
+        double x[4] = { qw, qx, qy, qz };
         vesta_core::MatrixXd actual(4, 3);
         actual << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
         parameterization->PlusJacobian(x, actual.data());
@@ -203,13 +199,12 @@ TEST(Orientation3DStamped, PlusJacobian) {
         reference.PlusJacobian(x, expected.data());
 
         Eigen::IOFormat clean(4, 0, ", ", "\n", "[", "]");
-        EXPECT_TRUE(expected.isApprox(actual, 1.0e-5))
-            << "Expected is:\n"
-            << expected.format(clean) << "\n"
-            << "Actual is:\n"
-            << actual.format(clean) << "\n"
-            << "Difference is:\n"
-            << (expected - actual).format(clean) << "\n";
+        EXPECT_TRUE(expected.isApprox(actual, 1.0e-5)) << "Expected is:\n"
+                                                       << expected.format(clean) << "\n"
+                                                       << "Actual is:\n"
+                                                       << actual.format(clean) << "\n"
+                                                       << "Difference is:\n"
+                                                       << (expected - actual).format(clean) << "\n";
       }
     }
   }
@@ -217,17 +212,20 @@ TEST(Orientation3DStamped, PlusJacobian) {
   delete parameterization;
 }
 
-TEST(Orientation3DStamped, MinusJacobian) {
-  auto parameterization =
-      Orientation3DStamped(vesta_core::Timestamp(0, 0)).manifold();
+TEST(Orientation3DStamped, MinusJacobian)
+{
+  auto parameterization = Orientation3DStamped(vesta_core::Timestamp(0, 0)).manifold();
   auto reference = Orientation3DManifold();
 
-  for (double qx = -0.5; qx < 0.5; qx += 0.1) {
-    for (double qy = -0.5; qy < 0.5; qy += 0.1) {
-      for (double qz = -0.5; qz < 0.5; qz += 0.1) {
+  for (double qx = -0.5; qx < 0.5; qx += 0.1)
+  {
+    for (double qy = -0.5; qy < 0.5; qy += 0.1)
+    {
+      for (double qz = -0.5; qz < 0.5; qz += 0.1)
+      {
         double qw = std::sqrt(1.0 - qx * qx - qy * qy - qz * qz);
 
-        double x[4] = {qw, qx, qy, qz};
+        double x[4] = { qw, qx, qy, qz };
         vesta_core::MatrixXd actual(3, 4);
         actual << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
         parameterization->MinusJacobian(x, actual.data());
@@ -237,13 +235,12 @@ TEST(Orientation3DStamped, MinusJacobian) {
         reference.MinusJacobian(x, expected.data());
 
         Eigen::IOFormat clean(4, 0, ", ", "\n", "[", "]");
-        EXPECT_TRUE(expected.isApprox(actual, 1.0e-5))
-            << "Expected is:\n"
-            << expected.format(clean) << "\n"
-            << "Actual is:\n"
-            << actual.format(clean) << "\n"
-            << "Difference is:\n"
-            << (expected - actual).format(clean) << "\n";
+        EXPECT_TRUE(expected.isApprox(actual, 1.0e-5)) << "Expected is:\n"
+                                                       << expected.format(clean) << "\n"
+                                                       << "Actual is:\n"
+                                                       << actual.format(clean) << "\n"
+                                                       << "Difference is:\n"
+                                                       << (expected - actual).format(clean) << "\n";
       }
     }
   }
@@ -251,10 +248,10 @@ TEST(Orientation3DStamped, MinusJacobian) {
   delete parameterization;
 }
 
-TEST(Orientation3DStamped, Stamped) {
-  vesta_core::Variable::SharedPtr base = Orientation3DStamped::make_shared(
-      vesta_core::Timestamp(12345678, 910111213),
-      vesta_core::uuid::generate("mo"));
+TEST(Orientation3DStamped, Stamped)
+{
+  vesta_core::Variable::SharedPtr base =
+      Orientation3DStamped::make_shared(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("mo"));
   auto derived = std::dynamic_pointer_cast<Orientation3DStamped>(base);
   ASSERT_TRUE(static_cast<bool>(derived));
   EXPECT_EQ(vesta_core::Timestamp(12345678, 910111213), derived->stamp());
@@ -266,8 +263,10 @@ TEST(Orientation3DStamped, Stamped) {
   EXPECT_EQ(vesta_core::uuid::generate("mo"), stamped->deviceId());
 }
 
-struct QuaternionCostFunction {
-  explicit QuaternionCostFunction(double *observation) {
+struct QuaternionCostFunction
+{
+  explicit QuaternionCostFunction(double* observation)
+  {
     observation_[0] = observation[0];
     observation_[1] = observation[1];
     observation_[2] = observation[2];
@@ -275,12 +274,11 @@ struct QuaternionCostFunction {
   }
 
   template <typename T>
-  bool operator()(const T *quaternion, T *residual) const {
-    T inverse_quaternion[4] = {quaternion[0], -quaternion[1], -quaternion[2],
-                               -quaternion[3]};
+  bool operator()(const T* quaternion, T* residual) const
+  {
+    T inverse_quaternion[4] = { quaternion[0], -quaternion[1], -quaternion[2], -quaternion[3] };
 
-    T observation[4] = {T(observation_[0]), T(observation_[1]),
-                        T(observation_[2]), T(observation_[3])};
+    T observation[4] = { T(observation_[0]), T(observation_[1]), T(observation_[2]), T(observation_[3]) };
 
     T output[4];
 
@@ -297,7 +295,8 @@ struct QuaternionCostFunction {
   double observation_[4];
 };
 
-TEST(Orientation3DStamped, Optimization) {
+TEST(Orientation3DStamped, Optimization)
+{
   // Create an Orientation3DStamped with R, P, Y values of 10, -20, 30 degrees
   Orientation3DStamped orientation(vesta_core::Timestamp(12345678, 910111213));
   orientation.w() = 0.952;
@@ -306,16 +305,14 @@ TEST(Orientation3DStamped, Optimization) {
   orientation.z() = 0.239;
 
   // Create a simple a constraint with an identity quaternion
-  double target_quat[4] = {1.0, 0.0, 0.0, 0.0};
-  ceres::CostFunction *cost_function =
-      new ceres::AutoDiffCostFunction<QuaternionCostFunction, 3, 4>(
-          new QuaternionCostFunction(target_quat));
+  double target_quat[4] = { 1.0, 0.0, 0.0, 0.0 };
+  ceres::CostFunction* cost_function =
+      new ceres::AutoDiffCostFunction<QuaternionCostFunction, 3, 4>(new QuaternionCostFunction(target_quat));
 
   // Build the problem.
   ceres::Problem problem;
-  problem.AddParameterBlock(orientation.data(), orientation.size(),
-                            orientation.manifold());
-  std::vector<double *> parameter_blocks;
+  problem.AddParameterBlock(orientation.data(), orientation.size(), orientation.manifold());
+  std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(orientation.data());
   problem.AddResidualBlock(cost_function, nullptr, parameter_blocks);
 
@@ -331,12 +328,12 @@ TEST(Orientation3DStamped, Optimization) {
   EXPECT_NEAR(target_quat[3], orientation.z(), 1.0e-3);
 }
 
-TEST(Orientation3DStamped, Euler) {
+TEST(Orientation3DStamped, Euler)
+{
   const double RAD_TO_DEG = 180.0 / M_PI;
 
   // Create an Orientation3DStamped with R, P, Y values of 10, -20, 30 degrees
-  Orientation3DStamped orientation_r(
-      vesta_core::Timestamp(12345678, 910111213));
+  Orientation3DStamped orientation_r(vesta_core::Timestamp(12345678, 910111213));
   orientation_r.w() = 0.9961947;
   orientation_r.x() = 0.0871557;
   orientation_r.y() = 0.0;
@@ -344,8 +341,7 @@ TEST(Orientation3DStamped, Euler) {
 
   EXPECT_NEAR(10.0, RAD_TO_DEG * orientation_r.roll(), 1e-5);
 
-  Orientation3DStamped orientation_p(
-      vesta_core::Timestamp(12345678, 910111213));
+  Orientation3DStamped orientation_p(vesta_core::Timestamp(12345678, 910111213));
   orientation_p.w() = 0.9848078;
   orientation_p.x() = 0.0;
   orientation_p.y() = -0.1736482;
@@ -353,8 +349,7 @@ TEST(Orientation3DStamped, Euler) {
 
   EXPECT_NEAR(-20.0, RAD_TO_DEG * orientation_p.pitch(), 1e-5);
 
-  Orientation3DStamped orientation_y(
-      vesta_core::Timestamp(12345678, 910111213));
+  Orientation3DStamped orientation_y(vesta_core::Timestamp(12345678, 910111213));
   orientation_y.w() = 0.9659258;
   orientation_y.x() = 0.0;
   orientation_y.y() = 0.0;
@@ -363,7 +358,8 @@ TEST(Orientation3DStamped, Euler) {
   EXPECT_NEAR(30.0, RAD_TO_DEG * orientation_y.yaw(), 1e-5);
 }
 
-TEST(Orientation3DStamped, Serialization) {
+TEST(Orientation3DStamped, Serialization)
+{
   // Create an Orientation3DStamped
   Orientation3DStamped expected(vesta_core::Timestamp(12345678, 910111213));
   expected.w() = 0.952;
@@ -394,7 +390,8 @@ TEST(Orientation3DStamped, Serialization) {
   EXPECT_EQ(expected.z(), actual.z());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

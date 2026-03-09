@@ -44,7 +44,8 @@
 #include <ostream>
 #include <string>
 
-namespace vesta_loss {
+namespace vesta_loss
+{
 
 /**
  * @brief The ComposedLoss loss function.
@@ -55,7 +56,8 @@ namespace vesta_loss {
  * See the Ceres documentation for more details:
  * http://ceres-solver.org/nnls_modeling.html#lossfunction
  */
-class ComposedLoss : public vesta_core::Loss {
+class ComposedLoss : public vesta_core::Loss
+{
 public:
   VESTA_LOSS_DEFINITIONS(ComposedLoss);
 
@@ -69,9 +71,8 @@ public:
    * the composition 'f(g(s))'. If it is nullptr the vesta_loss::TrivialLoss is
    * used. Defaults to nullptr.
    */
-  explicit ComposedLoss(
-      const std::shared_ptr<vesta_core::Loss> &f_loss = nullptr,
-      const std::shared_ptr<vesta_core::Loss> &g_loss = nullptr);
+  explicit ComposedLoss(const std::shared_ptr<vesta_core::Loss>& f_loss = nullptr,
+                        const std::shared_ptr<vesta_core::Loss>& g_loss = nullptr);
 
   /**
    * @brief Destructor
@@ -87,7 +88,9 @@ public:
    * @param[in] name A unique name to initialize this plugin instance, such as
    * from the parameter server.
    */
-  void initialize(const std::string & /*name*/) override {}
+  void initialize(const std::string& /*name*/) override
+  {
+  }
 
   /**
    * @brief Print a human-readable description of the loss function to the
@@ -95,7 +98,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Return a raw pointer to a ceres::LossFunction that implements the
@@ -110,28 +113,35 @@ public:
    *
    * @return A base pointer to an instance of a derived ceres::LossFunction.
    */
-  ceres::LossFunction *lossFunction() const override;
+  ceres::LossFunction* lossFunction() const override;
 
   /**
    * @brief Parameter 'f_loss' accessor.
    *
    * @return Parameter 'f_loss'.
    */
-  std::shared_ptr<vesta_core::Loss> fLoss() const { return f_loss_; }
+  std::shared_ptr<vesta_core::Loss> fLoss() const
+  {
+    return f_loss_;
+  }
 
   /**
    * @brief Parameter 'g_loss' accessor.
    *
    * @return Parameter 'g_loss'.
    */
-  std::shared_ptr<vesta_core::Loss> gLoss() const { return g_loss_; }
+  std::shared_ptr<vesta_core::Loss> gLoss() const
+  {
+    return g_loss_;
+  }
 
   /**
    * @brief Parameter 'f_loss' mutator.
    *
    * @param[in] loss Parameter 'f_loss'.
    */
-  void fLoss(const std::shared_ptr<vesta_core::Loss> &f_loss) {
+  void fLoss(const std::shared_ptr<vesta_core::Loss>& f_loss)
+  {
     f_loss_ = f_loss;
   }
 
@@ -140,17 +150,16 @@ public:
    *
    * @param[in] loss Parameter 'g_loss'.
    */
-  void gLoss(const std::shared_ptr<vesta_core::Loss> &g_loss) {
+  void gLoss(const std::shared_ptr<vesta_core::Loss>& g_loss)
+  {
     g_loss_ = g_loss;
   }
 
 private:
-  std::shared_ptr<vesta_core::Loss> f_loss_{
-      nullptr}; //!< The 'f' loss function, which is evaluated last to yield the
-                //!< composition 'f(g(s))'
-  std::shared_ptr<vesta_core::Loss> g_loss_{
-      nullptr}; //!< The 'g' loss function, which is evaluated first to yield
-                //!< the composition 'f(g(s))'
+  std::shared_ptr<vesta_core::Loss> f_loss_{ nullptr };  //!< The 'f' loss function, which is evaluated last to yield
+                                                         //!< the composition 'f(g(s))'
+  std::shared_ptr<vesta_core::Loss> g_loss_{ nullptr };  //!< The 'g' loss function, which is evaluated first to yield
+                                                         //!< the composition 'f(g(s))'
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
@@ -165,13 +174,14 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Loss>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Loss>(*this);
     archive & f_loss_;
     archive & g_loss_;
   }
 };
 
-} // namespace vesta_loss
+}  // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_KEY(vesta_loss::ComposedLoss);

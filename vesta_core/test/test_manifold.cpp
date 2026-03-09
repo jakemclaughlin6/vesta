@@ -37,9 +37,11 @@
 
 #include <gtest/gtest.h>
 
-struct Plus {
+struct Plus
+{
   template <typename T>
-  bool operator()(const T *x, const T *delta, T *x_plus_delta) const {
+  bool operator()(const T* x, const T* delta, T* x_plus_delta) const
+  {
     x_plus_delta[0] = x[0] + 2.0 * delta[0];
     x_plus_delta[1] = x[1] + 5.0 * delta[1];
     x_plus_delta[2] = x[2];
@@ -47,9 +49,11 @@ struct Plus {
   }
 };
 
-struct Minus {
+struct Minus
+{
   template <typename T>
-  bool operator()(const T *x1, const T *x2, T *delta) const {
+  bool operator()(const T* x1, const T* x2, T* delta) const
+  {
     delta[0] = (x2[0] - x1[0]) / 2.0;
     delta[1] = (x2[1] - x1[1]) / 5.0;
     return true;
@@ -58,12 +62,13 @@ struct Minus {
 
 using TestManifold = vesta_core::AutoDiffManifold<Plus, Minus, 3, 2>;
 
-TEST(Manifold, Plus) {
+TEST(Manifold, Plus)
+{
   TestManifold manifold;
 
-  double x[3] = {1.0, 2.0, 3.0};
-  double delta[2] = {0.5, 1.0};
-  double actual[3] = {0.0, 0.0, 0.0};
+  double x[3] = { 1.0, 2.0, 3.0 };
+  double delta[2] = { 0.5, 1.0 };
+  double actual[3] = { 0.0, 0.0, 0.0 };
   bool success = manifold.Plus(x, delta, actual);
 
   EXPECT_TRUE(success);
@@ -72,10 +77,11 @@ TEST(Manifold, Plus) {
   EXPECT_NEAR(3.0, actual[2], 1.0e-5);
 }
 
-TEST(Manifold, PlusJacobian) {
+TEST(Manifold, PlusJacobian)
+{
   TestManifold manifold;
 
-  double x[3] = {1.0, 2.0, 3.0};
+  double x[3] = { 1.0, 2.0, 3.0 };
   vesta_core::MatrixXd actual(3, 2);
   manifold.PlusJacobian(x, actual.data());
 
@@ -85,12 +91,13 @@ TEST(Manifold, PlusJacobian) {
   EXPECT_MATRIX_NEAR(expected, actual, 1.0e-5);
 }
 
-TEST(Manifold, Minus) {
+TEST(Manifold, Minus)
+{
   TestManifold manifold;
 
-  double x1[3] = {1.0, 2.0, 3.0};
-  double x2[3] = {2.0, 7.0, 3.0};
-  double actual[2] = {0.0, 0.0};
+  double x1[3] = { 1.0, 2.0, 3.0 };
+  double x2[3] = { 2.0, 7.0, 3.0 };
+  double actual[2] = { 0.0, 0.0 };
   bool success = manifold.Minus(x1, x2, actual);
 
   EXPECT_TRUE(success);
@@ -98,10 +105,11 @@ TEST(Manifold, Minus) {
   EXPECT_NEAR(1.0, actual[1], 1.0e-5);
 }
 
-TEST(Manifold, MinusJacobian) {
+TEST(Manifold, MinusJacobian)
+{
   TestManifold manifold;
 
-  double x[3] = {1.0, 2.0, 3.0};
+  double x[3] = { 1.0, 2.0, 3.0 };
   vesta_core::MatrixXd actual(2, 3);
   manifold.MinusJacobian(x, actual.data());
 
@@ -111,7 +119,8 @@ TEST(Manifold, MinusJacobian) {
   EXPECT_MATRIX_NEAR(expected, actual, 1.0e-5);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

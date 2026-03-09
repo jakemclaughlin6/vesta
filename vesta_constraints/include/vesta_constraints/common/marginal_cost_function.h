@@ -41,7 +41,8 @@
 
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Implements a cost function designed for precomputed marginal
@@ -63,7 +64,8 @@ namespace vesta_constraints {
  * variable's ambient size. The cost function will have the same number of
  * residuals as the rows of A.
  */
-class MarginalCostFunction : public ceres::CostFunction {
+class MarginalCostFunction : public ceres::CostFunction
+{
 public:
   /**
    * @brief Construct a cost function instance
@@ -76,10 +78,9 @@ public:
    * variables
    * @param[in] manifolds The manifold associated with the variable
    */
-  MarginalCostFunction(
-      const std::vector<vesta_core::MatrixXd> &A, const vesta_core::VectorXd &b,
-      const std::vector<vesta_core::VectorXd> &x_bar,
-      const std::vector<vesta_core::Manifold::SharedPtr> &manifolds);
+  MarginalCostFunction(const std::vector<vesta_core::MatrixXd>& A, const vesta_core::VectorXd& b,
+                       const std::vector<vesta_core::VectorXd>& x_bar,
+                       const std::vector<vesta_core::Manifold::SharedPtr>& manifolds);
 
   /**
    * @brief Destructor
@@ -90,16 +91,13 @@ public:
    * @brief Compute the cost values/residuals, and optionally the Jacobians,
    * using the provided variable/parameter values
    */
-  bool Evaluate(double const *const *parameters, double *residuals,
-                double **jacobians) const override;
+  bool Evaluate(double const* const* parameters, double* residuals, double** jacobians) const override;
 
 private:
-  const std::vector<vesta_core::MatrixXd>
-      &A_;                        //!< The A matrices of the marginal cost
-  const vesta_core::VectorXd &b_; //!< The b vector of the marginal cost
-  const std::vector<vesta_core::Manifold::SharedPtr> &manifolds_; //!< Manifolds
-  const std::vector<vesta_core::VectorXd>
-      &x_bar_; //!< The linearization point of each variable
+  const std::vector<vesta_core::MatrixXd>& A_;                     //!< The A matrices of the marginal cost
+  const vesta_core::VectorXd& b_;                                  //!< The b vector of the marginal cost
+  const std::vector<vesta_core::Manifold::SharedPtr>& manifolds_;  //!< Manifolds
+  const std::vector<vesta_core::VectorXd>& x_bar_;                 //!< The linearization point of each variable
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

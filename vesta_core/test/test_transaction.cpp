@@ -61,26 +61,30 @@ using vesta_core::UUID;
  * stamps, exist in the transaction, False otherwise.
  */
 template <typename TimeRange>
-bool testInvolvedStamps(const TimeRange &expected,
-                        const Transaction &transaction) {
+bool testInvolvedStamps(const TimeRange& expected, const Transaction& transaction)
+{
   auto range = transaction.involvedStamps();
-  if (std::distance(expected.begin(), expected.end()) !=
-      std::distance(range.begin(), range.end())) {
+  if (std::distance(expected.begin(), expected.end()) != std::distance(range.begin(), range.end()))
+  {
     return false;
   }
 
-  for (auto iter = range.begin(); iter != range.end(); ++iter) {
-    const auto &actual_stamp = *iter;
+  for (auto iter = range.begin(); iter != range.end(); ++iter)
+  {
+    const auto& actual_stamp = *iter;
 
     bool found = false;
-    for (const auto &expected_stamp : expected) {
-      if (actual_stamp == expected_stamp) {
+    for (const auto& expected_stamp : expected)
+    {
+      if (actual_stamp == expected_stamp)
+      {
         found = true;
         break;
       }
     }
 
-    if (!found) {
+    if (!found)
+    {
       return false;
     }
   }
@@ -104,43 +108,43 @@ bool testInvolvedStamps(const TimeRange &expected,
  * expected constraints, exist in the transaction, False otherwise.
  */
 template <typename ConstraintRange>
-bool testAddedConstraints(const ConstraintRange &expected,
-                          const Transaction &transaction) {
+bool testAddedConstraints(const ConstraintRange& expected, const Transaction& transaction)
+{
   auto range = transaction.addedConstraints();
-  if (std::distance(expected.begin(), expected.end()) !=
-      std::distance(range.begin(), range.end())) {
+  if (std::distance(expected.begin(), expected.end()) != std::distance(range.begin(), range.end()))
+  {
     return false;
   }
 
-  for (auto iter = range.begin(); iter != range.end(); ++iter) {
-    const auto &actual_constraint =
-        dynamic_cast<const ExampleConstraint &>(*iter);
+  for (auto iter = range.begin(); iter != range.end(); ++iter)
+  {
+    const auto& actual_constraint = dynamic_cast<const ExampleConstraint&>(*iter);
 
     bool found = false;
-    for (const auto &expected_constraint : expected) {
-      if (actual_constraint.uuid() == expected_constraint.uuid()) {
+    for (const auto& expected_constraint : expected)
+    {
+      if (actual_constraint.uuid() == expected_constraint.uuid())
+      {
         found = true;
         bool is_equal = true;
-        is_equal = is_equal &&
-                   (expected_constraint.type() == actual_constraint.type());
-        is_equal = is_equal && (expected_constraint.variables().size() ==
-                                actual_constraint.variables().size());
-        for (size_t i = 0; i < expected_constraint.variables().size(); ++i) {
-          is_equal = is_equal && (expected_constraint.variables().at(i) ==
-                                  actual_constraint.variables().at(i));
+        is_equal = is_equal && (expected_constraint.type() == actual_constraint.type());
+        is_equal = is_equal && (expected_constraint.variables().size() == actual_constraint.variables().size());
+        for (size_t i = 0; i < expected_constraint.variables().size(); ++i)
+        {
+          is_equal = is_equal && (expected_constraint.variables().at(i) == actual_constraint.variables().at(i));
         }
-        const auto &expected_derived =
-            dynamic_cast<const ExampleConstraint &>(expected_constraint);
-        is_equal =
-            is_equal && (expected_derived.data == actual_constraint.data);
+        const auto& expected_derived = dynamic_cast<const ExampleConstraint&>(expected_constraint);
+        is_equal = is_equal && (expected_derived.data == actual_constraint.data);
 
-        if (!is_equal) {
+        if (!is_equal)
+        {
           return false;
         }
       }
     }
 
-    if (!found) {
+    if (!found)
+    {
       return false;
     }
   }
@@ -164,26 +168,30 @@ bool testAddedConstraints(const ConstraintRange &expected,
  * constraints, exist in the transaction, False otherwise.
  */
 template <typename UuidRange>
-bool testRemovedConstraints(const UuidRange &expected,
-                            const Transaction &transaction) {
+bool testRemovedConstraints(const UuidRange& expected, const Transaction& transaction)
+{
   auto range = transaction.removedConstraints();
-  if (std::distance(expected.begin(), expected.end()) !=
-      std::distance(range.begin(), range.end())) {
+  if (std::distance(expected.begin(), expected.end()) != std::distance(range.begin(), range.end()))
+  {
     return false;
   }
 
-  for (auto iter = range.begin(); iter != range.end(); ++iter) {
-    const auto &actual_constraint_uuid = *iter;
+  for (auto iter = range.begin(); iter != range.end(); ++iter)
+  {
+    const auto& actual_constraint_uuid = *iter;
 
     bool found = false;
-    for (const auto &expected_constraint_uuid : expected) {
-      if (actual_constraint_uuid == expected_constraint_uuid) {
+    for (const auto& expected_constraint_uuid : expected)
+    {
+      if (actual_constraint_uuid == expected_constraint_uuid)
+      {
         found = true;
         break;
       }
     }
 
-    if (!found) {
+    if (!found)
+    {
       return false;
     }
   }
@@ -207,36 +215,38 @@ bool testRemovedConstraints(const UuidRange &expected,
  * variables, exist in the transaction, False otherwise.
  */
 template <typename VariableRange>
-bool testAddedVariables(const VariableRange &expected,
-                        const Transaction &transaction) {
+bool testAddedVariables(const VariableRange& expected, const Transaction& transaction)
+{
   auto range = transaction.addedVariables();
-  if (std::distance(expected.begin(), expected.end()) !=
-      std::distance(range.begin(), range.end())) {
+  if (std::distance(expected.begin(), expected.end()) != std::distance(range.begin(), range.end()))
+  {
     return false;
   }
 
-  for (auto iter = range.begin(); iter != range.end(); ++iter) {
-    const auto &actual_variable = dynamic_cast<const ExampleVariable &>(*iter);
+  for (auto iter = range.begin(); iter != range.end(); ++iter)
+  {
+    const auto& actual_variable = dynamic_cast<const ExampleVariable&>(*iter);
 
     bool found = false;
-    for (const auto &expected_variable : expected) {
-      if (actual_variable.uuid() == expected_variable.uuid()) {
+    for (const auto& expected_variable : expected)
+    {
+      if (actual_variable.uuid() == expected_variable.uuid())
+      {
         found = true;
         bool is_equal = true;
-        is_equal =
-            is_equal && (expected_variable.type() == actual_variable.type());
-        is_equal =
-            is_equal && (expected_variable.size() == actual_variable.size());
-        is_equal = is_equal &&
-                   (expected_variable.data()[0] == actual_variable.data()[0]);
+        is_equal = is_equal && (expected_variable.type() == actual_variable.type());
+        is_equal = is_equal && (expected_variable.size() == actual_variable.size());
+        is_equal = is_equal && (expected_variable.data()[0] == actual_variable.data()[0]);
 
-        if (!is_equal) {
+        if (!is_equal)
+        {
           return false;
         }
       }
     }
 
-    if (!found) {
+    if (!found)
+    {
       return false;
     }
   }
@@ -260,26 +270,30 @@ bool testAddedVariables(const VariableRange &expected,
  * variables, exist in the transaction, False otherwise.
  */
 template <typename UuidRange>
-bool testRemovedVariables(const UuidRange &expected,
-                          const Transaction &transaction) {
+bool testRemovedVariables(const UuidRange& expected, const Transaction& transaction)
+{
   auto range = transaction.removedVariables();
-  if (std::distance(expected.begin(), expected.end()) !=
-      std::distance(range.begin(), range.end())) {
+  if (std::distance(expected.begin(), expected.end()) != std::distance(range.begin(), range.end()))
+  {
     return false;
   }
 
-  for (auto iter = range.begin(); iter != range.end(); ++iter) {
-    const auto &actual_variable_uuid = *iter;
+  for (auto iter = range.begin(); iter != range.end(); ++iter)
+  {
+    const auto& actual_variable_uuid = *iter;
 
     bool found = false;
-    for (const auto &expected_variable_uuid : expected) {
-      if (actual_variable_uuid == expected_variable_uuid) {
+    for (const auto& expected_variable_uuid : expected)
+    {
+      if (actual_variable_uuid == expected_variable_uuid)
+      {
         found = true;
         break;
       }
     }
 
-    if (!found) {
+    if (!found)
+    {
       return false;
     }
   }
@@ -288,7 +302,8 @@ bool testRemovedVariables(const UuidRange &expected,
   return true;
 }
 
-TEST(Transaction, Empty) {
+TEST(Transaction, Empty)
+{
   // The default constructed transaction must be empty
   {
     Transaction transaction;
@@ -299,8 +314,8 @@ TEST(Transaction, Empty) {
   // A transaction with added constraints cannot be empty
   {
     const auto variable_uuid = vesta_core::uuid::generate();
-    const auto constraint = ExampleConstraint::make_shared(
-        "test", std::initializer_list<UUID>{variable_uuid}); // NOLINT
+    const auto constraint =
+        ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable_uuid });  // NOLINT
 
     Transaction transaction;
     transaction.addConstraint(constraint);
@@ -349,12 +364,12 @@ TEST(Transaction, Empty) {
   }
 }
 
-TEST(Transaction, AddConstraint) {
+TEST(Transaction, AddConstraint)
+{
   // Add a single constraint and verify it exists in the added constraints
   {
     UUID variable_uuid = vesta_core::uuid::generate();
-    auto constraint = ExampleConstraint::make_shared(
-        "test", std::initializer_list<UUID>{variable_uuid}); // NOLINT
+    auto constraint = ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable_uuid });  // NOLINT
 
     Transaction transaction;
     transaction.addConstraint(constraint);
@@ -368,8 +383,7 @@ TEST(Transaction, AddConstraint) {
   // in the Transaction.
   {
     UUID variable_uuid = vesta_core::uuid::generate();
-    auto constraint = ExampleConstraint::make_shared(
-        "test", std::initializer_list<UUID>{variable_uuid}); // NOLINT
+    auto constraint = ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable_uuid });  // NOLINT
 
     Transaction transaction;
     transaction.addConstraint(constraint);
@@ -384,14 +398,11 @@ TEST(Transaction, AddConstraint) {
   // Add multiple constraints. Verify they all exist in the Transaction.
   {
     UUID variable1_uuid = vesta_core::uuid::generate();
-    auto constraint1 = ExampleConstraint::make_shared(
-        "test", std::initializer_list<UUID>{variable1_uuid}); // NOLINT
+    auto constraint1 = ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable1_uuid });  // NOLINT
     UUID variable2_uuid = vesta_core::uuid::generate();
-    auto constraint2 = ExampleConstraint::make_shared(
-        "test", std::initializer_list<UUID>{variable2_uuid}); // NOLINT
+    auto constraint2 = ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable2_uuid });  // NOLINT
     UUID variable3_uuid = vesta_core::uuid::generate();
-    auto constraint3 = ExampleConstraint::make_shared(
-        "test", std::initializer_list<UUID>{variable3_uuid}); // NOLINT
+    auto constraint3 = ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable3_uuid });  // NOLINT
 
     Transaction transaction;
     transaction.addConstraint(constraint1);
@@ -409,8 +420,7 @@ TEST(Transaction, AddConstraint) {
   // added, and it should also be deleted from the 'removed' container.
   {
     UUID variable1_uuid = vesta_core::uuid::generate();
-    auto constraint1 = ExampleConstraint::make_shared(
-        "test", std::initializer_list<UUID>{variable1_uuid}); // NOLINT
+    auto constraint1 = ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable1_uuid });  // NOLINT
 
     UUID constraint2_uuid = vesta_core::uuid::generate();
 
@@ -419,7 +429,7 @@ TEST(Transaction, AddConstraint) {
     transaction.removeConstraint(constraint2_uuid);
     transaction.addConstraint(constraint1);
 
-    std::vector<ExampleConstraint> added_constraints; // empty
+    std::vector<ExampleConstraint> added_constraints;  // empty
     std::vector<UUID> removed_constraints;
     removed_constraints.push_back(constraint2_uuid);
     EXPECT_TRUE(testAddedConstraints(added_constraints, transaction));
@@ -430,8 +440,7 @@ TEST(Transaction, AddConstraint) {
   {
     // Create and add the constraint to the transaction
     UUID variable_uuid = vesta_core::uuid::generate();
-    auto constraint1 = ExampleConstraint::make_shared(
-        "test", std::initializer_list<UUID>{variable_uuid}); // NOLINT
+    auto constraint1 = ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable_uuid });  // NOLINT
     constraint1->data = 1.0;
 
     Transaction transaction;
@@ -471,7 +480,8 @@ TEST(Transaction, AddConstraint) {
   }
 }
 
-TEST(Transaction, RemoveConstraint) {
+TEST(Transaction, RemoveConstraint)
+{
   // Mark a single constraint for removal and verify it exists in the removed
   // constraints
   {
@@ -524,12 +534,10 @@ TEST(Transaction, RemoveConstraint) {
   // from the added constraints.
   {
     UUID variable1_uuid = vesta_core::uuid::generate();
-    auto constraint1 = ExampleConstraint::make_shared(
-        "test", std::initializer_list<UUID>{variable1_uuid}); // NOLINT
+    auto constraint1 = ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable1_uuid });  // NOLINT
 
     UUID variable2_uuid = vesta_core::uuid::generate();
-    auto constraint2 = ExampleConstraint::make_shared(
-        "test", std::initializer_list<UUID>{variable2_uuid}); // NOLINT
+    auto constraint2 = ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable2_uuid });  // NOLINT
 
     Transaction transaction;
     transaction.addConstraint(constraint1);
@@ -542,12 +550,12 @@ TEST(Transaction, RemoveConstraint) {
     EXPECT_TRUE(testAddedConstraints(expected_added_constraints, transaction));
 
     std::vector<UUID> expected_removed_constraints;
-    EXPECT_TRUE(
-        testRemovedConstraints(expected_removed_constraints, transaction));
+    EXPECT_TRUE(testRemovedConstraints(expected_removed_constraints, transaction));
   }
 }
 
-TEST(Transaction, AddVariable) {
+TEST(Transaction, AddVariable)
+{
   // Add a single variable and verify it exists in the added variables
   {
     auto variable = ExampleVariable::make_shared();
@@ -655,7 +663,8 @@ TEST(Transaction, AddVariable) {
   }
 }
 
-TEST(Transaction, RemoveVariable) {
+TEST(Transaction, RemoveVariable)
+{
   // Mark a single variable for removal and verify it exists in removed
   // variables
   {
@@ -725,7 +734,8 @@ TEST(Transaction, RemoveVariable) {
   }
 }
 
-TEST(Transaction, Merge) {
+TEST(Transaction, Merge)
+{
   // Create two transactions with different info
   vesta_core::Timestamp involved_stamp1(12345, 6789);
   vesta_core::Timestamp involved_stamp2(12346, 6789);
@@ -734,12 +744,12 @@ TEST(Transaction, Merge) {
   UUID variable1_uuid = vesta_core::uuid::generate();
   UUID variable2_uuid = vesta_core::uuid::generate();
   UUID variable3_uuid = vesta_core::uuid::generate();
-  auto added_constraint1 = ExampleConstraint::make_shared(
-      "test", std::initializer_list<UUID>{variable1_uuid}); // NOLINT
-  auto added_constraint2 = ExampleConstraint::make_shared(
-      "test", std::initializer_list<UUID>{variable2_uuid}); // NOLINT
-  auto added_constraint3 = ExampleConstraint::make_shared(
-      "test", std::initializer_list<UUID>{variable3_uuid}); // NOLINT
+  auto added_constraint1 =
+      ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable1_uuid });  // NOLINT
+  auto added_constraint2 =
+      ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable2_uuid });  // NOLINT
+  auto added_constraint3 =
+      ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable3_uuid });  // NOLINT
 
   UUID removed_constraint1 = vesta_core::uuid::generate();
   UUID removed_constraint2 = vesta_core::uuid::generate();
@@ -798,8 +808,7 @@ TEST(Transaction, Merge) {
   expected_removed_constraints.push_back(removed_constraint1);
   expected_removed_constraints.push_back(removed_constraint2);
   expected_removed_constraints.push_back(removed_constraint3);
-  EXPECT_TRUE(
-      testRemovedConstraints(expected_removed_constraints, transaction1));
+  EXPECT_TRUE(testRemovedConstraints(expected_removed_constraints, transaction1));
 
   std::vector<ExampleVariable> expected_added_variables;
   expected_added_variables.push_back(*added_variable1);
@@ -816,17 +825,18 @@ TEST(Transaction, Merge) {
   EXPECT_EQ(std::max(involved_stamp2, involved_stamp3), transaction1.stamp());
 }
 
-TEST(Transaction, Clone) {
+TEST(Transaction, Clone)
+{
   // Create two transactions with different info
   vesta_core::Timestamp involved_stamp1(12345, 6789);
   vesta_core::Timestamp involved_stamp2(12346, 6789);
 
   UUID variable1_uuid = vesta_core::uuid::generate();
   UUID variable2_uuid = vesta_core::uuid::generate();
-  auto added_constraint1 = ExampleConstraint::make_shared(
-      "test", std::initializer_list<UUID>{variable1_uuid}); // NOLINT
-  auto added_constraint2 = ExampleConstraint::make_shared(
-      "test", std::initializer_list<UUID>{variable2_uuid}); // NOLINT
+  auto added_constraint1 =
+      ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable1_uuid });  // NOLINT
+  auto added_constraint2 =
+      ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable2_uuid });  // NOLINT
 
   UUID removed_constraint1 = vesta_core::uuid::generate();
   UUID removed_constraint2 = vesta_core::uuid::generate();
@@ -866,8 +876,7 @@ TEST(Transaction, Clone) {
   std::vector<UUID> expected_removed_constraints;
   expected_removed_constraints.push_back(removed_constraint1);
   expected_removed_constraints.push_back(removed_constraint2);
-  EXPECT_TRUE(
-      testRemovedConstraints(expected_removed_constraints, *transaction2));
+  EXPECT_TRUE(testRemovedConstraints(expected_removed_constraints, *transaction2));
 
   std::vector<ExampleVariable> expected_added_variables;
   expected_added_variables.push_back(*added_variable1);
@@ -880,17 +889,18 @@ TEST(Transaction, Clone) {
   EXPECT_TRUE(testRemovedVariables(expected_removed_variables, *transaction2));
 }
 
-TEST(Transaction, Serialize) {
+TEST(Transaction, Serialize)
+{
   // Create a transaction
   vesta_core::Timestamp involved_stamp1(12345, 6789);
   vesta_core::Timestamp involved_stamp2(12346, 6789);
 
   UUID variable1_uuid = vesta_core::uuid::generate();
   UUID variable2_uuid = vesta_core::uuid::generate();
-  auto added_constraint1 = ExampleConstraint::make_shared(
-      "test", std::initializer_list<UUID>{variable1_uuid}); // NOLINT
-  auto added_constraint2 = ExampleConstraint::make_shared(
-      "test", std::initializer_list<UUID>{variable2_uuid}); // NOLINT
+  auto added_constraint1 =
+      ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable1_uuid });  // NOLINT
+  auto added_constraint2 =
+      ExampleConstraint::make_shared("test", std::initializer_list<UUID>{ variable2_uuid });  // NOLINT
 
   UUID removed_constraint1 = vesta_core::uuid::generate();
   UUID removed_constraint2 = vesta_core::uuid::generate();
@@ -935,7 +945,8 @@ TEST(Transaction, Serialize) {
   EXPECT_TRUE(testRemovedVariables(expected.removedVariables(), actual));
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

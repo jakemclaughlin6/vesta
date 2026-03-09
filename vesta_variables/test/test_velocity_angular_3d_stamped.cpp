@@ -46,37 +46,30 @@
 
 using vesta_variables::VelocityAngular3DStamped;
 
-TEST(VelocityAngular3DStamped, Type) {
+TEST(VelocityAngular3DStamped, Type)
+{
   VelocityAngular3DStamped variable(vesta_core::Timestamp(12345678, 910111213));
   EXPECT_EQ("vesta_variables::VelocityAngular3DStamped", variable.type());
 }
 
-TEST(VelocityAngular3DStamped, UUID) {
+TEST(VelocityAngular3DStamped, UUID)
+{
   // Verify two velocities at the same timestamp produce the same UUID
   {
-    VelocityAngular3DStamped variable1(
-        vesta_core::Timestamp(12345678, 910111213));
-    VelocityAngular3DStamped variable2(
-        vesta_core::Timestamp(12345678, 910111213));
+    VelocityAngular3DStamped variable1(vesta_core::Timestamp(12345678, 910111213));
+    VelocityAngular3DStamped variable2(vesta_core::Timestamp(12345678, 910111213));
     EXPECT_EQ(variable1.uuid(), variable2.uuid());
 
-    VelocityAngular3DStamped variable3(
-        vesta_core::Timestamp(12345678, 910111213),
-        vesta_core::uuid::generate("c3po"));
-    VelocityAngular3DStamped variable4(
-        vesta_core::Timestamp(12345678, 910111213),
-        vesta_core::uuid::generate("c3po"));
+    VelocityAngular3DStamped variable3(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("c3po"));
+    VelocityAngular3DStamped variable4(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("c3po"));
     EXPECT_EQ(variable3.uuid(), variable4.uuid());
   }
 
   // Verify two velocities at different timestamps produce different UUIDs
   {
-    VelocityAngular3DStamped variable1(
-        vesta_core::Timestamp(12345678, 910111213));
-    VelocityAngular3DStamped variable2(
-        vesta_core::Timestamp(12345678, 910111214));
-    VelocityAngular3DStamped variable3(
-        vesta_core::Timestamp(12345679, 910111213));
+    VelocityAngular3DStamped variable1(vesta_core::Timestamp(12345678, 910111213));
+    VelocityAngular3DStamped variable2(vesta_core::Timestamp(12345678, 910111214));
+    VelocityAngular3DStamped variable3(vesta_core::Timestamp(12345679, 910111213));
     EXPECT_NE(variable1.uuid(), variable2.uuid());
     EXPECT_NE(variable1.uuid(), variable3.uuid());
     EXPECT_NE(variable2.uuid(), variable3.uuid());
@@ -84,20 +77,17 @@ TEST(VelocityAngular3DStamped, UUID) {
 
   // Verify two velocities with different hardware IDs produce different UUIDs
   {
-    VelocityAngular3DStamped variable1(
-        vesta_core::Timestamp(12345678, 910111213),
-        vesta_core::uuid::generate("8d8"));
-    VelocityAngular3DStamped variable2(
-        vesta_core::Timestamp(12345678, 910111213),
-        vesta_core::uuid::generate("r4-p17"));
+    VelocityAngular3DStamped variable1(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("8d8"));
+    VelocityAngular3DStamped variable2(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("r4-"
+                                                                                                              "p17"));
     EXPECT_NE(variable1.uuid(), variable2.uuid());
   }
 }
 
-TEST(VelocityAngular3DStamped, Stamped) {
+TEST(VelocityAngular3DStamped, Stamped)
+{
   vesta_core::Variable::SharedPtr base = VelocityAngular3DStamped::make_shared(
-      vesta_core::Timestamp(12345678, 910111213),
-      vesta_core::uuid::generate("mo"));
+      vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("mo"));
   auto derived = std::dynamic_pointer_cast<VelocityAngular3DStamped>(base);
   ASSERT_TRUE(static_cast<bool>(derived));
   EXPECT_EQ(vesta_core::Timestamp(12345678, 910111213), derived->stamp());
@@ -109,10 +99,15 @@ TEST(VelocityAngular3DStamped, Stamped) {
   EXPECT_EQ(vesta_core::uuid::generate("mo"), stamped->deviceId());
 }
 
-struct CostFunctor {
-  CostFunctor() {}
+struct CostFunctor
+{
+  CostFunctor()
+  {
+  }
 
-  template <typename T> bool operator()(const T *const x, T *residual) const {
+  template <typename T>
+  bool operator()(const T* const x, T* residual) const
+  {
     residual[0] = x[0] - T(3.0);
     residual[1] = x[1] + T(8.0);
     residual[2] = x[2] - T(17.0);
@@ -120,23 +115,21 @@ struct CostFunctor {
   }
 };
 
-TEST(VelocityAngular3DStamped, Optimization) {
+TEST(VelocityAngular3DStamped, Optimization)
+{
   // Create a VelocityAngular3DStamped
-  VelocityAngular3DStamped velocity(vesta_core::Timestamp(12345678, 910111213),
-                                    vesta_core::uuid::generate("hal9000"));
+  VelocityAngular3DStamped velocity(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("hal9000"));
   velocity.roll() = 1.5;
   velocity.pitch() = -3.0;
   velocity.yaw() = 14.0;
 
   // Create a simple a constraint
-  ceres::CostFunction *cost_function =
-      new ceres::AutoDiffCostFunction<CostFunctor, 3, 3>(new CostFunctor());
+  ceres::CostFunction* cost_function = new ceres::AutoDiffCostFunction<CostFunctor, 3, 3>(new CostFunctor());
 
   // Build the problem.
   ceres::Problem problem;
-  problem.AddParameterBlock(velocity.data(), velocity.size(),
-                            velocity.manifold());
-  std::vector<double *> parameter_blocks;
+  problem.AddParameterBlock(velocity.data(), velocity.size(), velocity.manifold());
+  std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(velocity.data());
   problem.AddResidualBlock(cost_function, nullptr, parameter_blocks);
 
@@ -151,10 +144,10 @@ TEST(VelocityAngular3DStamped, Optimization) {
   EXPECT_NEAR(17.0, velocity.yaw(), 1.0e-5);
 }
 
-TEST(VelocityAngular3DStamped, Serialization) {
+TEST(VelocityAngular3DStamped, Serialization)
+{
   // Create a VelocityAngular3DStamped
-  VelocityAngular3DStamped expected(vesta_core::Timestamp(12345678, 910111213),
-                                    vesta_core::uuid::generate("hal9000"));
+  VelocityAngular3DStamped expected(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("hal9000"));
   expected.roll() = 1.5;
   expected.pitch() = -3.0;
   expected.yaw() = 14.0;
@@ -181,7 +174,8 @@ TEST(VelocityAngular3DStamped, Serialization) {
   EXPECT_EQ(expected.yaw(), actual.yaw());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

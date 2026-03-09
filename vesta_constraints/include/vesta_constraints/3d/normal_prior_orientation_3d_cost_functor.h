@@ -39,10 +39,11 @@
 #include <vesta_core/util.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 
-#include <Eigen/Core>
 #include <ceres/rotation.h>
+#include <Eigen/Core>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Create a prior cost function on a 3D orientation variable (quaternion)
@@ -67,7 +68,8 @@ namespace vesta_constraints {
  * the matrix A is the square root information matrix (the inverse of the
  * covariance).
  */
-class NormalPriorOrientation3DCostFunctor {
+class NormalPriorOrientation3DCostFunctor
+{
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
@@ -78,22 +80,22 @@ public:
    * information matrix in order (quaternion_x, quaternion_y, quaternion_z)
    * @param[in] b The orientation measurement or prior in order (w, x, y, z)
    */
-  NormalPriorOrientation3DCostFunctor(const vesta_core::Matrix3d &A,
-                                      const vesta_core::Vector4d &b)
-      : A_(A), b_(b) {}
+  NormalPriorOrientation3DCostFunctor(const vesta_core::Matrix3d& A, const vesta_core::Vector4d& b) : A_(A), b_(b)
+  {
+  }
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
    */
   template <typename T>
-  bool operator()(const T *const orientation, T *residuals) const {
+  bool operator()(const T* const orientation, T* residuals) const
+  {
     using vesta_variables::Orientation3DStamped;
 
     // Compute the delta quaternion
-    T variable[4] = {orientation[0], orientation[1], orientation[2],
-                     orientation[3]};
+    T variable[4] = { orientation[0], orientation[1], orientation[2], orientation[3] };
 
-    T observation_inverse[4] = {T(b_(0)), T(-b_(1)), T(-b_(2)), T(-b_(3))};
+    T observation_inverse[4] = { T(b_(0)), T(-b_(1)), T(-b_(2)), T(-b_(3)) };
 
     T difference[4];
     ceres::QuaternionProduct(observation_inverse, variable, difference);
@@ -108,9 +110,9 @@ public:
   }
 
 private:
-  vesta_core::Matrix3d A_; //!< The residual weighting matrix, most likely the
-                           //!< square root information matrix
-  vesta_core::Vector4d b_; //!< The measured 3D orientation (quaternion) value
+  vesta_core::Matrix3d A_;  //!< The residual weighting matrix, most likely the
+                            //!< square root information matrix
+  vesta_core::Vector4d b_;  //!< The measured 3D orientation (quaternion) value
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

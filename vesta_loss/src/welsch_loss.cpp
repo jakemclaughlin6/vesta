@@ -38,19 +38,24 @@
 
 #include <ostream>
 
-namespace vesta_loss {
+namespace vesta_loss
+{
 
-WelschLoss::WelschLoss(const double a) : a_(a) {}
+WelschLoss::WelschLoss(const double a) : a_(a)
+{
+}
 
-void WelschLoss::print(std::ostream &stream) const {
+void WelschLoss::print(std::ostream& stream) const
+{
   stream << type() << "\n"
          << "  a: " << a_ << "\n";
 }
 
-ceres::LossFunction *WelschLoss::lossFunction() const {
+ceres::LossFunction* WelschLoss::lossFunction() const
+{
   return new ceres::WelschLoss(a_);
 }
 
-} // namespace vesta_loss
+}  // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::WelschLoss);

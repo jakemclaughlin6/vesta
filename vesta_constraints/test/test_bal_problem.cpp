@@ -74,33 +74,59 @@ using vesta_variables::Position3DStamped;
 //
 // Radial distortion (k1, k2) is ignored since ReprojectionErrorConstraint
 // uses a standard pinhole model without distortion.
-class BALProblem {
+class BALProblem
+{
 public:
   BALProblem() = default;
-  ~BALProblem() {
+  ~BALProblem()
+  {
     delete[] point_index_;
     delete[] camera_index_;
     delete[] observations_;
     delete[] parameters_;
   }
-  int num_observations() const { return num_observations_; }
-  int num_cameras() const { return num_cameras_; }
-  int num_points() const { return num_points_; }
-  const double *observations() const { return observations_; }
+  int num_observations() const
+  {
+    return num_observations_;
+  }
+  int num_cameras() const
+  {
+    return num_cameras_;
+  }
+  int num_points() const
+  {
+    return num_points_;
+  }
+  const double* observations() const
+  {
+    return observations_;
+  }
 
   // Access world-frame camera parameters: [q_wc(4), p_world(3), fx, fy, cx, cy]
   // = 11 doubles per camera
-  double *camera(int i) { return parameters_ + i * 11; }
-  double *points(int i) {
+  double* camera(int i)
+  {
+    return parameters_ + i * 11;
+  }
+  double* points(int i)
+  {
     return parameters_ + 11 * num_cameras_ + i * 3;
   }
 
-  int camera_for_observation(int i) const { return camera_index_[i]; }
-  int point_for_observation(int i) const { return point_index_[i]; }
+  int camera_for_observation(int i) const
+  {
+    return camera_index_[i];
+  }
+  int point_for_observation(int i) const
+  {
+    return point_index_[i];
+  }
 
-  bool LoadFile(const char *filename) {
-    FILE *fptr = fopen(filename, "r");
-    if (fptr == nullptr) {
+  bool LoadFile(const char* filename)
+  {
+    FILE* fptr = fopen(filename, "r");
+    if (fptr == nullptr)
+    {
       return false;
     }
     FscanfOrDie(fptr, "%d", &num_cameras_);
@@ -111,10 +137,12 @@ public:
     camera_index_ = new int[num_observations_];
     observations_ = new double[2 * num_observations_];
 
-    for (int i = 0; i < num_observations_; ++i) {
+    for (int i = 0; i < num_observations_; ++i)
+    {
       FscanfOrDie(fptr, "%d", camera_index_ + i);
       FscanfOrDie(fptr, "%d", point_index_ + i);
-      for (int j = 0; j < 2; ++j) {
+      for (int j = 0; j < 2; ++j)
+      {
         FscanfOrDie(fptr, "%lf", observations_ + 2 * i + j);
       }
     }
@@ -122,8 +150,9 @@ public:
     // Read raw BAL parameters: 9 per camera (angle-axis(3), t(3), f, k1, k2)
     // + 3 per point
     int num_raw = 9 * num_cameras_ + 3 * num_points_;
-    auto *raw = new double[num_raw];
-    for (int i = 0; i < num_raw; ++i) {
+    auto* raw = new double[num_raw];
+    for (int i = 0; i < num_raw; ++i)
+    {
       FscanfOrDie(fptr, "%lf", raw + i);
     }
     fclose(fptr);
@@ -133,9 +162,10 @@ public:
     int num_params = 11 * num_cameras_ + 3 * num_points_;
     parameters_ = new double[num_params];
 
-    double *src = raw;
-    double *dst = parameters_;
-    for (int i = 0; i < num_cameras_; ++i) {
+    double* src = raw;
+    double* dst = parameters_;
+    for (int i = 0; i < num_cameras_; ++i)
+    {
       // Convert angle-axis to quaternion (gives q_cw)
       double q_cw[4];
       ceres::AngleAxisToQuaternion(src, q_cw);
@@ -148,7 +178,7 @@ public:
       dst[3] = -q_cw[3];
 
       // p_world = -R_cw^T * t = R_wc * (-t)
-      double neg_t[3] = {-src[0], -src[1], -src[2]};
+      double neg_t[3] = { -src[0], -src[1], -src[2] };
       // R_wc rotates from camera to world, and q_wc is exactly that
       ceres::QuaternionRotatePoint(dst, neg_t, dst + 4);
       src += 3;
@@ -160,13 +190,14 @@ public:
       dst[8] = -focal;  // fy
       dst[9] = 0.0;     // cx
       dst[10] = 0.0;    // cy
-      src += 3; // skip focal, k1, k2
+      src += 3;         // skip focal, k1, k2
 
       dst += 11;
     }
 
     // Copy points as-is (world-frame coordinates)
-    for (int i = 0; i < 3 * num_points_; ++i) {
+    for (int i = 0; i < 3 * num_points_; ++i)
+    {
       *dst++ = *src++;
     }
 
@@ -176,19 +207,21 @@ public:
 
 private:
   template <typename T>
-  void FscanfOrDie(FILE *fptr, const char *format, T *value) {
+  void FscanfOrDie(FILE* fptr, const char* format, T* value)
+  {
     int num_scanned = fscanf(fptr, format, value);
-    if (num_scanned != 1) {
+    if (num_scanned != 1)
+    {
       LOG(FATAL) << "Invalid UW data file.";
     }
   }
   int num_cameras_ = 0;
   int num_points_ = 0;
   int num_observations_ = 0;
-  int *point_index_ = nullptr;
-  int *camera_index_ = nullptr;
-  double *observations_ = nullptr;
-  double *parameters_ = nullptr;
+  int* point_index_ = nullptr;
+  int* camera_index_ = nullptr;
+  double* observations_ = nullptr;
+  double* parameters_ = nullptr;
 };
 
 // Inline world-frame pinhole reprojection error for raw Ceres comparison.
@@ -196,14 +229,17 @@ private:
 //   p_cam = R_wc^{-1} * (X - p_world)
 //   u = fx * p_cam[0] / p_cam[2] + cx
 //   v = fy * p_cam[1] / p_cam[2] + cy
-struct WorldFramePinholeReprojectionError {
+struct WorldFramePinholeReprojectionError
+{
   WorldFramePinholeReprojectionError(double observed_x, double observed_y)
-      : observed_x(observed_x), observed_y(observed_y) {}
+    : observed_x(observed_x), observed_y(observed_y)
+  {
+  }
 
   template <typename T>
-  bool operator()(const T *const position, const T *const orientation,
-                  const T *const calibration, const T *const point,
-                  T *residuals) const {
+  bool operator()(const T* const position, const T* const orientation, const T* const calibration, const T* const point,
+                  T* residuals) const
+  {
     T diff[3];
     diff[0] = point[0] - position[0];
     diff[1] = point[1] - position[1];
@@ -226,9 +262,9 @@ struct WorldFramePinholeReprojectionError {
     return true;
   }
 
-  static ceres::CostFunction *Create(double observed_x, double observed_y) {
-    return new ceres::AutoDiffCostFunction<WorldFramePinholeReprojectionError, 2,
-                                           3, 4, 4, 3>(
+  static ceres::CostFunction* Create(double observed_x, double observed_y)
+  {
+    return new ceres::AutoDiffCostFunction<WorldFramePinholeReprojectionError, 2, 3, 4, 4, 3>(
         new WorldFramePinholeReprojectionError(observed_x, observed_y));
   }
 
@@ -236,36 +272,37 @@ struct WorldFramePinholeReprojectionError {
   double observed_y;
 };
 
-TEST(ReprojectionErrorConstraint, BAL) {
+TEST(ReprojectionErrorConstraint, BAL)
+{
   std::string filename = "problem-21-11315-pre.txt";
 
   // ---- Solve with raw Ceres ----
   BALProblem bal_ceres;
-  ASSERT_TRUE(bal_ceres.LoadFile(filename.c_str()))
-      << "Unable to open file " << filename;
+  ASSERT_TRUE(bal_ceres.LoadFile(filename.c_str())) << "Unable to open file " << filename;
 
   ceres::Problem problem_ceres;
-  const double *obs_ceres = bal_ceres.observations();
-  for (int i = 0; i < bal_ceres.num_observations(); ++i) {
-    double *cam = bal_ceres.camera(bal_ceres.camera_for_observation(i));
-    double *pt = bal_ceres.points(bal_ceres.point_for_observation(i));
+  const double* obs_ceres = bal_ceres.observations();
+  for (int i = 0; i < bal_ceres.num_observations(); ++i)
+  {
+    double* cam = bal_ceres.camera(bal_ceres.camera_for_observation(i));
+    double* pt = bal_ceres.points(bal_ceres.point_for_observation(i));
 
     // cam layout: [q_wc(4), p_world(3), fx, fy, cx, cy]
-    double *position = cam + 4;
-    double *orientation = cam;
-    double *calibration = cam + 7;
+    double* position = cam + 4;
+    double* orientation = cam;
+    double* calibration = cam + 7;
 
-    ceres::CostFunction *cost_function =
-        WorldFramePinholeReprojectionError::Create(obs_ceres[2 * i + 0],
-                                                   obs_ceres[2 * i + 1]);
-    problem_ceres.AddResidualBlock(cost_function, nullptr, position,
-                                   orientation, calibration, pt);
+    ceres::CostFunction* cost_function =
+        WorldFramePinholeReprojectionError::Create(obs_ceres[2 * i + 0], obs_ceres[2 * i + 1]);
+    problem_ceres.AddResidualBlock(cost_function, nullptr, position, orientation, calibration, pt);
   }
 
   // Hold calibration constant for cameras that have observations
-  for (int i = 0; i < bal_ceres.num_cameras(); ++i) {
-    double *calibration = bal_ceres.camera(i) + 7;
-    if (problem_ceres.HasParameterBlock(calibration)) {
+  for (int i = 0; i < bal_ceres.num_cameras(); ++i)
+  {
+    double* calibration = bal_ceres.camera(i) + 7;
+    if (problem_ceres.HasParameterBlock(calibration))
+    {
       problem_ceres.SetParameterBlockConstant(calibration);
     }
   }
@@ -278,8 +315,7 @@ TEST(ReprojectionErrorConstraint, BAL) {
 
   // ---- Solve with Vesta constraints ----
   BALProblem bal_vesta;
-  ASSERT_TRUE(bal_vesta.LoadFile(filename.c_str()))
-      << "Unable to open file " << filename;
+  ASSERT_TRUE(bal_vesta.LoadFile(filename.c_str())) << "Unable to open file " << filename;
 
   // Create vesta variables from loaded data
   std::vector<Position3DStamped> cams_p;
@@ -289,19 +325,18 @@ TEST(ReprojectionErrorConstraint, BAL) {
   cams_q.reserve(bal_vesta.num_cameras());
   cams_k.reserve(bal_vesta.num_cameras());
 
-  for (int i = 0; i < bal_vesta.num_cameras(); ++i) {
-    double *cam = bal_vesta.camera(i);
+  for (int i = 0; i < bal_vesta.num_cameras(); ++i)
+  {
+    double* cam = bal_vesta.camera(i);
     // cam layout: [q_wc(4), p_world(3), fx, fy, cx, cy]
 
-    cams_q.emplace_back(vesta_core::Timestamp(i, 0),
-                        vesta_core::uuid::generate("bal"));
+    cams_q.emplace_back(vesta_core::Timestamp(i, 0), vesta_core::uuid::generate("bal"));
     cams_q[i].w() = cam[0];
     cams_q[i].x() = cam[1];
     cams_q[i].y() = cam[2];
     cams_q[i].z() = cam[3];
 
-    cams_p.emplace_back(vesta_core::Timestamp(i, 0),
-                        vesta_core::uuid::generate("bal"));
+    cams_p.emplace_back(vesta_core::Timestamp(i, 0), vesta_core::uuid::generate("bal"));
     cams_p[i].x() = cam[4];
     cams_p[i].y() = cam[5];
     cams_p[i].z() = cam[6];
@@ -315,8 +350,9 @@ TEST(ReprojectionErrorConstraint, BAL) {
 
   std::vector<Point3DLandmark> pts;
   pts.reserve(bal_vesta.num_points());
-  for (int i = 0; i < bal_vesta.num_points(); ++i) {
-    double *pt = bal_vesta.points(i);
+  for (int i = 0; i < bal_vesta.num_points(); ++i)
+  {
+    double* pt = bal_vesta.points(i);
     pts.emplace_back(static_cast<uint64_t>(i));
     pts[i].x() = pt[0];
     pts[i].y() = pt[1];
@@ -326,8 +362,9 @@ TEST(ReprojectionErrorConstraint, BAL) {
   ceres::Problem::Options problem_options;
   problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem;
-  const double *obs = bal_vesta.observations();
-  for (int i = 0; i < bal_vesta.num_observations(); ++i) {
+  const double* obs = bal_vesta.observations();
+  for (int i = 0; i < bal_vesta.num_observations(); ++i)
+  {
     int c = bal_vesta.camera_for_observation(i);
     int p = bal_vesta.point_for_observation(i);
 
@@ -335,24 +372,24 @@ TEST(ReprojectionErrorConstraint, BAL) {
     mean << obs[2 * i + 0], obs[2 * i + 1];
 
     vesta_core::Matrix2d cov;
-    cov << 1e-5, 0.0, // NOLINT
+    cov << 1e-5, 0.0,  // NOLINT
         0.0, 1e-5;     // NOLINT
 
-    auto constraint = ReprojectionErrorConstraint::make_shared(
-        "test", cams_p[c], cams_q[c], cams_k[c], pts[p], mean, cov);
+    auto constraint =
+        ReprojectionErrorConstraint::make_shared("test", cams_p[c], cams_q[c], cams_k[c], pts[p], mean, cov);
 
     problem.AddParameterBlock(pts[p].data(), pts[p].size(), pts[p].manifold());
 
-    std::vector<double *> parameter_blocks;
+    std::vector<double*> parameter_blocks;
     parameter_blocks.push_back(cams_p[c].data());
     parameter_blocks.push_back(cams_q[c].data());
     parameter_blocks.push_back(cams_k[c].data());
     parameter_blocks.push_back(pts[p].data());
 
-    problem.AddResidualBlock(constraint->costFunction(),
-                             constraint->lossFunction(), parameter_blocks);
+    problem.AddResidualBlock(constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
 
-    if (cams_k[c].holdConstant()) {
+    if (cams_k[c].holdConstant())
+    {
       problem.SetParameterBlockConstant(cams_k[c].data());
     }
   }
@@ -364,8 +401,9 @@ TEST(ReprojectionErrorConstraint, BAL) {
   ceres::Solve(options, &problem, &summary);
 
   // ---- Compare results ----
-  for (int i = 0; i < bal_vesta.num_cameras(); ++i) {
-    double *cam = bal_ceres.camera(i);
+  for (int i = 0; i < bal_vesta.num_cameras(); ++i)
+  {
+    double* cam = bal_ceres.camera(i);
 
     EXPECT_NEAR(cams_q[i].w(), cam[0], 1e-2);
     EXPECT_NEAR(cams_q[i].x(), cam[1], 1e-2);
@@ -382,15 +420,17 @@ TEST(ReprojectionErrorConstraint, BAL) {
     EXPECT_NEAR(cams_k[i].cy(), cam[10], 1e-2);
   }
 
-  for (int i = 0; i < bal_vesta.num_points(); ++i) {
-    double *pt = bal_ceres.points(i);
+  for (int i = 0; i < bal_vesta.num_points(); ++i)
+  {
+    double* pt = bal_ceres.points(i);
     EXPECT_NEAR(pts[i].x(), pt[0], 1e-2);
     EXPECT_NEAR(pts[i].y(), pt[1], 1e-2);
     EXPECT_NEAR(pts[i].z(), pt[2], 1e-2);
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

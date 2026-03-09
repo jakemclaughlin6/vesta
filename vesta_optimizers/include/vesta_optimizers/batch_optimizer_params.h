@@ -37,13 +37,15 @@
 #include <ceres/solver.h>
 #include <vesta_core/timestamp.h>
 
-namespace vesta_optimizers {
+namespace vesta_optimizers
+{
 
 /**
  * @brief Defines the set of parameters required by the
  * vesta_optimizers::BatchOptimizer class
  */
-struct BatchOptimizerParams {
+struct BatchOptimizerParams
+{
   /**
    * @brief The maximum time to wait for motion models to be generated for a
    * received transaction.
@@ -52,7 +54,7 @@ struct BatchOptimizerParams {
    * added to the graph while waiting for motion models to be generated. Once
    * the timeout expires, that transaction will be deleted from the queue.
    */
-  vesta_core::Duration transaction_timeout{vesta_core::Duration::fromSec(0.1)};
+  vesta_core::Duration transaction_timeout{ vesta_core::Duration::fromSec(0.1) };
 
   /**
    * @brief Ceres Solver::Options object that controls various aspects of the
@@ -61,4 +63,4 @@ struct BatchOptimizerParams {
   ceres::Solver::Options solver_options;
 };
 
-} // namespace vesta_optimizers
+}  // namespace vesta_optimizers

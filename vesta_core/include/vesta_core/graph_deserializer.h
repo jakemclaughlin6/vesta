@@ -38,7 +38,8 @@
 
 #include <vector>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief Serialize a graph into a byte buffer
@@ -46,8 +47,7 @@ namespace vesta_core {
  * @param[in]  graph  The graph to serialize
  * @param[out] data   The output byte buffer
  */
-void serializeGraph(const vesta_core::Graph &graph,
-                    std::vector<unsigned char> &data);
+void serializeGraph(const vesta_core::Graph& graph, std::vector<unsigned char>& data);
 
 /**
  * @brief Deserialize a graph from a byte buffer
@@ -61,8 +61,6 @@ void serializeGraph(const vesta_core::Graph &graph,
  * implementation
  * @return A unique_ptr to the deserialized Graph object
  */
-vesta_core::Graph::UniquePtr
-deserializeGraph(const std::vector<unsigned char> &data,
-                 const std::string &plugin_name);
+vesta_core::Graph::UniquePtr deserializeGraph(const std::vector<unsigned char>& data, const std::string& plugin_name);
 
-} // namespace vesta_core
+}  // namespace vesta_core

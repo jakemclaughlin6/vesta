@@ -7,7 +7,8 @@
 
 #include <Eigen/Core>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Create a prior cost function on the full 3D IMU state.
@@ -38,7 +39,8 @@ namespace vesta_constraints {
  * the matrix A is the square root information matrix (the inverse of the
  * covariance).
  */
-class NormalPriorImuState3DCostFunctor {
+class NormalPriorImuState3DCostFunctor
+{
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
@@ -52,8 +54,7 @@ public:
    *              (qw, qx, qy, qz, px, py, pz, vx, vy, vz, bgx, bgy, bgz, bax,
    * bay, baz)
    */
-  NormalPriorImuState3DCostFunctor(const Eigen::Matrix<double, 15, 15> &A,
-                                   const Eigen::Matrix<double, 16, 1> &b);
+  NormalPriorImuState3DCostFunctor(const Eigen::Matrix<double, 15, 15>& A, const Eigen::Matrix<double, 16, 1>& b);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
@@ -67,9 +68,8 @@ public:
    * @param[out] residual   Output residual vector (15D)
    */
   template <typename T>
-  bool operator()(const T *const orientation, const T *const position,
-                  const T *const velocity, const T *const gyro_bias,
-                  const T *const accel_bias, T *residual) const;
+  bool operator()(const T* const orientation, const T* const position, const T* const velocity,
+                  const T* const gyro_bias, const T* const accel_bias, T* residual) const;
 
 private:
   Eigen::Matrix<double, 15, 15> A_;
@@ -78,19 +78,17 @@ private:
   NormalPriorOrientation3DCostFunctor orientation_functor_;
 };
 
-inline NormalPriorImuState3DCostFunctor::NormalPriorImuState3DCostFunctor(
-    const Eigen::Matrix<double, 15, 15> &A,
-    const Eigen::Matrix<double, 16, 1> &b)
-    : A_(A), b_(b),
-      orientation_functor_(vesta_core::Matrix3d::Identity(), b_.head<4>()) {}
+inline NormalPriorImuState3DCostFunctor::NormalPriorImuState3DCostFunctor(const Eigen::Matrix<double, 15, 15>& A,
+                                                                          const Eigen::Matrix<double, 16, 1>& b)
+  : A_(A), b_(b), orientation_functor_(vesta_core::Matrix3d::Identity(), b_.head<4>())
+{
+}
 
 template <typename T>
-bool NormalPriorImuState3DCostFunctor::operator()(const T *const orientation,
-                                                  const T *const position,
-                                                  const T *const velocity,
-                                                  const T *const gyro_bias,
-                                                  const T *const accel_bias,
-                                                  T *residual) const {
+bool NormalPriorImuState3DCostFunctor::operator()(const T* const orientation, const T* const position,
+                                                  const T* const velocity, const T* const gyro_bias,
+                                                  const T* const accel_bias, T* residual) const
+{
   // Compute the orientation error (3D angle-axis residual)
   orientation_functor_(orientation, &residual[0]);
 
@@ -122,4 +120,4 @@ bool NormalPriorImuState3DCostFunctor::operator()(const T *const orientation,
   return true;
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

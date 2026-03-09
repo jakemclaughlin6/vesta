@@ -44,28 +44,29 @@
 
 #include <ostream>
 
-namespace vesta_variables {
-PinholeCamera::PinholeCamera(const vesta_core::UUID &uuid,
-                             const uint64_t &camera_id)
-    : BaseCamera(uuid, camera_id) {}
+namespace vesta_variables
+{
+PinholeCamera::PinholeCamera(const vesta_core::UUID& uuid, const uint64_t& camera_id) : BaseCamera(uuid, camera_id)
+{
+}
 
-PinholeCamera::PinholeCamera(const uint64_t &camera_id)
-    : PinholeCamera(vesta_core::uuid::generate(detail::type(), camera_id),
-                    camera_id) {}
+PinholeCamera::PinholeCamera(const uint64_t& camera_id)
+  : PinholeCamera(vesta_core::uuid::generate(detail::type(), camera_id), camera_id)
+{
+}
 
-PinholeCamera::PinholeCamera(const vesta_core::UUID &uuid,
-                             const uint64_t &camera_id, const double &fx,
-                             const double &fy, const double &cx,
-                             const double &cy)
-    : PinholeCamera(vesta_core::uuid::generate(detail::type(), camera_id),
-                    camera_id) {
+PinholeCamera::PinholeCamera(const vesta_core::UUID& uuid, const uint64_t& camera_id, const double& fx,
+                             const double& fy, const double& cx, const double& cy)
+  : PinholeCamera(vesta_core::uuid::generate(detail::type(), camera_id), camera_id)
+{
   data_[FX] = fx;
   data_[FY] = fy;
   data_[CX] = cx;
   data_[CY] = cy;
 }
 
-void PinholeCamera::print(std::ostream &stream) const {
+void PinholeCamera::print(std::ostream& stream) const
+{
   stream << type() << ":\n"
          << "  uuid: " << uuid() << "\n"
          << "  size: " << size() << "\n"
@@ -77,6 +78,6 @@ void PinholeCamera::print(std::ostream &stream) const {
          << "  - cy: " << cy() << "\n";
 }
 
-} // namespace vesta_variables
+}  // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::PinholeCamera);

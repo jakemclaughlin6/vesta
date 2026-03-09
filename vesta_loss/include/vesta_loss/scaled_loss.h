@@ -44,7 +44,8 @@
 #include <ostream>
 #include <string>
 
-namespace vesta_loss {
+namespace vesta_loss
+{
 
 /**
  * @brief The ScaledLoss loss function.
@@ -55,7 +56,8 @@ namespace vesta_loss {
  * See the Ceres documentation for more details:
  * http://ceres-solver.org/nnls_modeling.html#lossfunction
  */
-class ScaledLoss : public vesta_core::Loss {
+class ScaledLoss : public vesta_core::Loss
+{
 public:
   VESTA_LOSS_DEFINITIONS(ScaledLoss);
 
@@ -67,8 +69,7 @@ public:
    * @param[in] loss The loss function to scale. Its output is scaled/multiplied
    * by 'a'.
    */
-  explicit ScaledLoss(const double a = 1.0,
-                      const std::shared_ptr<vesta_core::Loss> &loss = nullptr);
+  explicit ScaledLoss(const double a = 1.0, const std::shared_ptr<vesta_core::Loss>& loss = nullptr);
 
   /**
    * @brief Destructor
@@ -84,7 +85,9 @@ public:
    * @param[in] name A unique name to initialize this plugin instance, such as
    * from the parameter server.
    */
-  void initialize(const std::string & /*name*/) override {}
+  void initialize(const std::string& /*name*/) override
+  {
+  }
 
   /**
    * @brief Print a human-readable description of the loss function to the
@@ -92,7 +95,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Return a raw pointer to a ceres::LossFunction that implements the
@@ -107,41 +110,52 @@ public:
    *
    * @return A base pointer to an instance of a derived ceres::LossFunction.
    */
-  ceres::LossFunction *lossFunction() const override;
+  ceres::LossFunction* lossFunction() const override;
 
   /**
    * @brief Parameter 'a' accessor.
    *
    * @return Parameter 'a'.
    */
-  double a() const { return a_; }
+  double a() const
+  {
+    return a_;
+  }
 
   /**
    * @brief Parameter 'loss' accessor.
    *
    * @return Parameter 'loss'.
    */
-  std::shared_ptr<vesta_core::Loss> loss() const { return loss_; }
+  std::shared_ptr<vesta_core::Loss> loss() const
+  {
+    return loss_;
+  }
 
   /**
    * @brief Parameter 'a' mutator.
    *
    * @param[in] a Parameter 'a'.
    */
-  void a(const double a) { a_ = a; }
+  void a(const double a)
+  {
+    a_ = a;
+  }
 
   /**
    * @brief Parameter 'loss' mutator.
    *
    * @param[in] loss Parameter 'loss'.
    */
-  void loss(const std::shared_ptr<vesta_core::Loss> &loss) { loss_ = loss; }
+  void loss(const std::shared_ptr<vesta_core::Loss>& loss)
+  {
+    loss_ = loss;
+  }
 
 private:
-  double a_{1.0}; //!< ScaledLoss parameter 'a'. See Ceres documentation for
-                  //!< more details
-  std::shared_ptr<vesta_core::Loss> loss_{
-      nullptr}; //!< The loss function to scale
+  double a_{ 1.0 };                                    //!< ScaledLoss parameter 'a'. See Ceres documentation for
+                                                       //!< more details
+  std::shared_ptr<vesta_core::Loss> loss_{ nullptr };  //!< The loss function to scale
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
@@ -156,13 +170,14 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Loss>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Loss>(*this);
     archive & a_;
     archive & loss_;
   }
 };
 
-} // namespace vesta_loss
+}  // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_KEY(vesta_loss::ScaledLoss);

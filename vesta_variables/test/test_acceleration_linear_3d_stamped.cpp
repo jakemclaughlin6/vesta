@@ -46,38 +46,32 @@
 
 using vesta_variables::AccelerationLinear3DStamped;
 
-TEST(AccelerationLinear3DStamped, Type) {
-  AccelerationLinear3DStamped variable(
-      vesta_core::Timestamp(12345678, 910111213));
+TEST(AccelerationLinear3DStamped, Type)
+{
+  AccelerationLinear3DStamped variable(vesta_core::Timestamp(12345678, 910111213));
   EXPECT_EQ("vesta_variables::AccelerationLinear3DStamped", variable.type());
 }
 
-TEST(AccelerationLinear3DStamped, UUID) {
+TEST(AccelerationLinear3DStamped, UUID)
+{
   // Verify two accelerations at the same timestamp produce the same UUID
   {
-    AccelerationLinear3DStamped variable1(
-        vesta_core::Timestamp(12345678, 910111213));
-    AccelerationLinear3DStamped variable2(
-        vesta_core::Timestamp(12345678, 910111213));
+    AccelerationLinear3DStamped variable1(vesta_core::Timestamp(12345678, 910111213));
+    AccelerationLinear3DStamped variable2(vesta_core::Timestamp(12345678, 910111213));
     EXPECT_EQ(variable1.uuid(), variable2.uuid());
 
-    AccelerationLinear3DStamped variable3(
-        vesta_core::Timestamp(12345678, 910111213),
-        vesta_core::uuid::generate("c3po"));
-    AccelerationLinear3DStamped variable4(
-        vesta_core::Timestamp(12345678, 910111213),
-        vesta_core::uuid::generate("c3po"));
+    AccelerationLinear3DStamped variable3(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("c3p"
+                                                                                                                 "o"));
+    AccelerationLinear3DStamped variable4(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("c3p"
+                                                                                                                 "o"));
     EXPECT_EQ(variable3.uuid(), variable4.uuid());
   }
 
   // Verify two accelerations at different timestamps produce different UUIDs
   {
-    AccelerationLinear3DStamped variable1(
-        vesta_core::Timestamp(12345678, 910111213));
-    AccelerationLinear3DStamped variable2(
-        vesta_core::Timestamp(12345678, 910111214));
-    AccelerationLinear3DStamped variable3(
-        vesta_core::Timestamp(12345679, 910111213));
+    AccelerationLinear3DStamped variable1(vesta_core::Timestamp(12345678, 910111213));
+    AccelerationLinear3DStamped variable2(vesta_core::Timestamp(12345678, 910111214));
+    AccelerationLinear3DStamped variable3(vesta_core::Timestamp(12345679, 910111213));
     EXPECT_NE(variable1.uuid(), variable2.uuid());
     EXPECT_NE(variable1.uuid(), variable3.uuid());
     EXPECT_NE(variable2.uuid(), variable3.uuid());
@@ -86,21 +80,19 @@ TEST(AccelerationLinear3DStamped, UUID) {
   // Verify two accelerations with different hardware IDs produce different
   // UUIDs
   {
-    AccelerationLinear3DStamped variable1(
-        vesta_core::Timestamp(12345678, 910111213),
-        vesta_core::uuid::generate("8d8"));
-    AccelerationLinear3DStamped variable2(
-        vesta_core::Timestamp(12345678, 910111213),
-        vesta_core::uuid::generate("r4-p17"));
+    AccelerationLinear3DStamped variable1(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("8d"
+                                                                                                                 "8"));
+    AccelerationLinear3DStamped variable2(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("r4-"
+                                                                                                                 "p1"
+                                                                                                                 "7"));
     EXPECT_NE(variable1.uuid(), variable2.uuid());
   }
 }
 
-TEST(AccelerationLinear3DStamped, Stamped) {
-  vesta_core::Variable::SharedPtr base =
-      AccelerationLinear3DStamped::make_shared(
-          vesta_core::Timestamp(12345678, 910111213),
-          vesta_core::uuid::generate("mo"));
+TEST(AccelerationLinear3DStamped, Stamped)
+{
+  vesta_core::Variable::SharedPtr base = AccelerationLinear3DStamped::make_shared(
+      vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("mo"));
   auto derived = std::dynamic_pointer_cast<AccelerationLinear3DStamped>(base);
   ASSERT_TRUE(static_cast<bool>(derived));
   EXPECT_EQ(vesta_core::Timestamp(12345678, 910111213), derived->stamp());
@@ -112,10 +104,15 @@ TEST(AccelerationLinear3DStamped, Stamped) {
   EXPECT_EQ(vesta_core::uuid::generate("mo"), stamped->deviceId());
 }
 
-struct CostFunctor {
-  CostFunctor() {}
+struct CostFunctor
+{
+  CostFunctor()
+  {
+  }
 
-  template <typename T> bool operator()(const T *const x, T *residual) const {
+  template <typename T>
+  bool operator()(const T* const x, T* residual) const
+  {
     residual[0] = x[0] - T(3.0);
     residual[1] = x[1] + T(8.0);
     residual[2] = x[2] - T(17.0);
@@ -123,24 +120,23 @@ struct CostFunctor {
   }
 };
 
-TEST(AccelerationLinear3DStamped, Optimization) {
+TEST(AccelerationLinear3DStamped, Optimization)
+{
   // Create a AccelerationLinear3DStamped
-  AccelerationLinear3DStamped acceleration(
-      vesta_core::Timestamp(12345678, 910111213),
-      vesta_core::uuid::generate("hal9000"));
+  AccelerationLinear3DStamped acceleration(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("hal9"
+                                                                                                                  "00"
+                                                                                                                  "0"));
   acceleration.x() = 1.5;
   acceleration.y() = -3.0;
   acceleration.z() = 14.0;
 
   // Create a simple a constraint
-  ceres::CostFunction *cost_function =
-      new ceres::AutoDiffCostFunction<CostFunctor, 3, 3>(new CostFunctor());
+  ceres::CostFunction* cost_function = new ceres::AutoDiffCostFunction<CostFunctor, 3, 3>(new CostFunctor());
 
   // Build the problem.
   ceres::Problem problem;
-  problem.AddParameterBlock(acceleration.data(), acceleration.size(),
-                            acceleration.manifold());
-  std::vector<double *> parameter_blocks;
+  problem.AddParameterBlock(acceleration.data(), acceleration.size(), acceleration.manifold());
+  std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(acceleration.data());
   problem.AddResidualBlock(cost_function, nullptr, parameter_blocks);
 
@@ -155,11 +151,11 @@ TEST(AccelerationLinear3DStamped, Optimization) {
   EXPECT_NEAR(17.0, acceleration.z(), 1.0e-5);
 }
 
-TEST(AccelerationLinear3DStamped, Serialization) {
+TEST(AccelerationLinear3DStamped, Serialization)
+{
   // Create a AccelerationLinear3DStamped
-  AccelerationLinear3DStamped expected(
-      vesta_core::Timestamp(12345678, 910111213),
-      vesta_core::uuid::generate("hal9000"));
+  AccelerationLinear3DStamped expected(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("hal900"
+                                                                                                              "0"));
   expected.x() = 1.5;
   expected.y() = -3.0;
   expected.z() = 14.0;
@@ -186,7 +182,8 @@ TEST(AccelerationLinear3DStamped, Serialization) {
   EXPECT_EQ(expected.z(), actual.z());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

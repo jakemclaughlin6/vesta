@@ -21,7 +21,8 @@
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief A constraint that represents the relative change between two 3D IMU
@@ -36,7 +37,8 @@ namespace vesta_constraints {
  * Variables order: ori1, pos1, vel1, bg1, ba1, ori2, pos2, vel2, bg2, ba2 (10
  * variables).
  */
-class RelativeImuState3DStampedConstraint : public vesta_core::Constraint {
+class RelativeImuState3DStampedConstraint : public vesta_core::Constraint
+{
 public:
   VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(RelativeImuState3DStampedConstraint);
 
@@ -75,21 +77,16 @@ public:
    * (default: 1.0)
    */
   RelativeImuState3DStampedConstraint(
-      const std::string &source,
-      const vesta_variables::Orientation3DStamped &orientation1,
-      const vesta_variables::Position3DStamped &position1,
-      const vesta_variables::VelocityLinear3DStamped &velocity1,
-      const vesta_variables::GyroscopeBias3DStamped &gyro_bias1,
-      const vesta_variables::AccelerationBias3DStamped &accel_bias1,
-      const vesta_variables::Orientation3DStamped &orientation2,
-      const vesta_variables::Position3DStamped &position2,
-      const vesta_variables::VelocityLinear3DStamped &velocity2,
-      const vesta_variables::GyroscopeBias3DStamped &gyro_bias2,
-      const vesta_variables::AccelerationBias3DStamped &accel_bias2,
-      const ImuPreintegrator &preintegrator,
-      const Eigen::Vector3d &linearization_bg,
-      const Eigen::Vector3d &linearization_ba,
-      const Eigen::Vector3d &gravity = kGravityWorld, double info_weight = 1.0);
+      const std::string& source, const vesta_variables::Orientation3DStamped& orientation1,
+      const vesta_variables::Position3DStamped& position1, const vesta_variables::VelocityLinear3DStamped& velocity1,
+      const vesta_variables::GyroscopeBias3DStamped& gyro_bias1,
+      const vesta_variables::AccelerationBias3DStamped& accel_bias1,
+      const vesta_variables::Orientation3DStamped& orientation2, const vesta_variables::Position3DStamped& position2,
+      const vesta_variables::VelocityLinear3DStamped& velocity2,
+      const vesta_variables::GyroscopeBias3DStamped& gyro_bias2,
+      const vesta_variables::AccelerationBias3DStamped& accel_bias2, const ImuPreintegrator& preintegrator,
+      const Eigen::Vector3d& linearization_bg, const Eigen::Vector3d& linearization_ba,
+      const Eigen::Vector3d& gravity = kGravityWorld, double info_weight = 1.0);
 
   /**
    * @brief Destructor
@@ -99,34 +96,50 @@ public:
   /**
    * @brief Read-only access to the preintegrated rotation.
    */
-  const Eigen::Quaterniond &deltaQ() const { return delta_q_; }
+  const Eigen::Quaterniond& deltaQ() const
+  {
+    return delta_q_;
+  }
 
   /**
    * @brief Read-only access to the preintegrated position.
    */
-  const Eigen::Vector3d &deltaP() const { return delta_p_; }
+  const Eigen::Vector3d& deltaP() const
+  {
+    return delta_p_;
+  }
 
   /**
    * @brief Read-only access to the preintegrated velocity.
    */
-  const Eigen::Vector3d &deltaV() const { return delta_v_; }
+  const Eigen::Vector3d& deltaV() const
+  {
+    return delta_v_;
+  }
 
   /**
    * @brief Read-only access to the integration time interval.
    */
-  double dt() const { return dt_; }
+  double dt() const
+  {
+    return dt_;
+  }
 
   /**
    * @brief Read-only access to the square root information matrix.
    */
-  const Eigen::Matrix<double, 15, 15> &sqrtInformation() const {
+  const Eigen::Matrix<double, 15, 15>& sqrtInformation() const
+  {
     return sqrt_information_;
   }
 
   /**
    * @brief Read-only access to the gravity vector.
    */
-  const Eigen::Vector3d &gravity() const { return gravity_; }
+  const Eigen::Vector3d& gravity() const
+  {
+    return gravity_;
+  }
 
   /**
    * @brief Print a human-readable description of the constraint to the provided
@@ -134,7 +147,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
@@ -147,40 +160,31 @@ public:
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction *costFunction() const override;
+  ceres::CostFunction* costFunction() const override;
 
 protected:
-  Eigen::Quaterniond delta_q_{
-      Eigen::Quaterniond::Identity()};               //!< Preintegrated rotation
-  Eigen::Vector3d delta_p_{Eigen::Vector3d::Zero()}; //!< Preintegrated position
-  Eigen::Vector3d delta_v_{Eigen::Vector3d::Zero()}; //!< Preintegrated velocity
-  double dt_{0.0}; //!< Integration time interval
+  Eigen::Quaterniond delta_q_{ Eigen::Quaterniond::Identity() };  //!< Preintegrated rotation
+  Eigen::Vector3d delta_p_{ Eigen::Vector3d::Zero() };            //!< Preintegrated position
+  Eigen::Vector3d delta_v_{ Eigen::Vector3d::Zero() };            //!< Preintegrated velocity
+  double dt_{ 0.0 };                                              //!< Integration time interval
 
-  Eigen::Matrix<double, 15, 15> sqrt_information_{
-      Eigen::Matrix<double, 15,
-                    15>::Zero()}; //!< Square root information matrix
+  Eigen::Matrix<double, 15, 15> sqrt_information_{ Eigen::Matrix<double, 15, 15>::Zero() };  //!< Square root
+                                                                                             //!< information matrix
 
-  Eigen::Vector3d linearization_bg_{
-      Eigen::Vector3d::Zero()}; //!< Gyro bias linearization point
-  Eigen::Vector3d linearization_ba_{
-      Eigen::Vector3d::Zero()};            //!< Accel bias linearization point
-  Eigen::Vector3d gravity_{kGravityWorld}; //!< Gravity vector in world frame
+  Eigen::Vector3d linearization_bg_{ Eigen::Vector3d::Zero() };  //!< Gyro bias linearization point
+  Eigen::Vector3d linearization_ba_{ Eigen::Vector3d::Zero() };  //!< Accel bias linearization point
+  Eigen::Vector3d gravity_{ kGravityWorld };                     //!< Gravity vector in world frame
 
-  Eigen::Matrix3d dq_dbg_{
-      Eigen::Matrix3d::Zero()}; //!< Jacobian of preintegrated rotation w.r.t.
-                                //!< gyro bias
-  Eigen::Matrix3d dp_dbg_{
-      Eigen::Matrix3d::Zero()}; //!< Jacobian of preintegrated position w.r.t.
-                                //!< gyro bias
-  Eigen::Matrix3d dp_dba_{
-      Eigen::Matrix3d::Zero()}; //!< Jacobian of preintegrated position w.r.t.
-                                //!< accel bias
-  Eigen::Matrix3d dv_dbg_{
-      Eigen::Matrix3d::Zero()}; //!< Jacobian of preintegrated velocity w.r.t.
-                                //!< gyro bias
-  Eigen::Matrix3d dv_dba_{
-      Eigen::Matrix3d::Zero()}; //!< Jacobian of preintegrated velocity w.r.t.
-                                //!< accel bias
+  Eigen::Matrix3d dq_dbg_{ Eigen::Matrix3d::Zero() };  //!< Jacobian of preintegrated rotation w.r.t.
+                                                       //!< gyro bias
+  Eigen::Matrix3d dp_dbg_{ Eigen::Matrix3d::Zero() };  //!< Jacobian of preintegrated position w.r.t.
+                                                       //!< gyro bias
+  Eigen::Matrix3d dp_dba_{ Eigen::Matrix3d::Zero() };  //!< Jacobian of preintegrated position w.r.t.
+                                                       //!< accel bias
+  Eigen::Matrix3d dv_dbg_{ Eigen::Matrix3d::Zero() };  //!< Jacobian of preintegrated velocity w.r.t.
+                                                       //!< gyro bias
+  Eigen::Matrix3d dv_dba_{ Eigen::Matrix3d::Zero() };  //!< Jacobian of preintegrated velocity w.r.t.
+                                                       //!< accel bias
 
 private:
   // Allow Boost Serialization access to private methods
@@ -196,8 +200,9 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     // Serialize quaternion components individually (Eigen internal order: x, y,
     // z, w)
     archive & delta_q_.x();
@@ -219,6 +224,6 @@ private:
   }
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::RelativeImuState3DStampedConstraint);

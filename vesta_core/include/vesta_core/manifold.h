@@ -37,10 +37,11 @@
 #include <vesta_core/fuse_macros.h>
 #include <vesta_core/serialization.h>
 
-#include <boost/serialization/access.hpp>
 #include <ceres/manifold.h>
+#include <boost/serialization/access.hpp>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief The Manifold interface definition.
@@ -61,7 +62,8 @@ namespace vesta_core {
  * See the Ceres documentation for more details.
  * http://ceres-solver.org/nnls_modeling.html#manifold
  */
-class Manifold : public ceres::Manifold {
+class Manifold : public ceres::Manifold
+{
 public:
   VESTA_SMART_PTR_ALIASES_ONLY(Manifold);
 
@@ -79,7 +81,9 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive & /* archive */, const unsigned int /* version */) {}
+  void serialize(Archive& /* archive */, const unsigned int /* version */)
+  {
+  }
 };
 
-} // namespace vesta_core
+}  // namespace vesta_core

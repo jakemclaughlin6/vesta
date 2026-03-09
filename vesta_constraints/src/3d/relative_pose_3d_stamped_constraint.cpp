@@ -35,26 +35,28 @@
 
 #include <vesta_constraints/3d/normal_delta_pose_3d_cost_functor.h>
 
-#include <boost/serialization/export.hpp>
 #include <ceres/autodiff_cost_function.h>
+#include <boost/serialization/export.hpp>
 
 #include <string>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 RelativePose3DStampedConstraint::RelativePose3DStampedConstraint(
-    const std::string &source,
-    const vesta_variables::Position3DStamped &position1,
-    const vesta_variables::Orientation3DStamped &orientation1,
-    const vesta_variables::Position3DStamped &position2,
-    const vesta_variables::Orientation3DStamped &orientation2,
-    const vesta_core::Vector7d &delta, const vesta_core::Matrix6d &covariance)
-    : vesta_core::Constraint(
-          source, {position1.uuid(), orientation1.uuid(), position2.uuid(),
-                   orientation2.uuid()}), // NOLINT(whitespace/braces)
-      delta_(delta), sqrt_information_(covariance.inverse().llt().matrixU()) {}
+    const std::string& source, const vesta_variables::Position3DStamped& position1,
+    const vesta_variables::Orientation3DStamped& orientation1, const vesta_variables::Position3DStamped& position2,
+    const vesta_variables::Orientation3DStamped& orientation2, const vesta_core::Vector7d& delta,
+    const vesta_core::Matrix6d& covariance)
+  : vesta_core::Constraint(source, { position1.uuid(), orientation1.uuid(), position2.uuid(), orientation2.uuid() })
+  ,  // NOLINT(whitespace/braces)
+  delta_(delta)
+  , sqrt_information_(covariance.inverse().llt().matrixU())
+{
+}
 
-void RelativePose3DStampedConstraint::print(std::ostream &stream) const {
+void RelativePose3DStampedConstraint::print(std::ostream& stream) const
+{
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
@@ -66,13 +68,12 @@ void RelativePose3DStampedConstraint::print(std::ostream &stream) const {
          << "  sqrt_info: " << sqrtInformation() << "\n";
 }
 
-ceres::CostFunction *RelativePose3DStampedConstraint::costFunction() const {
-  return new ceres::AutoDiffCostFunction<NormalDeltaPose3DCostFunctor, 6, 3, 4,
-                                         3, 4>(
+ceres::CostFunction* RelativePose3DStampedConstraint::costFunction() const
+{
+  return new ceres::AutoDiffCostFunction<NormalDeltaPose3DCostFunctor, 6, 3, 4, 3, 4>(
       new NormalDeltaPose3DCostFunctor(sqrt_information_, delta_));
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
-BOOST_CLASS_EXPORT_IMPLEMENT(
-    vesta_constraints::RelativePose3DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::RelativePose3DStampedConstraint);

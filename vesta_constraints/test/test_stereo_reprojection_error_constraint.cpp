@@ -55,12 +55,11 @@ using vesta_variables::Point3DLandmark;
 using vesta_variables::Position3DStamped;
 using vesta_variables::StereoCamera;
 
-TEST(StereoReprojectionErrorConstraint, Constructor) {
+TEST(StereoReprojectionErrorConstraint, Constructor)
+{
   // Construct a constraint just to make sure it compiles.
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
-                                      vesta_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(
-      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
   Point3DLandmark point(0);
   StereoCamera calibration_variable(0);
 
@@ -69,17 +68,15 @@ TEST(StereoReprojectionErrorConstraint, Constructor) {
 
   vesta_core::Matrix4d cov = vesta_core::Matrix4d::Identity() * 0.25;
 
-  EXPECT_NO_THROW(StereoReprojectionErrorConstraint constraint(
-      "test", position_variable, orientation_variable, calibration_variable,
-      point, mean, cov));
+  EXPECT_NO_THROW(StereoReprojectionErrorConstraint constraint("test", position_variable, orientation_variable,
+                                                               calibration_variable, point, mean, cov));
 }
 
-TEST(StereoReprojectionErrorConstraint, Covariance) {
+TEST(StereoReprojectionErrorConstraint, Covariance)
+{
   // Verify the covariance <--> sqrt information conversions are correct
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
-                                      vesta_core::uuid::generate("mo"));
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678),
-                                            vesta_core::uuid::generate("mo"));
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("mo"));
+  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("mo"));
   Point3DLandmark point(0);
   StereoCamera calibration_variable(0);
 
@@ -88,13 +85,11 @@ TEST(StereoReprojectionErrorConstraint, Covariance) {
 
   vesta_core::Matrix4d cov = vesta_core::Matrix4d::Identity() * 0.25;
 
-  StereoReprojectionErrorConstraint constraint(
-      "test", position_variable, orientation_variable, calibration_variable,
-      point, mean, cov);
+  StereoReprojectionErrorConstraint constraint("test", position_variable, orientation_variable, calibration_variable,
+                                               point, mean, cov);
 
   // Define the expected matrices (chol(inv(0.25*I)) = 2*I)
-  vesta_core::Matrix4d expected_sqrt_info =
-      vesta_core::Matrix4d::Identity() * 2.0;
+  vesta_core::Matrix4d expected_sqrt_info = vesta_core::Matrix4d::Identity() * 2.0;
   vesta_core::Matrix4d expected_cov = cov;
 
   // Compare
@@ -102,7 +97,8 @@ TEST(StereoReprojectionErrorConstraint, Covariance) {
   EXPECT_MATRIX_NEAR(expected_sqrt_info, constraint.sqrtInformation(), 1.0e-9);
 }
 
-TEST(StereoReprojectionErrorConstraint, Optimization) {
+TEST(StereoReprojectionErrorConstraint, Optimization)
+{
   // Optimize camera pose given stereo observations of known 3D points.
   //
   // Ground truth: camera at origin with identity orientation.
@@ -142,7 +138,8 @@ TEST(StereoReprojectionErrorConstraint, Optimization) {
   // point in world frame) u_l = fx * X/Z + cx, v_l = fy * Y/Z + cy u_r = fx *
   // (X - baseline)/Z + cx, v_r = fy * Y/Z + cy
   std::vector<vesta_core::Vector4d> means(4);
-  for (size_t i = 0; i < 4; ++i) {
+  for (size_t i = 0; i < 4; ++i)
+  {
     double px = point_variables[i]->x();
     double py = point_variables[i]->y();
     double pz = point_variables[i]->z();
@@ -154,14 +151,15 @@ TEST(StereoReprojectionErrorConstraint, Optimization) {
   }
 
   // Create perturbed camera pose (initial guess)
-  auto position_variable = Position3DStamped::make_shared(
-      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("stereo"));
+  auto position_variable = Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("ster"
+                                                                                                                  "e"
+                                                                                                                  "o"));
   position_variable->x() = 0.5;
   position_variable->y() = -0.3;
   position_variable->z() = 0.2;
 
-  auto orientation_variable = Orientation3DStamped::make_shared(
-      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("stereo"));
+  auto orientation_variable =
+      Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("stereo"));
   orientation_variable->w() = 0.98;
   orientation_variable->x() = 0.05;
   orientation_variable->y() = -0.1;
@@ -183,39 +181,32 @@ TEST(StereoReprojectionErrorConstraint, Optimization) {
   ceres::Problem problem(problem_options);
 
   // Add parameter blocks
-  problem.AddParameterBlock(position_variable->data(),
-                            position_variable->size(),
-                            position_variable->manifold());
-  problem.AddParameterBlock(orientation_variable->data(),
-                            orientation_variable->size(),
+  problem.AddParameterBlock(position_variable->data(), position_variable->size(), position_variable->manifold());
+  problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
                             orientation_variable->manifold());
-  problem.AddParameterBlock(calibration_variable->data(),
-                            calibration_variable->size(),
+  problem.AddParameterBlock(calibration_variable->data(), calibration_variable->size(),
                             calibration_variable->manifold());
 
   // Hold calibration constant
   problem.SetParameterBlockConstant(calibration_variable->data());
 
-  for (size_t i = 0; i < point_variables.size(); ++i) {
+  for (size_t i = 0; i < point_variables.size(); ++i)
+  {
     auto constraint = StereoReprojectionErrorConstraint::make_shared(
-        "test", *position_variable, *orientation_variable,
-        *calibration_variable, *point_variables[i], means[i], cov);
+        "test", *position_variable, *orientation_variable, *calibration_variable, *point_variables[i], means[i], cov);
 
-    problem.AddParameterBlock(point_variables[i]->data(),
-                              point_variables[i]->size(),
-                              point_variables[i]->manifold());
+    problem.AddParameterBlock(point_variables[i]->data(), point_variables[i]->size(), point_variables[i]->manifold());
 
     // Hold landmarks constant (known)
     problem.SetParameterBlockConstant(point_variables[i]->data());
 
-    std::vector<double *> parameter_blocks;
+    std::vector<double*> parameter_blocks;
     parameter_blocks.push_back(position_variable->data());
     parameter_blocks.push_back(orientation_variable->data());
     parameter_blocks.push_back(calibration_variable->data());
     parameter_blocks.push_back(point_variables[i]->data());
 
-    problem.AddResidualBlock(constraint->costFunction(),
-                             constraint->lossFunction(), parameter_blocks);
+    problem.AddResidualBlock(constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
   }
 
   // Run the solver
@@ -234,12 +225,11 @@ TEST(StereoReprojectionErrorConstraint, Optimization) {
   EXPECT_NEAR(0.0, orientation_variable->z(), 5.0e-3);
 }
 
-TEST(StereoReprojectionErrorConstraint, Serialization) {
+TEST(StereoReprojectionErrorConstraint, Serialization)
+{
   // Construct a constraint
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
-                                      vesta_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(
-      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
   Point3DLandmark point(0);
 
   StereoCamera calibration_variable(0);
@@ -254,9 +244,8 @@ TEST(StereoReprojectionErrorConstraint, Serialization) {
 
   vesta_core::Matrix4d cov = vesta_core::Matrix4d::Identity() * 0.25;
 
-  StereoReprojectionErrorConstraint expected(
-      "test", position_variable, orientation_variable, calibration_variable,
-      point, mean, cov);
+  StereoReprojectionErrorConstraint expected("test", position_variable, orientation_variable, calibration_variable,
+                                             point, mean, cov);
 
   // Serialize the constraint into an archive
   std::stringstream stream;
@@ -279,7 +268,8 @@ TEST(StereoReprojectionErrorConstraint, Serialization) {
   EXPECT_MATRIX_EQ(expected.sqrtInformation(), actual.sqrtInformation());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

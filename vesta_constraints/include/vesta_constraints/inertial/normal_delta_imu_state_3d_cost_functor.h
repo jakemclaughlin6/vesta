@@ -6,7 +6,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Implements a cost function that models the relative constraint between
@@ -28,7 +29,8 @@ namespace vesta_constraints {
  * where the corrected preintegrated measurements account for bias changes from
  * the linearization point using first-order Jacobians.
  */
-class NormalDeltaImuState3DCostFunctor {
+class NormalDeltaImuState3DCostFunctor
+{
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
@@ -56,14 +58,13 @@ public:
    * @param[in] dv_dba            Jacobian of preintegrated velocity w.r.t.
    * accel bias (3x3)
    */
-  NormalDeltaImuState3DCostFunctor(
-      const Eigen::Matrix<double, 15, 15> &sqrt_information,
-      const Eigen::Quaterniond &delta_q, const Eigen::Vector3d &delta_p,
-      const Eigen::Vector3d &delta_v, double dt, const Eigen::Vector3d &gravity,
-      const Eigen::Vector3d &linearization_bg,
-      const Eigen::Vector3d &linearization_ba, const Eigen::Matrix3d &dq_dbg,
-      const Eigen::Matrix3d &dp_dbg, const Eigen::Matrix3d &dp_dba,
-      const Eigen::Matrix3d &dv_dbg, const Eigen::Matrix3d &dv_dba);
+  NormalDeltaImuState3DCostFunctor(const Eigen::Matrix<double, 15, 15>& sqrt_information,
+                                   const Eigen::Quaterniond& delta_q, const Eigen::Vector3d& delta_p,
+                                   const Eigen::Vector3d& delta_v, double dt, const Eigen::Vector3d& gravity,
+                                   const Eigen::Vector3d& linearization_bg, const Eigen::Vector3d& linearization_ba,
+                                   const Eigen::Matrix3d& dq_dbg, const Eigen::Matrix3d& dp_dbg,
+                                   const Eigen::Matrix3d& dp_dba, const Eigen::Matrix3d& dv_dbg,
+                                   const Eigen::Matrix3d& dv_dba);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
@@ -76,12 +77,10 @@ public:
    * @param[out] residual Output residual vector (15D)
    */
   template <typename T>
-  bool operator()(const T *const orientation1, const T *const position1,
-                  const T *const velocity1, const T *const gyro_bias1,
-                  const T *const accel_bias1, const T *const orientation2,
-                  const T *const position2, const T *const velocity2,
-                  const T *const gyro_bias2, const T *const accel_bias2,
-                  T *residual) const;
+  bool operator()(const T* const orientation1, const T* const position1, const T* const velocity1,
+                  const T* const gyro_bias1, const T* const accel_bias1, const T* const orientation2,
+                  const T* const position2, const T* const velocity2, const T* const gyro_bias2,
+                  const T* const accel_bias2, T* residual) const;
 
 private:
   Eigen::Matrix<double, 15, 15> sqrt_information_;
@@ -100,44 +99,47 @@ private:
 };
 
 inline NormalDeltaImuState3DCostFunctor::NormalDeltaImuState3DCostFunctor(
-    const Eigen::Matrix<double, 15, 15> &sqrt_information,
-    const Eigen::Quaterniond &delta_q, const Eigen::Vector3d &delta_p,
-    const Eigen::Vector3d &delta_v, const double dt,
-    const Eigen::Vector3d &gravity, const Eigen::Vector3d &linearization_bg,
-    const Eigen::Vector3d &linearization_ba, const Eigen::Matrix3d &dq_dbg,
-    const Eigen::Matrix3d &dp_dbg, const Eigen::Matrix3d &dp_dba,
-    const Eigen::Matrix3d &dv_dbg, const Eigen::Matrix3d &dv_dba)
-    : sqrt_information_(sqrt_information), delta_q_(delta_q), delta_p_(delta_p),
-      delta_v_(delta_v), dt_(dt), gravity_(gravity),
-      linearization_bg_(linearization_bg), linearization_ba_(linearization_ba),
-      dq_dbg_(dq_dbg), dp_dbg_(dp_dbg), dp_dba_(dp_dba), dv_dbg_(dv_dbg),
-      dv_dba_(dv_dba) {}
+    const Eigen::Matrix<double, 15, 15>& sqrt_information, const Eigen::Quaterniond& delta_q,
+    const Eigen::Vector3d& delta_p, const Eigen::Vector3d& delta_v, const double dt, const Eigen::Vector3d& gravity,
+    const Eigen::Vector3d& linearization_bg, const Eigen::Vector3d& linearization_ba, const Eigen::Matrix3d& dq_dbg,
+    const Eigen::Matrix3d& dp_dbg, const Eigen::Matrix3d& dp_dba, const Eigen::Matrix3d& dv_dbg,
+    const Eigen::Matrix3d& dv_dba)
+  : sqrt_information_(sqrt_information)
+  , delta_q_(delta_q)
+  , delta_p_(delta_p)
+  , delta_v_(delta_v)
+  , dt_(dt)
+  , gravity_(gravity)
+  , linearization_bg_(linearization_bg)
+  , linearization_ba_(linearization_ba)
+  , dq_dbg_(dq_dbg)
+  , dp_dbg_(dp_dbg)
+  , dp_dba_(dp_dba)
+  , dv_dbg_(dv_dbg)
+  , dv_dba_(dv_dba)
+{
+}
 
 template <typename T>
-bool NormalDeltaImuState3DCostFunctor::operator()(
-    const T *const orientation1, const T *const position1,
-    const T *const velocity1, const T *const gyro_bias1,
-    const T *const accel_bias1, const T *const orientation2,
-    const T *const position2, const T *const velocity2,
-    const T *const gyro_bias2, const T *const accel_bias2, T *residual) const {
+bool NormalDeltaImuState3DCostFunctor::operator()(const T* const orientation1, const T* const position1,
+                                                  const T* const velocity1, const T* const gyro_bias1,
+                                                  const T* const accel_bias1, const T* const orientation2,
+                                                  const T* const position2, const T* const velocity2,
+                                                  const T* const gyro_bias2, const T* const accel_bias2,
+                                                  T* residual) const
+{
   // Map inputs to Eigen types
-  const Eigen::Quaternion<T> q_i(orientation1[0], orientation1[1],
-                                 orientation1[2], orientation1[3]);
+  const Eigen::Quaternion<T> q_i(orientation1[0], orientation1[1], orientation1[2], orientation1[3]);
   const Eigen::Matrix<T, 3, 1> p_i(position1[0], position1[1], position1[2]);
   const Eigen::Matrix<T, 3, 1> v_i(velocity1[0], velocity1[1], velocity1[2]);
-  const Eigen::Matrix<T, 3, 1> bg_i(gyro_bias1[0], gyro_bias1[1],
-                                    gyro_bias1[2]);
-  const Eigen::Matrix<T, 3, 1> ba_i(accel_bias1[0], accel_bias1[1],
-                                    accel_bias1[2]);
+  const Eigen::Matrix<T, 3, 1> bg_i(gyro_bias1[0], gyro_bias1[1], gyro_bias1[2]);
+  const Eigen::Matrix<T, 3, 1> ba_i(accel_bias1[0], accel_bias1[1], accel_bias1[2]);
 
-  const Eigen::Quaternion<T> q_j(orientation2[0], orientation2[1],
-                                 orientation2[2], orientation2[3]);
+  const Eigen::Quaternion<T> q_j(orientation2[0], orientation2[1], orientation2[2], orientation2[3]);
   const Eigen::Matrix<T, 3, 1> p_j(position2[0], position2[1], position2[2]);
   const Eigen::Matrix<T, 3, 1> v_j(velocity2[0], velocity2[1], velocity2[2]);
-  const Eigen::Matrix<T, 3, 1> bg_j(gyro_bias2[0], gyro_bias2[1],
-                                    gyro_bias2[2]);
-  const Eigen::Matrix<T, 3, 1> ba_j(accel_bias2[0], accel_bias2[1],
-                                    accel_bias2[2]);
+  const Eigen::Matrix<T, 3, 1> bg_j(gyro_bias2[0], gyro_bias2[1], gyro_bias2[2]);
+  const Eigen::Matrix<T, 3, 1> ba_j(accel_bias2[0], accel_bias2[1], accel_bias2[2]);
 
   // Cast preintegrated values to templated type
   const T dt = T(dt_);
@@ -160,23 +162,17 @@ bool NormalDeltaImuState3DCostFunctor::operator()(
   // Apply first-order bias correction to preintegrated measurements
   const Eigen::Matrix<T, 3, 1> q_correction = J_dq_dbg * dbg;
   const Eigen::Quaternion<T> dq_corrected = dq * deltaQ(q_correction);
-  const Eigen::Matrix<T, 3, 1> dp_corrected =
-      dp + J_dp_dbg * dbg + J_dp_dba * dba;
-  const Eigen::Matrix<T, 3, 1> dv_corrected =
-      dv + J_dv_dbg * dbg + J_dv_dba * dba;
+  const Eigen::Matrix<T, 3, 1> dp_corrected = dp + J_dp_dbg * dbg + J_dp_dba * dba;
+  const Eigen::Matrix<T, 3, 1> dv_corrected = dv + J_dv_dbg * dbg + J_dv_dba * dba;
 
   // Orientation residual
-  const Eigen::Matrix<T, 3, 1> res_q =
-      T(2) * (dq_corrected.inverse() * (q_i.inverse() * q_j)).vec();
+  const Eigen::Matrix<T, 3, 1> res_q = T(2) * (dq_corrected.inverse() * (q_i.inverse() * q_j)).vec();
 
   // Position residual
-  const Eigen::Matrix<T, 3, 1> res_p =
-      q_i.conjugate() * (p_j - p_i - dt * v_i - T(0.5) * dt * dt * G) -
-      dp_corrected;
+  const Eigen::Matrix<T, 3, 1> res_p = q_i.conjugate() * (p_j - p_i - dt * v_i - T(0.5) * dt * dt * G) - dp_corrected;
 
   // Velocity residual
-  const Eigen::Matrix<T, 3, 1> res_v =
-      q_i.conjugate() * (v_j - v_i - dt * G) - dv_corrected;
+  const Eigen::Matrix<T, 3, 1> res_v = q_i.conjugate() * (v_j - v_i - dt * G) - dv_corrected;
 
   // Bias residuals (random walk model)
   const Eigen::Matrix<T, 3, 1> res_bg = bg_j - bg_i;
@@ -207,4 +203,4 @@ bool NormalDeltaImuState3DCostFunctor::operator()(
   return true;
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

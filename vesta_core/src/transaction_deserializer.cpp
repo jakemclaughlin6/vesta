@@ -39,10 +39,11 @@
 
 #include <vector>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
-void serializeTransaction(const vesta_core::Transaction &transaction,
-                          std::vector<unsigned char> &data) {
+void serializeTransaction(const vesta_core::Transaction& transaction, std::vector<unsigned char>& data)
+{
   data.clear();
   boost::iostreams::stream<vesta_core::MessageBufferStreamSink> stream(data);
   {
@@ -51,8 +52,8 @@ void serializeTransaction(const vesta_core::Transaction &transaction,
   }
 }
 
-vesta_core::Transaction
-deserializeTransaction(const std::vector<unsigned char> &data) {
+vesta_core::Transaction deserializeTransaction(const std::vector<unsigned char>& data)
+{
   auto transaction = vesta_core::Transaction();
   boost::iostreams::stream<vesta_core::MessageBufferStreamSource> stream(data);
   {
@@ -62,4 +63,4 @@ deserializeTransaction(const std::vector<unsigned char> &data) {
   return transaction;
 }
 
-} // namespace vesta_core
+}  // namespace vesta_core

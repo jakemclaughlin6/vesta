@@ -45,12 +45,14 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
 
-namespace vesta_variables {
+namespace vesta_variables
+{
 /**
  * @brief Variable representing a pinhole camera that exists across time.
  *
  */
-class PinholeCameraFixed : public PinholeCamera {
+class PinholeCameraFixed : public PinholeCamera
+{
 public:
   VESTA_VARIABLE_DEFINITIONS(PinholeCameraFixed);
 
@@ -64,7 +66,7 @@ public:
    *
    * @param[in] camera_id  The id associated to a camera
    */
-  explicit PinholeCameraFixed(const uint64_t &camera_id);
+  explicit PinholeCameraFixed(const uint64_t& camera_id);
 
   /**
    * @brief Construct a pinhole camera variable given a camera id and intrinsic
@@ -72,14 +74,16 @@ public:
    *
    * @param[in] camera_id  The id associated to a camera
    */
-  explicit PinholeCameraFixed(const uint64_t &camera_id, const double &fx,
-                              const double &fy, const double &cx,
-                              const double &cy);
+  explicit PinholeCameraFixed(const uint64_t& camera_id, const double& fx, const double& fy, const double& cx,
+                              const double& cy);
   /**
    * @brief Specifies if the value of the variable should not be changed during
    * optimization
    */
-  bool holdConstant() const override { return true; }
+  bool holdConstant() const override
+  {
+    return true;
+  }
 
 private:
   // Allow Boost Serialization access to private methods
@@ -95,11 +99,12 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<PinholeCamera>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<PinholeCamera>(*this);
   }
 };
 
-} // namespace vesta_variables
+}  // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_KEY(vesta_variables::PinholeCameraFixed);

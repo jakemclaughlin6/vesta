@@ -41,12 +41,12 @@
 #include <vesta_core/serialization.h>
 #include <vesta_core/variable.h>
 
+#include <ceres/cost_function.h>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
-#include <ceres/cost_function.h>
 
 #include <algorithm>
 #include <cassert>
@@ -54,7 +54,8 @@
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief A constraint that represents remaining marginal information on a set
@@ -66,7 +67,8 @@ namespace vesta_constraints {
  * variable value at the time of construction, and the minus operator is
  * implemented in the variable's manifold.
  */
-class MarginalConstraint : public vesta_core::Constraint {
+class MarginalConstraint : public vesta_core::Constraint
+{
 public:
   VESTA_CONSTRAINT_DEFINITIONS(MarginalConstraint);
 
@@ -96,9 +98,8 @@ public:
    * A*(x - x_bar) + b)
    */
   template <typename VariableIterator, typename MatrixIterator>
-  MarginalConstraint(const std::string &source, VariableIterator first_variable,
-                     VariableIterator last_variable, MatrixIterator first_A,
-                     MatrixIterator last_A, const vesta_core::VectorXd &b);
+  MarginalConstraint(const std::string& source, VariableIterator first_variable, VariableIterator last_variable,
+                     MatrixIterator first_A, MatrixIterator last_A, const vesta_core::VectorXd& b);
 
   /**
    * @brief Destructor
@@ -108,22 +109,32 @@ public:
   /**
    * @brief Read-only access to the A matrices of the marginal constraint
    */
-  const std::vector<vesta_core::MatrixXd> &A() const { return A_; }
+  const std::vector<vesta_core::MatrixXd>& A() const
+  {
+    return A_;
+  }
 
   /**
    * @brief Read-only access to the b vector of the marginal constraint
    */
-  const vesta_core::VectorXd &b() const { return b_; }
+  const vesta_core::VectorXd& b() const
+  {
+    return b_;
+  }
 
   /**
    * @brief Read-only access to the variable linearization points, x_bar
    */
-  const std::vector<vesta_core::VectorXd> &x_bar() const { return x_bar_; }
+  const std::vector<vesta_core::VectorXd>& x_bar() const
+  {
+    return x_bar_;
+  }
 
   /**
    * @brief Read-only access to the variable manifolds
    */
-  const std::vector<vesta_core::Manifold::SharedPtr> &manifolds() const {
+  const std::vector<vesta_core::Manifold::SharedPtr>& manifolds() const
+  {
     return manifolds_;
   }
 
@@ -133,7 +144,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
@@ -146,15 +157,13 @@ public:
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction *costFunction() const override;
+  ceres::CostFunction* costFunction() const override;
 
 protected:
-  std::vector<vesta_core::MatrixXd>
-      A_;                  //!< The A matrices of the marginal constraint
-  vesta_core::VectorXd b_; //!< The b vector of the marginal constraint
-  std::vector<vesta_core::Manifold::SharedPtr> manifolds_; //!< The manifolds
-  std::vector<vesta_core::VectorXd>
-      x_bar_; //!< The linearization point of each involved variable
+  std::vector<vesta_core::MatrixXd> A_;                     //!< The A matrices of the marginal constraint
+  vesta_core::VectorXd b_;                                  //!< The b vector of the marginal constraint
+  std::vector<vesta_core::Manifold::SharedPtr> manifolds_;  //!< The manifolds
+  std::vector<vesta_core::VectorXd> x_bar_;                 //!< The linearization point of each involved variable
 
 private:
   // Allow Boost Serialization access to private methods
@@ -170,8 +179,9 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & A_;
     archive & b_;
     archive & manifolds_;
@@ -179,59 +189,68 @@ private:
   }
 };
 
-namespace detail {
+namespace detail
+{
 
 /**
  * @brief Return the UUID of the provided variable
  */
-inline const vesta_core::UUID getUuid(const vesta_core::Variable &variable) {
+inline const vesta_core::UUID getUuid(const vesta_core::Variable& variable)
+{
   return variable.uuid();
 }
 
 /**
  * @brief Return the current value of the provided variable
  */
-inline const vesta_core::VectorXd
-getCurrentValue(const vesta_core::Variable &variable) {
-  return Eigen::Map<const vesta_core::VectorXd>(variable.data(),
-                                                variable.size());
+inline const vesta_core::VectorXd getCurrentValue(const vesta_core::Variable& variable)
+{
+  return Eigen::Map<const vesta_core::VectorXd>(variable.data(), variable.size());
 }
 
 /**
  * @brief Return the manifold of the provided variable
  */
-inline vesta_core::Manifold::SharedPtr const
-getManifold(const vesta_core::Variable &variable) {
+inline vesta_core::Manifold::SharedPtr const getManifold(const vesta_core::Variable& variable)
+{
   return vesta_core::Manifold::SharedPtr(variable.manifold());
 }
 
 // Simple transform iterator to avoid boost::make_transform_iterator
-template <typename Iterator, typename Func> class TransformIterator {
+template <typename Iterator, typename Func>
+class TransformIterator
+{
 public:
-  using value_type =
-      std::invoke_result_t<Func,
-                           typename std::iterator_traits<Iterator>::reference>;
+  using value_type = std::invoke_result_t<Func, typename std::iterator_traits<Iterator>::reference>;
   using reference = value_type;
   using pointer = void;
-  using difference_type =
-      typename std::iterator_traits<Iterator>::difference_type;
+  using difference_type = typename std::iterator_traits<Iterator>::difference_type;
   using iterator_category = std::forward_iterator_tag;
 
-  TransformIterator(Iterator it, Func func) : it_(it), func_(func) {}
-  reference operator*() const { return func_(*it_); }
-  TransformIterator &operator++() {
+  TransformIterator(Iterator it, Func func) : it_(it), func_(func)
+  {
+  }
+  reference operator*() const
+  {
+    return func_(*it_);
+  }
+  TransformIterator& operator++()
+  {
     ++it_;
     return *this;
   }
-  TransformIterator operator++(int) {
+  TransformIterator operator++(int)
+  {
     auto tmp = *this;
     ++it_;
     return tmp;
   }
-  bool operator==(const TransformIterator &other) const {
+  bool operator==(const TransformIterator& other) const
+  {
     return it_ == other.it_;
   }
-  bool operator!=(const TransformIterator &other) const {
+  bool operator!=(const TransformIterator& other) const
+  {
     return it_ != other.it_;
   }
 
@@ -241,28 +260,26 @@ private:
 };
 
 template <typename Iterator, typename Func>
-TransformIterator<Iterator, Func> makeTransformIterator(Iterator it,
-                                                        Func func) {
+TransformIterator<Iterator, Func> makeTransformIterator(Iterator it, Func func)
+{
   return TransformIterator<Iterator, Func>(it, func);
 }
 
-} // namespace detail
+}  // namespace detail
 
 template <typename VariableIterator, typename MatrixIterator>
-MarginalConstraint::MarginalConstraint(const std::string &source,
-                                       VariableIterator first_variable,
-                                       VariableIterator last_variable,
-                                       MatrixIterator first_A,
-                                       MatrixIterator last_A,
-                                       const vesta_core::VectorXd &b)
-    : Constraint(source,
-                 vesta_constraints::detail::makeTransformIterator(
-                     first_variable, &vesta_constraints::detail::getUuid),
-                 vesta_constraints::detail::makeTransformIterator(
-                     last_variable, &vesta_constraints::detail::getUuid)),
-      A_(first_A, last_A), b_(b) {
+MarginalConstraint::MarginalConstraint(const std::string& source, VariableIterator first_variable,
+                                       VariableIterator last_variable, MatrixIterator first_A, MatrixIterator last_A,
+                                       const vesta_core::VectorXd& b)
+  : Constraint(source,
+               vesta_constraints::detail::makeTransformIterator(first_variable, &vesta_constraints::detail::getUuid),
+               vesta_constraints::detail::makeTransformIterator(last_variable, &vesta_constraints::detail::getUuid))
+  , A_(first_A, last_A)
+  , b_(b)
+{
   // Build manifold and x_bar vectors from the variable range
-  for (auto it = first_variable; it != last_variable; ++it) {
+  for (auto it = first_variable; it != last_variable; ++it)
+  {
     manifolds_.push_back(vesta_constraints::detail::getManifold(*it));
     x_bar_.push_back(vesta_constraints::detail::getCurrentValue(*it));
   }
@@ -271,19 +288,17 @@ MarginalConstraint::MarginalConstraint(const std::string &source,
   assert(A_.size() == x_bar_.size());
   assert(A_.size() == manifolds_.size());
   assert(b_.rows() > 0);
-  assert(std::all_of(A_.begin(), A_.end(), [this](const auto &A) {
-    return A.rows() == this->b_.rows();
-  })); // NOLINT
+  assert(std::all_of(A_.begin(), A_.end(), [this](const auto& A) { return A.rows() == this->b_.rows(); }));  // NOLINT
   // Verify A matrix columns match variable tangent sizes
   {
     auto var_it = first_variable;
-    for (size_t i = 0; i < A_.size() && var_it != last_variable;
-         ++i, ++var_it) {
+    for (size_t i = 0; i < A_.size() && var_it != last_variable; ++i, ++var_it)
+    {
       assert(static_cast<size_t>(A_[i].cols()) == (*var_it).tangentSize());
     }
   }
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::MarginalConstraint);

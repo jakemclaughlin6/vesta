@@ -50,7 +50,8 @@
 #include <ostream>
 #include <string>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief A constraint that represents either prior information about a 3D
@@ -59,10 +60,10 @@ namespace vesta_constraints {
  * This constraint holds the measured 3D orientation and the measurement
  * uncertainty/covariance.
  */
-class AbsoluteOrientation3DStampedConstraint : public vesta_core::Constraint {
+class AbsoluteOrientation3DStampedConstraint : public vesta_core::Constraint
+{
 public:
-  VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(
-      AbsoluteOrientation3DStampedConstraint);
+  VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(AbsoluteOrientation3DStampedConstraint);
 
   /**
    * @brief Default constructor
@@ -81,10 +82,9 @@ public:
    * @param[in] covariance  The measurement/prior covariance (3x3 matrix: qx,
    * qy, qz)
    */
-  AbsoluteOrientation3DStampedConstraint(
-      const std::string &source,
-      const vesta_variables::Orientation3DStamped &orientation,
-      const vesta_core::Vector4d &mean, const vesta_core::Matrix3d &covariance);
+  AbsoluteOrientation3DStampedConstraint(const std::string& source,
+                                         const vesta_variables::Orientation3DStamped& orientation,
+                                         const vesta_core::Vector4d& mean, const vesta_core::Matrix3d& covariance);
 
   /**
    * @brief Create a constraint using a measurement/prior of a 3D orientation
@@ -98,10 +98,9 @@ public:
    * @param[in] covariance  The measurement/prior covariance (3x3 matrix: qx,
    * qy, qz)
    */
-  AbsoluteOrientation3DStampedConstraint(
-      const std::string &source,
-      const vesta_variables::Orientation3DStamped &orientation,
-      const Eigen::Quaterniond &mean, const vesta_core::Matrix3d &covariance);
+  AbsoluteOrientation3DStampedConstraint(const std::string& source,
+                                         const vesta_variables::Orientation3DStamped& orientation,
+                                         const Eigen::Quaterniond& mean, const vesta_core::Matrix3d& covariance);
 
   /**
    * @brief Destructor
@@ -113,14 +112,18 @@ public:
    *
    * Order is (w, x, y, z)
    */
-  const vesta_core::Vector4d &mean() const { return mean_; }
+  const vesta_core::Vector4d& mean() const
+  {
+    return mean_;
+  }
 
   /**
    * @brief Read-only access to the square root information matrix.
    *
    * Order is (x, y, z)
    */
-  const vesta_core::Matrix3d &sqrtInformation() const {
+  const vesta_core::Matrix3d& sqrtInformation() const
+  {
     return sqrt_information_;
   }
 
@@ -137,7 +140,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
@@ -150,7 +153,7 @@ public:
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction *costFunction() const override;
+  ceres::CostFunction* costFunction() const override;
 
 protected:
   /**
@@ -158,19 +161,17 @@ protected:
    * @param[in] quaternion - The input Eigen quaternion
    * @return The \p quaternion, converted to an Eigen Vector4d
    */
-  static vesta_core::Vector4d toEigen(const Eigen::Quaterniond &quaternion);
+  static vesta_core::Vector4d toEigen(const Eigen::Quaterniond& quaternion);
 
   /**
    * @brief Utility method to convert a flat 1D array to a 3x3 Eigen matrix
    * @param[in] covariance - The input covariance array
    * @return The \p covariance, converted to an Eigen Matrix3d
    */
-  static vesta_core::Matrix3d toEigen(const std::array<double, 9> &covariance);
+  static vesta_core::Matrix3d toEigen(const std::array<double, 9>& covariance);
 
-  vesta_core::Vector4d
-      mean_; //!< The measured/prior mean vector for this variable
-  vesta_core::Matrix3d
-      sqrt_information_; //!< The square root information matrix
+  vesta_core::Vector4d mean_;              //!< The measured/prior mean vector for this variable
+  vesta_core::Matrix3d sqrt_information_;  //!< The square root information matrix
 
 private:
   // Allow Boost Serialization access to private methods
@@ -186,14 +187,14 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & mean_;
     archive & sqrt_information_;
   }
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
-BOOST_CLASS_EXPORT_KEY(
-    vesta_constraints::AbsoluteOrientation3DStampedConstraint);
+BOOST_CLASS_EXPORT_KEY(vesta_constraints::AbsoluteOrientation3DStampedConstraint);

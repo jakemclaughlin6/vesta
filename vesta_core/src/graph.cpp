@@ -40,53 +40,54 @@
 
 #include <functional>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
-std::ostream &operator<<(std::ostream &stream, const Graph &graph) {
+std::ostream& operator<<(std::ostream& stream, const Graph& graph)
+{
   graph.print(stream);
   return stream;
 }
 
-Graph::const_variable_range
-Graph::getConnectedVariables(const UUID &constraint_uuid) const {
-  std::function<const vesta_core::Variable &(const UUID &variable_uuid)>
-      uuid_to_variable_ref =
-          [this](const UUID &variable_uuid) -> const Variable & {
-    return this->getVariable(variable_uuid);
-  };
+Graph::const_variable_range Graph::getConnectedVariables(const UUID& constraint_uuid) const
+{
+  std::function<const vesta_core::Variable&(const UUID& variable_uuid)> uuid_to_variable_ref =
+      [this](const UUID& variable_uuid) -> const Variable& { return this->getVariable(variable_uuid); };
 
-  const auto &constraint = getConstraint(constraint_uuid);
-  const auto &variable_uuids = constraint.variables();
+  const auto& constraint = getConstraint(constraint_uuid);
+  const auto& variable_uuids = constraint.variables();
 
-  return const_variable_range(
-      boost::make_transform_iterator(variable_uuids.cbegin(),
-                                     uuid_to_variable_ref),
-      boost::make_transform_iterator(variable_uuids.cend(),
-                                     uuid_to_variable_ref));
+  return const_variable_range(boost::make_transform_iterator(variable_uuids.cbegin(), uuid_to_variable_ref),
+                              boost::make_transform_iterator(variable_uuids.cend(), uuid_to_variable_ref));
 }
 
-void Graph::update(const Transaction &transaction) {
+void Graph::update(const Transaction& transaction)
+{
   // Update the graph with a new transaction. In order to keep the graph
   // consistent, variables are added first, followed by the constraints which
   // might use the newly added variables. Then constraints are removed so that
   // the variable usage is updated. Finally, variables are removed.
 
   // Insert the new variables into the graph
-  for (const auto &variable : transaction.addedVariables()) {
+  for (const auto& variable : transaction.addedVariables())
+  {
     addVariable(variable.clone());
   }
   // Insert the new constraints into the graph
-  for (const auto &constraint : transaction.addedConstraints()) {
+  for (const auto& constraint : transaction.addedConstraints())
+  {
     addConstraint(constraint.clone());
   }
   // Delete constraints from the graph
-  for (const auto &constraint_uuid : transaction.removedConstraints()) {
+  for (const auto& constraint_uuid : transaction.removedConstraints())
+  {
     removeConstraint(constraint_uuid);
   }
   // Delete variables from the graph
-  for (const auto &variable_uuid : transaction.removedVariables()) {
+  for (const auto& variable_uuid : transaction.removedVariables())
+  {
     removeVariable(variable_uuid);
   }
 }
 
-} // namespace vesta_core
+}  // namespace vesta_core

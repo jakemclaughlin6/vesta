@@ -37,19 +37,24 @@
 
 #include <ostream>
 
-namespace vesta_loss {
+namespace vesta_loss
+{
 
-HuberLoss::HuberLoss(const double a) : a_(a) {}
+HuberLoss::HuberLoss(const double a) : a_(a)
+{
+}
 
-void HuberLoss::print(std::ostream &stream) const {
+void HuberLoss::print(std::ostream& stream) const
+{
   stream << type() << "\n"
          << "  a: " << a_ << "\n";
 }
 
-ceres::LossFunction *HuberLoss::lossFunction() const {
+ceres::LossFunction* HuberLoss::lossFunction() const
+{
   return new ceres::HuberLoss(a_);
 }
 
-} // namespace vesta_loss
+}  // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::HuberLoss);

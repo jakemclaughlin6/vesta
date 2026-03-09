@@ -44,27 +44,29 @@
 
 #include <ostream>
 
-namespace vesta_variables {
-PinholeCameraRadial::PinholeCameraRadial(const vesta_core::UUID &uuid,
-                                         const uint64_t &camera_id)
-    : BaseCamera(uuid, camera_id) {}
+namespace vesta_variables
+{
+PinholeCameraRadial::PinholeCameraRadial(const vesta_core::UUID& uuid, const uint64_t& camera_id)
+  : BaseCamera(uuid, camera_id)
+{
+}
 
-PinholeCameraRadial::PinholeCameraRadial(const uint64_t &camera_id)
-    : PinholeCameraRadial(vesta_core::uuid::generate(detail::type(), camera_id),
-                          camera_id) {}
+PinholeCameraRadial::PinholeCameraRadial(const uint64_t& camera_id)
+  : PinholeCameraRadial(vesta_core::uuid::generate(detail::type(), camera_id), camera_id)
+{
+}
 
-PinholeCameraRadial::PinholeCameraRadial(const vesta_core::UUID &uuid,
-                                         const uint64_t &camera_id,
-                                         const double &f, const double &r1,
-                                         const double &r2)
-    : PinholeCameraRadial(vesta_core::uuid::generate(detail::type(), camera_id),
-                          camera_id) {
+PinholeCameraRadial::PinholeCameraRadial(const vesta_core::UUID& uuid, const uint64_t& camera_id, const double& f,
+                                         const double& r1, const double& r2)
+  : PinholeCameraRadial(vesta_core::uuid::generate(detail::type(), camera_id), camera_id)
+{
   data_[F] = f;
   data_[R1] = r1;
   data_[R2] = r2;
 }
 
-void PinholeCameraRadial::print(std::ostream &stream) const {
+void PinholeCameraRadial::print(std::ostream& stream) const
+{
   stream << type() << ":\n"
          << "  uuid: " << uuid() << "\n"
          << "  size: " << size() << "\n"
@@ -75,6 +77,6 @@ void PinholeCameraRadial::print(std::ostream &stream) const {
          << "  - r2: " << r2() << "\n";
 }
 
-} // namespace vesta_variables
+}  // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::PinholeCameraRadial);

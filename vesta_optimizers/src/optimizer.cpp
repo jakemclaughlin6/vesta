@@ -36,4 +36,6 @@
 // The Optimizer base class is a pure interface (header-only).
 // This file is kept for build system compatibility.
 
-namespace vesta_optimizers {} // namespace vesta_optimizers
+namespace vesta_optimizers
+{
+}  // namespace vesta_optimizers

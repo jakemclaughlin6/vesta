@@ -44,7 +44,8 @@
 
 #include <Eigen/Core>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Create a prior cost function on the marker position, minimising
@@ -74,7 +75,8 @@ namespace vesta_constraints {
  * the matrix A is the square root information matrix (the inverse of the
  * covariance).
  */
-class Fixed3DLandmarkSimpleCovarianceCostFunctor {
+class Fixed3DLandmarkSimpleCovarianceCostFunctor
+{
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
@@ -90,9 +92,8 @@ public:
    *
    * @param[in] marker_size The size of the marker (in meters).
    **/
-  Fixed3DLandmarkSimpleCovarianceCostFunctor(
-      const vesta_core::MatrixXd &A, const vesta_core::Vector7d &b,
-      const vesta_core::MatrixXd &obs, const vesta_core::Vector1d &marker_size);
+  Fixed3DLandmarkSimpleCovarianceCostFunctor(const vesta_core::MatrixXd& A, const vesta_core::Vector7d& b,
+                                             const vesta_core::MatrixXd& obs, const vesta_core::Vector1d& marker_size);
 
   /**
    * @brief Construct a cost function instance
@@ -107,17 +108,14 @@ public:
    * @param[in] pts3d The 3D points in marker coordinate frame (Nx3 in order x,
    *y, z).
    **/
-  Fixed3DLandmarkSimpleCovarianceCostFunctor(const vesta_core::MatrixXd &A,
-                                             const vesta_core::Vector7d &b,
-                                             const vesta_core::MatrixXd &obs,
-                                             const vesta_core::MatrixXd &pts3d);
+  Fixed3DLandmarkSimpleCovarianceCostFunctor(const vesta_core::MatrixXd& A, const vesta_core::Vector7d& b,
+                                             const vesta_core::MatrixXd& obs, const vesta_core::MatrixXd& pts3d);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
    */
   template <typename T>
-  bool operator()(const T *const position, const T *const orientation,
-                  const T *const calibration, T *residual) const;
+  bool operator()(const T* const position, const T* const orientation, const T* const calibration, T* residual) const;
 
 private:
   vesta_core::MatrixXd A_;
@@ -126,26 +124,23 @@ private:
   vesta_core::MatrixXd pts3d_;
 };
 
-Fixed3DLandmarkSimpleCovarianceCostFunctor::
-    Fixed3DLandmarkSimpleCovarianceCostFunctor(
-        const vesta_core::MatrixXd &A, const vesta_core::Vector7d &b,
-        const vesta_core::MatrixXd &obs, const vesta_core::MatrixXd &pts3d)
-    : A_(A), b_(b), obs_(obs),
-      pts3d_(
-          pts3d.transpose()) // Transpose from Nx3 to 3xN to make math easier.
+Fixed3DLandmarkSimpleCovarianceCostFunctor::Fixed3DLandmarkSimpleCovarianceCostFunctor(
+    const vesta_core::MatrixXd& A, const vesta_core::Vector7d& b, const vesta_core::MatrixXd& obs,
+    const vesta_core::MatrixXd& pts3d)
+  : A_(A), b_(b), obs_(obs), pts3d_(pts3d.transpose())  // Transpose from Nx3 to 3xN to make math easier.
 {
-  assert(pts3d_.rows() == 3); // Check if we have 3xN
+  assert(pts3d_.rows() == 3);  // Check if we have 3xN
 
   // Create Marker Transform Matrix (Tm)
-  double qm[4] = {b_(3), b_(4), b_(5), b_(6)};
+  double qm[4] = { b_(3), b_(4), b_(5), b_(6) };
   double rm[9];
   ceres::QuaternionToRotation(qm, rm);
 
   Eigen::Matrix<double, 4, 4, Eigen::RowMajor> Tm;
-  Tm << rm[0], rm[1], rm[2], b_(0), // NOLINT
-      rm[3], rm[4], rm[5], b_(1),   // NOLINT
-      rm[6], rm[7], rm[8], b_(2),   // NOLINT
-      0.0, 0.0, 0.0, 1.0;           // NOLINT
+  Tm << rm[0], rm[1], rm[2], b_(0),  // NOLINT
+      rm[3], rm[4], rm[5], b_(1),    // NOLINT
+      rm[6], rm[7], rm[8], b_(2),    // NOLINT
+      0.0, 0.0, 0.0, 1.0;            // NOLINT
 
   // TODO(omendez): Can we do this directly on quaternions?
   // ceres::QuaternionProduct(q, position, difference);
@@ -156,26 +151,26 @@ Fixed3DLandmarkSimpleCovarianceCostFunctor::
 }
 
 template <typename T>
-bool Fixed3DLandmarkSimpleCovarianceCostFunctor::operator()(
-    const T *const position, const T *const orientation,
-    const T *const calibration, T *residual) const {
+bool Fixed3DLandmarkSimpleCovarianceCostFunctor::operator()(const T* const position, const T* const orientation,
+                                                            const T* const calibration, T* residual) const
+{
   // Create Calibration Matrix K
   Eigen::Matrix<T, 4, 4, Eigen::RowMajor> K;
-  K << calibration[0], T(0.0), calibration[2], T(0.0), // NOLINT
-      T(0.0), calibration[1], calibration[3], T(0.0),  // NOLINT
-      T(0.0), T(0.0), T(1.0), T(0.0),                  // NOLINT
-      T(0.0), T(0.0), T(0.0), T(1.0);                  // NOLINT
+  K << calibration[0], T(0.0), calibration[2], T(0.0),  // NOLINT
+      T(0.0), calibration[1], calibration[3], T(0.0),   // NOLINT
+      T(0.0), T(0.0), T(1.0), T(0.0),                   // NOLINT
+      T(0.0), T(0.0), T(0.0), T(1.0);                   // NOLINT
 
   // Create Camera Translation Matrix from Params.
-  T q[4] = {orientation[0], orientation[1], orientation[2], orientation[3]};
+  T q[4] = { orientation[0], orientation[1], orientation[2], orientation[3] };
   T r[9];
   ceres::QuaternionToRotation(q, r);
 
   Eigen::Matrix<T, 4, 4, Eigen::RowMajor> Ta;
-  Ta << r[0], r[1], r[2], position[0], // NOLINT
-      r[3], r[4], r[5], position[1],   // NOLINT
-      r[6], r[7], r[8], position[2],   // NOLINT
-      T(0.0), T(0.0), T(0.0), T(1.0);  // NOLINT
+  Ta << r[0], r[1], r[2], position[0],  // NOLINT
+      r[3], r[4], r[5], position[1],    // NOLINT
+      r[6], r[7], r[8], position[2],    // NOLINT
+      T(0.0), T(0.0), T(0.0), T(1.0);   // NOLINT
 
   // Transform 3D Points to Marker Location
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> xp;
@@ -187,7 +182,8 @@ bool Fixed3DLandmarkSimpleCovarianceCostFunctor::operator()(
 
   auto d = (obs_.cast<T>() - xp.block(0, 0, xp.rows(), 2));
 
-  for (uint i = 0; i < pts3d_.cols(); i++) {
+  for (uint i = 0; i < pts3d_.cols(); i++)
+  {
     // Weight Residuals, in this case, we assume a flat error on the pixels
     auto r = A_ * d.row(i).transpose();
     residual[i * 2] = r[0];
@@ -197,4 +193,4 @@ bool Fixed3DLandmarkSimpleCovarianceCostFunctor::operator()(
   return true;
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

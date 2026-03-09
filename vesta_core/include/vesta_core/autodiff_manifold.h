@@ -41,7 +41,8 @@
 
 #include <memory>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief Create a manifold with the Jacobians computed via automatic
@@ -76,12 +77,11 @@ namespace vesta_core {
  *
  * For more information on manifolds, see vesta_core::Manifold
  */
-template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize,
-          int kTangentSize>
-class AutoDiffManifold : public Manifold {
+template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize, int kTangentSize>
+class AutoDiffManifold : public Manifold
+{
 public:
-  VESTA_SMART_PTR_DEFINITIONS(
-      AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize, kTangentSize>);
+  VESTA_SMART_PTR_DEFINITIONS(AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize, kTangentSize>);
 
   /**
    * @brief Constructs new PlusFunctor and MinusFunctor instances
@@ -92,7 +92,7 @@ public:
    * @brief Takes ownership of the provided PlusFunctor and MinusFunctor
    * instances
    */
-  AutoDiffManifold(PlusFunctor *plus_functor, MinusFunctor *minus_functor);
+  AutoDiffManifold(PlusFunctor* plus_functor, MinusFunctor* minus_functor);
 
   /**
    * @brief Generalization of the addition operation, implemented by the
@@ -105,8 +105,7 @@ public:
    * @param[out] x_plus_delta The final variable value, of size \p AmbientSize()
    * @return True if successful, false otherwise
    */
-  bool Plus(const double *x, const double *delta,
-            double *x_plus_delta) const override;
+  bool Plus(const double* x, const double* delta, double* x_plus_delta) const override;
 
   /**
    * @brief The Jacobian of Plus(x, delta) w.r.t delta at delta = 0, computed
@@ -117,7 +116,7 @@ public:
    * @param[out] jacobian The Jacobian in row-major order, of size \p
    * AmbientSize() x \p TangentSize()
    */
-  bool PlusJacobian(const double *x, double *jacobian) const override;
+  bool PlusJacobian(const double* x, double* jacobian) const override;
 
   /**
    * @brief Generalization of the subtraction operation, implemented by the
@@ -130,7 +129,7 @@ public:
    * of size \p TangentSize()
    * @return True if successful, false otherwise
    */
-  bool Minus(const double *x1, const double *x2, double *delta) const override;
+  bool Minus(const double* x1, const double* x2, double* delta) const override;
 
   /**
    * @brief The Jacobian of Minus(x1, x2) w.r.t x2 evaluated at x1 = x2 = x,
@@ -141,85 +140,83 @@ public:
    * @param[out] jacobian The Jacobian in row-major order, of size \p
    * TangentSize() x \p AmbientSize()
    */
-  bool MinusJacobian(const double *x, double *jacobian) const override;
+  bool MinusJacobian(const double* x, double* jacobian) const override;
 
   /**
    * @brief The size of the variable parameterization in the nonlinear manifold
    */
-  int AmbientSize() const override { return kAmbientSize; }
+  int AmbientSize() const override
+  {
+    return kAmbientSize;
+  }
 
   /**
    * @brief The size of a delta vector in the linear tangent space to the
    * nonlinear manifold
    */
-  int TangentSize() const override { return kTangentSize; }
+  int TangentSize() const override
+  {
+    return kTangentSize;
+  }
 
 private:
   std::unique_ptr<PlusFunctor> plus_functor_;
   std::unique_ptr<MinusFunctor> minus_functor_;
 };
 
-template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize,
-          int kTangentSize>
-AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize,
-                 kTangentSize>::AutoDiffManifold()
-    : plus_functor_(new PlusFunctor()), minus_functor_(new MinusFunctor()) {}
+template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize, int kTangentSize>
+AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize, kTangentSize>::AutoDiffManifold()
+  : plus_functor_(new PlusFunctor()), minus_functor_(new MinusFunctor())
+{
+}
 
-template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize,
-          int kTangentSize>
-AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize,
-                 kTangentSize>::AutoDiffManifold(PlusFunctor *plus_functor,
-                                                 MinusFunctor *minus_functor)
-    : plus_functor_(plus_functor), minus_functor_(minus_functor) {}
+template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize, int kTangentSize>
+AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize, kTangentSize>::AutoDiffManifold(PlusFunctor* plus_functor,
+                                                                                          MinusFunctor* minus_functor)
+  : plus_functor_(plus_functor), minus_functor_(minus_functor)
+{
+}
 
-template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize,
-          int kTangentSize>
-bool AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize,
-                      kTangentSize>::Plus(const double *x, const double *delta,
-                                          double *x_plus_delta) const {
+template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize, int kTangentSize>
+bool AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize, kTangentSize>::Plus(const double* x, const double* delta,
+                                                                                   double* x_plus_delta) const
+{
   return (*plus_functor_)(x, delta, x_plus_delta);
 }
 
-template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize,
-          int kTangentSize>
-bool AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize,
-                      kTangentSize>::PlusJacobian(const double *x,
-                                                  double *jacobian) const {
-  double zero_delta[kTangentSize] = {}; // zero-initialize
+template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize, int kTangentSize>
+bool AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize, kTangentSize>::PlusJacobian(const double* x,
+                                                                                           double* jacobian) const
+{
+  double zero_delta[kTangentSize] = {};  // zero-initialize
   double x_plus_delta[kAmbientSize];
 
-  const double *parameter_ptrs[2] = {x, zero_delta};
-  double *jacobian_ptrs[2] = {NULL, jacobian};
-  ceres::internal::AutoDifferentiate<
-      kAmbientSize,
-      ceres::internal::StaticParameterDims<kAmbientSize, kTangentSize>>(
-      *plus_functor_, parameter_ptrs, kAmbientSize, x_plus_delta,
-      jacobian_ptrs);
+  const double* parameter_ptrs[2] = { x, zero_delta };
+  double* jacobian_ptrs[2] = { NULL, jacobian };
+  ceres::internal::AutoDifferentiate<kAmbientSize, ceres::internal::StaticParameterDims<kAmbientSize, kTangentSize>>(
+      *plus_functor_, parameter_ptrs, kAmbientSize, x_plus_delta, jacobian_ptrs);
   return true;
 }
 
-template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize,
-          int kTangentSize>
-bool AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize,
-                      kTangentSize>::Minus(const double *x1, const double *x2,
-                                           double *delta) const {
+template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize, int kTangentSize>
+bool AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize, kTangentSize>::Minus(const double* x1, const double* x2,
+                                                                                    double* delta) const
+{
   return (*minus_functor_)(x1, x2, delta);
 }
 
-template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize,
-          int kTangentSize>
-bool AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize,
-                      kTangentSize>::MinusJacobian(const double *x,
-                                                   double *jacobian) const {
-  double delta[kTangentSize] = {}; // zero-initialize
+template <typename PlusFunctor, typename MinusFunctor, int kAmbientSize, int kTangentSize>
+bool AutoDiffManifold<PlusFunctor, MinusFunctor, kAmbientSize, kTangentSize>::MinusJacobian(const double* x,
+                                                                                            double* jacobian) const
+{
+  double delta[kTangentSize] = {};  // zero-initialize
 
-  const double *parameter_ptrs[2] = {x, x};
-  double *jacobian_ptrs[2] = {NULL, jacobian};
-  using StaticParameters =
-      ceres::internal::StaticParameterDims<kAmbientSize, kAmbientSize>;
-  ceres::internal::AutoDifferentiate<kTangentSize, StaticParameters>(
-      *minus_functor_, parameter_ptrs, kTangentSize, delta, jacobian_ptrs);
+  const double* parameter_ptrs[2] = { x, x };
+  double* jacobian_ptrs[2] = { NULL, jacobian };
+  using StaticParameters = ceres::internal::StaticParameterDims<kAmbientSize, kAmbientSize>;
+  ceres::internal::AutoDifferentiate<kTangentSize, StaticParameters>(*minus_functor_, parameter_ptrs, kTangentSize,
+                                                                     delta, jacobian_ptrs);
   return true;
 }
 
-} // namespace vesta_core
+}  // namespace vesta_core

@@ -49,12 +49,14 @@
 
 using vesta_variables::PinholeCameraRadial;
 
-TEST(PinholeCameraRadialSimple, Type) {
+TEST(PinholeCameraRadialSimple, Type)
+{
   PinholeCameraRadial variable(0);
   EXPECT_EQ("vesta_variables::PinholeCameraRadial", variable.type());
 }
 
-TEST(PinholeCameraRadial, UUID) {
+TEST(PinholeCameraRadial, UUID)
+{
   // Verify two positions with the same landmark ids produce the same uuids
   {
     PinholeCameraRadial variable1(0);
@@ -71,10 +73,15 @@ TEST(PinholeCameraRadial, UUID) {
   }
 }
 
-struct CostFunctor {
-  CostFunctor() {}
+struct CostFunctor
+{
+  CostFunctor()
+  {
+  }
 
-  template <typename T> bool operator()(const T *const k, T *residual) const {
+  template <typename T>
+  bool operator()(const T* const k, T* residual) const
+  {
     residual[0] = k[0] - T(1.2);
     residual[1] = k[1] + T(0.8);
     residual[2] = k[2] - T(0.51);
@@ -83,7 +90,8 @@ struct CostFunctor {
   }
 };
 
-TEST(PinholeCameraRadial, Optimization) {
+TEST(PinholeCameraRadial, Optimization)
+{
   // Create a Point3DLandmark
   PinholeCameraRadial K(0);
   K.f() = 4.1;
@@ -91,13 +99,12 @@ TEST(PinholeCameraRadial, Optimization) {
   K.r2() = 5;
 
   // Create a simple a constraint
-  ceres::CostFunction *cost_function =
-      new ceres::AutoDiffCostFunction<CostFunctor, 3, 3>(new CostFunctor());
+  ceres::CostFunction* cost_function = new ceres::AutoDiffCostFunction<CostFunctor, 3, 3>(new CostFunctor());
 
   // Build the problem.
   ceres::Problem problem;
   problem.AddParameterBlock(K.data(), K.size());
-  std::vector<double *> parameter_blocks;
+  std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(K.data());
   problem.AddResidualBlock(cost_function, nullptr, parameter_blocks);
 
@@ -113,7 +120,8 @@ TEST(PinholeCameraRadial, Optimization) {
   EXPECT_NEAR(0.51, K.r2(), 1.0e-5);
 }
 
-TEST(PinholeCameraRadial, Serialization) {
+TEST(PinholeCameraRadial, Serialization)
+{
   // Create a Point3DLandmark
   PinholeCameraRadial expected(0);
   expected.f() = 640;
@@ -142,7 +150,8 @@ TEST(PinholeCameraRadial, Serialization) {
   EXPECT_EQ(expected.r2(), actual.r2());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

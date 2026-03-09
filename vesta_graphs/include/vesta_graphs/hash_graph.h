@@ -44,6 +44,9 @@
 #include <vesta_core/variable.h>
 #include <vesta_graphs/hash_graph_params.h>
 
+#include <ceres/covariance.h>
+#include <ceres/problem.h>
+#include <ceres/solver.h>
 #include <boost/archive/detail/basic_iarchive.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -51,9 +54,6 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/unordered_map.hpp>
 #include <boost/serialization/unordered_set.hpp>
-#include <ceres/covariance.h>
-#include <ceres/problem.h>
-#include <ceres/solver.h>
 
 #include <memory>
 #include <type_traits>
@@ -62,7 +62,8 @@
 #include <utility>
 #include <vector>
 
-namespace vesta_graphs {
+namespace vesta_graphs
+{
 
 /**
  * @brief This is a concrete implementation of the Graph interface using
@@ -79,7 +80,8 @@ namespace vesta_graphs {
  * standard thread synchronization techniques should be used to guard access to
  * the graph.
  */
-class HashGraph : public vesta_core::Graph {
+class HashGraph : public vesta_core::Graph
+{
 public:
   VESTA_GRAPH_DEFINITIONS(HashGraph);
 
@@ -88,14 +90,14 @@ public:
    *
    * @param[in] params HashGraph parameters.
    */
-  explicit HashGraph(const HashGraphParams &params = HashGraphParams());
+  explicit HashGraph(const HashGraphParams& params = HashGraphParams());
 
   /**
    * @brief Copy constructor
    *
    * Performs a deep copy of the graph
    */
-  HashGraph(const HashGraph &other);
+  HashGraph(const HashGraph& other);
 
   /**
    * @brief Destructor
@@ -107,7 +109,7 @@ public:
    *
    * Performs a deep copy of the graph
    */
-  HashGraph &operator=(const HashGraph &other);
+  HashGraph& operator=(const HashGraph& other);
 
   /**
    * @brief Clear all variables and constraints from the graph object.
@@ -135,8 +137,7 @@ public:
    * @return                    True if this constraint already exists, False
    * otherwise
    */
-  bool constraintExists(
-      const vesta_core::UUID &constraint_uuid) const noexcept override;
+  bool constraintExists(const vesta_core::UUID& constraint_uuid) const noexcept override;
 
   /**
    * @brief Add a new constraint to the graph
@@ -166,7 +167,7 @@ public:
    * @return                    True if the constraint was removed, false
    * otherwise
    */
-  bool removeConstraint(const vesta_core::UUID &constraint_uuid) override;
+  bool removeConstraint(const vesta_core::UUID& constraint_uuid) override;
 
   /**
    * @brief Read-only access to a constraint from the graph by UUID
@@ -178,8 +179,7 @@ public:
    * @return                    The constraint in the graph with the specified
    * UUID
    */
-  const vesta_core::Constraint &
-  getConstraint(const vesta_core::UUID &constraint_uuid) const override;
+  const vesta_core::Constraint& getConstraint(const vesta_core::UUID& constraint_uuid) const override;
 
   /**
    * @brief Read-only access to all of the constraints in the graph
@@ -192,8 +192,7 @@ public:
    *
    * @return A read-only iterator range containing all constraints
    */
-  vesta_core::Graph::const_constraint_range
-  getConstraints() const noexcept override;
+  vesta_core::Graph::const_constraint_range getConstraints() const noexcept override;
 
   /**
    * @brief Read-only access to the subset of constraints that are connected to
@@ -204,7 +203,7 @@ public:
    * the specified variable
    */
   vesta_core::Graph::const_constraint_range
-  getConnectedConstraints(const vesta_core::UUID &variable_uuid) const override;
+  getConnectedConstraints(const vesta_core::UUID& variable_uuid) const override;
 
   /**
    * @brief Check if the variable already exists in the graph
@@ -216,8 +215,7 @@ public:
    * @return                  True if this variable already exists, False
    * otherwise
    */
-  bool
-  variableExists(const vesta_core::UUID &variable_uuid) const noexcept override;
+  bool variableExists(const vesta_core::UUID& variable_uuid) const noexcept override;
 
   /**
    * @brief Add a new variable to the graph
@@ -244,7 +242,7 @@ public:
    * @param[in] variable_uuid The UUID of the variable to be removed
    * @return                  True if the variable was removed, false otherwise
    */
-  bool removeVariable(const vesta_core::UUID &variable_uuid) override;
+  bool removeVariable(const vesta_core::UUID& variable_uuid) override;
 
   /**
    * @brief Read-only access to a variable in the graph by UUID
@@ -255,8 +253,7 @@ public:
    * @param[in] variable_uuid The UUID of the requested variable
    * @return                  The variable in the graph with the specified UUID
    */
-  const vesta_core::Variable &
-  getVariable(const vesta_core::UUID &variable_uuid) const override;
+  const vesta_core::Variable& getVariable(const vesta_core::UUID& variable_uuid) const override;
 
   /**
    * @brief Read-only access to all of the variables in the graph
@@ -269,8 +266,7 @@ public:
    *
    * @return A read-only iterator range containing all variables
    */
-  vesta_core::Graph::const_variable_range
-  getVariables() const noexcept override;
+  vesta_core::Graph::const_variable_range getVariables() const noexcept override;
 
   /**
    * @brief Configure a variable to hold its current value during optimization
@@ -287,8 +283,7 @@ public:
    * held constant during optimization, or if the variable's value is allowed to
    * change during optimization.
    */
-  void holdVariable(const vesta_core::UUID &variable_uuid,
-                    bool hold_constant = true) override;
+  void holdVariable(const vesta_core::UUID& variable_uuid, bool hold_constant = true) override;
 
   /**
    * @brief Check whether a variable is on hold or not
@@ -296,7 +291,7 @@ public:
    * @param[in] variable_uuid The variable to test
    * @return True if the variable is on hold, false otherwise
    */
-  bool isVariableOnHold(const vesta_core::UUID &variable_uuid) const override;
+  bool isVariableOnHold(const vesta_core::UUID& variable_uuid) const override;
 
   /**
    * @brief Compute the marginal covariance blocks for the requested set of
@@ -325,12 +320,10 @@ public:
    * computed in the variable's tangent space/local coordinates. Otherwise it is
    * computed in the variable's parameter space.
    */
-  void getCovariance(
-      const std::vector<std::pair<vesta_core::UUID, vesta_core::UUID>>
-          &covariance_requests,
-      std::vector<std::vector<double>> &covariance_matrices,
-      const ceres::Covariance::Options &options = ceres::Covariance::Options(),
-      const bool use_tangent_space = true) const override;
+  void getCovariance(const std::vector<std::pair<vesta_core::UUID, vesta_core::UUID>>& covariance_requests,
+                     std::vector<std::vector<double>>& covariance_matrices,
+                     const ceres::Covariance::Options& options = ceres::Covariance::Options(),
+                     const bool use_tangent_space = true) const override;
 
   /**
    * @brief Optimize the values of the current set of variables, given the
@@ -350,8 +343,7 @@ public:
    * @return            A Ceres Solver Summary structure containing information
    * about the optimization process
    */
-  ceres::Solver::Summary optimize(const ceres::Solver::Options &options =
-                                      ceres::Solver::Options()) override;
+  ceres::Solver::Summary optimize(const ceres::Solver::Options& options = ceres::Solver::Options()) override;
 
   /**
    * @brief Optimize the values of the current set of variables, given the
@@ -369,10 +361,8 @@ public:
    * @return            A Ceres Solver Summary structure containing information
    * about the optimization process
    */
-  ceres::Solver::Summary
-  optimizeFor(const vesta_core::Duration &max_optimization_time,
-              const ceres::Solver::Options &options =
-                  ceres::Solver::Options()) override;
+  ceres::Solver::Summary optimizeFor(const vesta_core::Duration& max_optimization_time,
+                                     const ceres::Solver::Options& options = ceres::Solver::Options()) override;
 
   /**
    * @brief Evalute the values of the current set of variables, given the
@@ -398,10 +388,8 @@ public:
    * https://ceres-solver.googlesource.com/ceres-solver/+/master/include/ceres/problem.h#401
    * @return True if the problem evaluation was successful; False, otherwise.
    */
-  bool evaluate(double *cost, std::vector<double> *residuals = nullptr,
-                std::vector<double> *gradient = nullptr,
-                const ceres::Problem::EvaluateOptions &options =
-                    ceres::Problem::EvaluateOptions()) const override;
+  bool evaluate(double* cost, std::vector<double>* residuals = nullptr, std::vector<double>* gradient = nullptr,
+                const ceres::Problem::EvaluateOptions& options = ceres::Problem::EvaluateOptions()) const override;
 
   /**
    * @brief Print a human-readable description of the graph to the provided
@@ -409,51 +397,36 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
 protected:
   // Define some helpful typedefs
-  using Constraints =
-      std::unordered_map<vesta_core::UUID, vesta_core::Constraint::SharedPtr,
-                         vesta_core::uuid::hash>;
-  using Variables =
-      std::unordered_map<vesta_core::UUID, vesta_core::Variable::SharedPtr,
-                         vesta_core::uuid::hash>;
-  using VariableSet =
-      std::unordered_set<vesta_core::UUID, vesta_core::uuid::hash>;
-  using CrossReference =
-      std::unordered_map<vesta_core::UUID, std::vector<vesta_core::UUID>,
-                         vesta_core::uuid::hash>;
+  using Constraints = std::unordered_map<vesta_core::UUID, vesta_core::Constraint::SharedPtr, vesta_core::uuid::hash>;
+  using Variables = std::unordered_map<vesta_core::UUID, vesta_core::Variable::SharedPtr, vesta_core::uuid::hash>;
+  using VariableSet = std::unordered_set<vesta_core::UUID, vesta_core::uuid::hash>;
+  using CrossReference = std::unordered_map<vesta_core::UUID, std::vector<vesta_core::UUID>, vesta_core::uuid::hash>;
 
-  Constraints constraints_; //!< The set of all constraints
-  CrossReference
-      constraints_by_variable_uuid_; //!< Index all of the constraints by
-                                     //!< variable uuids
-  ceres::Problem::Options
-      problem_options_; //!< User-defined options to be applied to all
-                        //!< constructed ceres::Problems
-  Variables variables_; //!< The set of all variables
-  VariableSet
-      variables_on_hold_; //!< The set of variables that should be held constant
+  Constraints constraints_;                      //!< The set of all constraints
+  CrossReference constraints_by_variable_uuid_;  //!< Index all of the constraints by
+                                                 //!< variable uuids
+  ceres::Problem::Options problem_options_;      //!< User-defined options to be applied to all
+                                                 //!< constructed ceres::Problems
+  Variables variables_;                          //!< The set of all variables
+  VariableSet variables_on_hold_;                //!< The set of variables that should be held constant
 
   //!< Persistent ceres::Problem for incremental optimization
   std::unique_ptr<ceres::Problem> problem_;
   //!< Map from constraint UUID to ceres ResidualBlockId for incremental removal
-  std::unordered_map<vesta_core::UUID, ceres::ResidualBlockId,
-                     vesta_core::uuid::hash>
-      residual_block_ids_;
-  bool problem_dirty_ =
-      true; //!< If true, problem_ must be rebuilt from scratch on next optimize
+  std::unordered_map<vesta_core::UUID, ceres::ResidualBlockId, vesta_core::uuid::hash> residual_block_ids_;
+  bool problem_dirty_ = true;  //!< If true, problem_ must be rebuilt from scratch on next optimize
 
   //!< Jacobian policy configuration (serialized for round-trip fidelity)
-  vesta_core::JacobianPolicy jacobian_policy_ =
-      vesta_core::JacobianPolicy::kDefault;
+  vesta_core::JacobianPolicy jacobian_policy_ = vesta_core::JacobianPolicy::kDefault;
   int jacobian_relinearization_period_ = 1;
   double jacobian_relinearization_threshold_ = 0.01;
   //!< Jacobian relinearization controller (shared with callback and cost
   //!< function wrappers)
-  std::shared_ptr<vesta_core::JacobianRelinearizationController>
-      jacobian_controller_;
+  std::shared_ptr<vesta_core::JacobianRelinearizationController> jacobian_controller_;
   //!< Ceres EvaluationCallback for Jacobian caching (owned by HashGraph, raw
   //!< pointer given to Problem)
   std::unique_ptr<vesta_core::JacobianEvaluationCallback> jacobian_callback_;
@@ -467,8 +440,7 @@ protected:
    * @return The original pointer if kDefault, or a new
    * CachedJacobianCostFunction wrapper
    */
-  ceres::CostFunction *
-  wrapCostFunction(ceres::CostFunction *cost_function) const;
+  ceres::CostFunction* wrapCostFunction(ceres::CostFunction* cost_function) const;
 
   /**
    * @brief Ensure the persistent ceres::Problem is up-to-date
@@ -488,7 +460,7 @@ protected:
    *
    * @param[out] problem The ceres::Problem object to modify
    */
-  void createProblem(ceres::Problem &problem) const;
+  void createProblem(ceres::Problem& problem) const;
 
 private:
   // Allow Boost Serialization access to private methods
@@ -504,28 +476,31 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Graph>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Graph>(*this);
     archive & constraints_;
     archive & constraints_by_variable_uuid_;
     archive & problem_options_;
     archive & variables_;
     archive & variables_on_hold_;
     // Serialize JacobianPolicy as int since it's an enum class
-    if constexpr (std::is_base_of_v<boost::archive::detail::basic_iarchive,
-                                    Archive>) {
+    if constexpr (std::is_base_of_v<boost::archive::detail::basic_iarchive, Archive>)
+    {
       int policy_int = 0;
       archive & policy_int;
       jacobian_policy_ = static_cast<vesta_core::JacobianPolicy>(policy_int);
-    } else {
+    }
+    else
+    {
       int policy_int = static_cast<int>(jacobian_policy_);
       archive & policy_int;
     }
     archive & jacobian_relinearization_period_;
     archive & jacobian_relinearization_threshold_;
     // Transient members rebuilt lazily — reset on deserialization
-    if constexpr (std::is_base_of_v<boost::archive::detail::basic_iarchive,
-                                    Archive>) {
+    if constexpr (std::is_base_of_v<boost::archive::detail::basic_iarchive, Archive>)
+    {
       problem_.reset();
       residual_block_ids_.clear();
       problem_dirty_ = true;
@@ -534,16 +509,15 @@ private:
       problem_options_.loss_function_ownership = vesta_core::Loss::Ownership;
       problem_options_.evaluation_callback = nullptr;
       // Rebuild Jacobian controller and callback from serialized policy
-      if (jacobian_policy_ != vesta_core::JacobianPolicy::kDefault) {
-        jacobian_controller_ =
-            std::make_shared<vesta_core::JacobianRelinearizationController>(
-                jacobian_policy_, jacobian_relinearization_period_,
-                jacobian_relinearization_threshold_);
-        jacobian_callback_ =
-            std::make_unique<vesta_core::JacobianEvaluationCallback>(
-                jacobian_controller_);
+      if (jacobian_policy_ != vesta_core::JacobianPolicy::kDefault)
+      {
+        jacobian_controller_ = std::make_shared<vesta_core::JacobianRelinearizationController>(
+            jacobian_policy_, jacobian_relinearization_period_, jacobian_relinearization_threshold_);
+        jacobian_callback_ = std::make_unique<vesta_core::JacobianEvaluationCallback>(jacobian_controller_);
         problem_options_.evaluation_callback = jacobian_callback_.get();
-      } else {
+      }
+      else
+      {
         jacobian_controller_.reset();
         jacobian_callback_.reset();
       }
@@ -551,17 +525,19 @@ private:
   }
 };
 
-} // namespace vesta_graphs
+}  // namespace vesta_graphs
 
-namespace boost {
-namespace serialization {
+namespace boost
+{
+namespace serialization
+{
 
 /**
  * @brief Serialize a ceres::Problem::Options object using Boost Serialization
  */
 template <class Archive>
-void serialize(Archive &archive, ceres::Problem::Options &options,
-               const unsigned int /* version */) {
+void serialize(Archive& archive, ceres::Problem::Options& options, const unsigned int /* version */)
+{
   archive & options.cost_function_ownership;
   archive & options.disable_all_safety_checks;
   archive & options.enable_fast_removal;
@@ -569,7 +545,7 @@ void serialize(Archive &archive, ceres::Problem::Options &options,
   archive & options.loss_function_ownership;
 }
 
-} // namespace serialization
-} // namespace boost
+}  // namespace serialization
+}  // namespace boost
 
 BOOST_CLASS_EXPORT_KEY(vesta_graphs::HashGraph);

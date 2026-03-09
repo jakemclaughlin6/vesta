@@ -48,15 +48,18 @@
  * Test fixture that adds a known set of entries to the timestamp manager.
  * Used to test the interactions with existing entries.
  */
-class TimestampManagerTestFixture : public ::testing::Test {
+class TimestampManagerTestFixture : public ::testing::Test
+{
 public:
   TimestampManagerTestFixture()
-      : manager(std::bind(&TimestampManagerTestFixture::generator, this,
-                          std::placeholders::_1, std::placeholders::_2,
-                          std::placeholders::_3, std::placeholders::_4),
-                vesta_core::Duration::MAX) {}
+    : manager(std::bind(&TimestampManagerTestFixture::generator, this, std::placeholders::_1, std::placeholders::_2,
+                        std::placeholders::_3, std::placeholders::_4),
+              vesta_core::Duration::MAX)
+  {
+  }
 
-  void populate() {
+  void populate()
+  {
     // Add a standard set of entries into the motion model
     vesta_core::Transaction transaction;
     transaction.addInvolvedStamp(vesta_core::Timestamp(10, 0));
@@ -67,20 +70,19 @@ public:
     generated_time_spans.clear();
   }
 
-  void
-  generator(const vesta_core::Timestamp &beginning_stamp,
-            const vesta_core::Timestamp &ending_stamp,
-            std::vector<vesta_core::Constraint::SharedPtr> & /*constraints*/,
-            std::vector<vesta_core::Variable::SharedPtr> & /*variables*/) {
+  void generator(const vesta_core::Timestamp& beginning_stamp, const vesta_core::Timestamp& ending_stamp,
+                 std::vector<vesta_core::Constraint::SharedPtr>& /*constraints*/,
+                 std::vector<vesta_core::Variable::SharedPtr>& /*variables*/)
+  {
     generated_time_spans.emplace_back(beginning_stamp, ending_stamp);
   }
 
   vesta_core::TimestampManager manager;
-  std::vector<std::pair<vesta_core::Timestamp, vesta_core::Timestamp>>
-      generated_time_spans;
+  std::vector<std::pair<vesta_core::Timestamp, vesta_core::Timestamp>> generated_time_spans;
 };
 
-TEST_F(TimestampManagerTestFixture, Empty) {
+TEST_F(TimestampManagerTestFixture, Empty)
+{
   // Test:
   // Existing: |-------------------------------------> t
   // Adding:   |------********-----------------------> t
@@ -106,7 +108,8 @@ TEST_F(TimestampManagerTestFixture, Empty) {
   EXPECT_EQ(vesta_core::Timestamp(20, 0), generated_time_spans[0].second);
 }
 
-TEST_F(TimestampManagerTestFixture, EmptySingleStamp) {
+TEST_F(TimestampManagerTestFixture, EmptySingleStamp)
+{
   // Test:
   // Existing: |-------------------------------------> t
   // Adding:   |------*------------------------------> t
@@ -129,7 +132,8 @@ TEST_F(TimestampManagerTestFixture, EmptySingleStamp) {
   EXPECT_EQ(generated_time_spans[0].first, generated_time_spans[0].second);
 }
 
-TEST_F(TimestampManagerTestFixture, Exceptions) {
+TEST_F(TimestampManagerTestFixture, Exceptions)
+{
   // Set a finite buffer length and populate it with some queries
   manager.bufferLength(vesta_core::Duration::fromSec(25.0));
   populate();
@@ -156,7 +160,8 @@ TEST_F(TimestampManagerTestFixture, Exceptions) {
   }
 }
 
-TEST_F(TimestampManagerTestFixture, Purge) {
+TEST_F(TimestampManagerTestFixture, Purge)
+{
   // Set a finite buffer length and populate it with some queries
   manager.bufferLength(vesta_core::Duration::fromSec(30.0));
   populate();
@@ -268,7 +273,8 @@ TEST_F(TimestampManagerTestFixture, Purge) {
   }
 }
 
-TEST_F(TimestampManagerTestFixture, Existing) {
+TEST_F(TimestampManagerTestFixture, Existing)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |--------------********---------------> t
@@ -296,7 +302,8 @@ TEST_F(TimestampManagerTestFixture, Existing) {
   ASSERT_EQ(0ul, generated_time_spans.size());
 }
 
-TEST_F(TimestampManagerTestFixture, BeforeBeginningAligned) {
+TEST_F(TimestampManagerTestFixture, BeforeBeginningAligned)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |--****-------------------------------> t
@@ -328,7 +335,8 @@ TEST_F(TimestampManagerTestFixture, BeforeBeginningAligned) {
   EXPECT_EQ(vesta_core::Timestamp(10, 0), generated_time_spans[0].second);
 }
 
-TEST_F(TimestampManagerTestFixture, BeforeBeginningUnaligned) {
+TEST_F(TimestampManagerTestFixture, BeforeBeginningUnaligned)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |--***--------------------------------> t
@@ -364,7 +372,8 @@ TEST_F(TimestampManagerTestFixture, BeforeBeginningUnaligned) {
   EXPECT_EQ(vesta_core::Timestamp(10, 0), generated_time_spans[1].second);
 }
 
-TEST_F(TimestampManagerTestFixture, BeforeBeginningOverlap) {
+TEST_F(TimestampManagerTestFixture, BeforeBeginningOverlap)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |--********---------------------------> t
@@ -402,7 +411,8 @@ TEST_F(TimestampManagerTestFixture, BeforeBeginningOverlap) {
   EXPECT_EQ(vesta_core::Timestamp(20, 0), generated_time_spans[2].second);
 }
 
-TEST_F(TimestampManagerTestFixture, AfterEndAligned) {
+TEST_F(TimestampManagerTestFixture, AfterEndAligned)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |------------------------------****---> t
@@ -433,7 +443,8 @@ TEST_F(TimestampManagerTestFixture, AfterEndAligned) {
   EXPECT_EQ(vesta_core::Timestamp(45, 0), generated_time_spans[0].second);
 }
 
-TEST_F(TimestampManagerTestFixture, AfterEndUnaligned) {
+TEST_F(TimestampManagerTestFixture, AfterEndUnaligned)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |-------------------------------***---> t
@@ -469,7 +480,8 @@ TEST_F(TimestampManagerTestFixture, AfterEndUnaligned) {
   EXPECT_EQ(vesta_core::Timestamp(45, 0), generated_time_spans[1].second);
 }
 
-TEST_F(TimestampManagerTestFixture, AfterEndOverlap) {
+TEST_F(TimestampManagerTestFixture, AfterEndOverlap)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |--------------------------********---> t
@@ -507,7 +519,8 @@ TEST_F(TimestampManagerTestFixture, AfterEndOverlap) {
   EXPECT_EQ(vesta_core::Timestamp(45, 0), generated_time_spans[2].second);
 }
 
-TEST_F(TimestampManagerTestFixture, MultiSegment) {
+TEST_F(TimestampManagerTestFixture, MultiSegment)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |------************************-------> t
@@ -535,7 +548,8 @@ TEST_F(TimestampManagerTestFixture, MultiSegment) {
   ASSERT_EQ(0ul, generated_time_spans.size());
 }
 
-TEST_F(TimestampManagerTestFixture, MultiSegmentBeforeBeginning) {
+TEST_F(TimestampManagerTestFixture, MultiSegmentBeforeBeginning)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |--****************************-------> t
@@ -567,7 +581,8 @@ TEST_F(TimestampManagerTestFixture, MultiSegmentBeforeBeginning) {
   EXPECT_EQ(vesta_core::Timestamp(10, 0), generated_time_spans[0].second);
 }
 
-TEST_F(TimestampManagerTestFixture, MultiSegmentPastEnd) {
+TEST_F(TimestampManagerTestFixture, MultiSegmentPastEnd)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |------****************************---> t
@@ -599,7 +614,8 @@ TEST_F(TimestampManagerTestFixture, MultiSegmentPastEnd) {
   EXPECT_EQ(vesta_core::Timestamp(45, 0), generated_time_spans[0].second);
 }
 
-TEST_F(TimestampManagerTestFixture, MultiSegmentPastBothEnds) {
+TEST_F(TimestampManagerTestFixture, MultiSegmentPastBothEnds)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |--********************************---> t
@@ -635,7 +651,8 @@ TEST_F(TimestampManagerTestFixture, MultiSegmentPastBothEnds) {
   EXPECT_EQ(vesta_core::Timestamp(45, 0), generated_time_spans[1].second);
 }
 
-TEST_F(TimestampManagerTestFixture, SplitBeginning) {
+TEST_F(TimestampManagerTestFixture, SplitBeginning)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |----------************---------------> t
@@ -669,7 +686,8 @@ TEST_F(TimestampManagerTestFixture, SplitBeginning) {
   EXPECT_EQ(vesta_core::Timestamp(20, 0), generated_time_spans[1].second);
 }
 
-TEST_F(TimestampManagerTestFixture, SplitEnd) {
+TEST_F(TimestampManagerTestFixture, SplitEnd)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |--------------************-----------> t
@@ -703,7 +721,8 @@ TEST_F(TimestampManagerTestFixture, SplitEnd) {
   EXPECT_EQ(vesta_core::Timestamp(40, 0), generated_time_spans[1].second);
 }
 
-TEST_F(TimestampManagerTestFixture, SplitBoth) {
+TEST_F(TimestampManagerTestFixture, SplitBoth)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |----------****************-----------> t
@@ -743,7 +762,8 @@ TEST_F(TimestampManagerTestFixture, SplitBoth) {
   EXPECT_EQ(vesta_core::Timestamp(40, 0), generated_time_spans[3].second);
 }
 
-TEST_F(TimestampManagerTestFixture, SplitSame) {
+TEST_F(TimestampManagerTestFixture, SplitSame)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |----------------****-----------------> t
@@ -781,7 +801,8 @@ TEST_F(TimestampManagerTestFixture, SplitSame) {
   EXPECT_EQ(vesta_core::Timestamp(30, 0), generated_time_spans[2].second);
 }
 
-TEST_F(TimestampManagerTestFixture, SplitSameMultiple) {
+TEST_F(TimestampManagerTestFixture, SplitSameMultiple)
+{
   // Test:
   // Existing: |------111111112222222233333333-------> t
   // Adding:   |----------------**%%#----------------> t
@@ -829,7 +850,8 @@ TEST_F(TimestampManagerTestFixture, SplitSameMultiple) {
   EXPECT_EQ(vesta_core::Timestamp(30, 0), generated_time_spans[4].second);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

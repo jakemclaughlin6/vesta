@@ -44,14 +44,16 @@
 #include <functional>
 #include <string>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 using UUID = boost::uuids::uuid;
 
-namespace uuid {
+namespace uuid
+{
 using boost::uuids::to_string;
 using hash = boost::hash<UUID>;
-constexpr UUID NIL = {{0}};
+constexpr UUID NIL = { { 0 } };
 
 /**
  * @brief Convert a string representation of the UUID into a UUID variable
@@ -62,7 +64,8 @@ constexpr UUID NIL = {{0}};
  * - "0123456789abcdef0123456789abcdef"
  * - "{01234567-89ab-cdef-0123-456789abcdef}"
  */
-inline UUID from_string(const std::string &uuid_string) {
+inline UUID from_string(const std::string& uuid_string)
+{
   return boost::uuids::string_generator()(uuid_string);
 }
 
@@ -79,7 +82,8 @@ UUID generate();
  * @param[in] byte_count The number of bytes in the data buffer
  * @return               A repeatable UUID specific to the provided data
  */
-inline UUID generate(const void *data, size_t byte_count) {
+inline UUID generate(const void* data, size_t byte_count)
+{
   return boost::uuids::name_generator(NIL)(data, byte_count);
 }
 
@@ -89,7 +93,8 @@ inline UUID generate(const void *data, size_t byte_count) {
  * @param[in] data A data buffer held in a C-style string
  * @return         A repeatable UUID specific to the provided data
  */
-inline UUID generate(const char *data) {
+inline UUID generate(const char* data)
+{
   return generate(data, std::strlen(data));
 }
 
@@ -99,7 +104,8 @@ inline UUID generate(const char *data) {
  * @param[in] data A data buffer held in a C++-style string
  * @return         A repeatable UUID specific to the provided namespace and data
  */
-inline UUID generate(const std::string &data) {
+inline UUID generate(const std::string& data)
+{
   return generate(data.c_str(), data.length());
 }
 
@@ -114,10 +120,9 @@ inline UUID generate(const std::string &data) {
  * @return                     A repeatable UUID specific to the provided
  * namespace and data
  */
-inline UUID generate(const std::string &namespace_string, const void *data,
-                     size_t byte_count) {
-  return boost::uuids::name_generator(generate(namespace_string))(data,
-                                                                  byte_count);
+inline UUID generate(const std::string& namespace_string, const void* data, size_t byte_count)
+{
+  return boost::uuids::name_generator(generate(namespace_string))(data, byte_count);
 }
 
 /**
@@ -129,7 +134,8 @@ inline UUID generate(const std::string &namespace_string, const void *data,
  * @return                     A repeatable UUID specific to the provided
  * namespace and data
  */
-inline UUID generate(const std::string &namespace_string, const char *data) {
+inline UUID generate(const std::string& namespace_string, const char* data)
+{
   return generate(namespace_string, data, std::strlen(data));
 }
 
@@ -142,8 +148,8 @@ inline UUID generate(const std::string &namespace_string, const char *data) {
  * @return                     A repeatable UUID specific to the provided
  * namespace and data
  */
-inline UUID generate(const std::string &namespace_string,
-                     const std::string &data) {
+inline UUID generate(const std::string& namespace_string, const std::string& data)
+{
   return generate(namespace_string, data.c_str(), data.length());
 }
 
@@ -158,8 +164,7 @@ inline UUID generate(const std::string &namespace_string,
  * @return                     A repeatable UUID specific to the provided
  * namespace and timestamp
  */
-UUID generate(const std::string &namespace_string,
-              const vesta_core::Timestamp &stamp);
+UUID generate(const std::string& namespace_string, const vesta_core::Timestamp& stamp);
 
 /**
  * @brief Generate a UUID from a namespace string, a timestamp, and an
@@ -174,8 +179,7 @@ UUID generate(const std::string &namespace_string,
  * @return                     A repeatable UUID specific to the provided
  * namespace and timestamp
  */
-UUID generate(const std::string &namespace_string,
-              const vesta_core::Timestamp &stamp, const UUID &id);
+UUID generate(const std::string& namespace_string, const vesta_core::Timestamp& stamp, const UUID& id);
 
 /**
  * @brief Generate a UUID from a namespace string and a user provided id
@@ -188,21 +192,25 @@ UUID generate(const std::string &namespace_string,
  * @return                     A repeatable UUID specific to the provided
  * namespace and user id
  */
-UUID generate(const std::string &namespace_string, const uint64_t &user_id);
-} // namespace uuid
+UUID generate(const std::string& namespace_string, const uint64_t& user_id);
+}  // namespace uuid
 
-} // namespace vesta_core
+}  // namespace vesta_core
 
-namespace std {
+namespace std
+{
 
 /**
  * @brief Define a hash specialization for the UUID to make it easier to use in
  * unordered_maps and unordered_sets
  */
-template <> struct hash<vesta_core::UUID> {
-  size_t operator()(const vesta_core::UUID &id) const {
+template <>
+struct hash<vesta_core::UUID>
+{
+  size_t operator()(const vesta_core::UUID& id) const
+  {
     return boost::uuids::hash_value(id);
   }
 };
 
-} // namespace std
+}  // namespace std

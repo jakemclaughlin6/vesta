@@ -77,11 +77,11 @@
  *
  * Use in the public section of the class.
  */
-#define VESTA_SMART_PTR_DEFINITIONS(...)                                       \
-  __VESTA_SHARED_PTR_ALIAS(__VA_ARGS__)                                        \
-  __VESTA_MAKE_SHARED_DEFINITION(__VA_ARGS__)                                  \
-  __VESTA_WEAK_PTR_ALIAS(__VA_ARGS__)                                          \
-  __VESTA_UNIQUE_PTR_ALIAS(__VA_ARGS__)                                        \
+#define VESTA_SMART_PTR_DEFINITIONS(...)                                                                               \
+  __VESTA_SHARED_PTR_ALIAS(__VA_ARGS__)                                                                                \
+  __VESTA_MAKE_SHARED_DEFINITION(__VA_ARGS__)                                                                          \
+  __VESTA_WEAK_PTR_ALIAS(__VA_ARGS__)                                                                                  \
+  __VESTA_UNIQUE_PTR_ALIAS(__VA_ARGS__)                                                                                \
   __VESTA_MAKE_UNIQUE_DEFINITION(__VA_ARGS__)
 
 /**
@@ -94,8 +94,7 @@
  *
  * Use in the public section of the class.
  */
-#define VESTA_SMART_PTR_DEFINITIONS_WITH_EIGEN(...)                            \
-  VESTA_SMART_PTR_DEFINITIONS(__VA_ARGS__)
+#define VESTA_SMART_PTR_DEFINITIONS_WITH_EIGEN(...) VESTA_SMART_PTR_DEFINITIONS(__VA_ARGS__)
 
 /**
  * Defines smart pointers aliases only for abstract classes.
@@ -106,30 +105,31 @@
  *
  * Use in the public section of the class.
  */
-#define VESTA_SMART_PTR_ALIASES_ONLY(...)                                      \
-  __VESTA_SHARED_PTR_ALIAS(__VA_ARGS__)                                        \
-  __VESTA_WEAK_PTR_ALIAS(__VA_ARGS__)                                          \
+#define VESTA_SMART_PTR_ALIASES_ONLY(...)                                                                              \
+  __VESTA_SHARED_PTR_ALIAS(__VA_ARGS__)                                                                                \
+  __VESTA_WEAK_PTR_ALIAS(__VA_ARGS__)                                                                                  \
   __VESTA_UNIQUE_PTR_ALIAS(__VA_ARGS__)
 
-#define __VESTA_SHARED_PTR_ALIAS(...)                                          \
-  using SharedPtr = std::shared_ptr<__VA_ARGS__>;                              \
+#define __VESTA_SHARED_PTR_ALIAS(...)                                                                                  \
+  using SharedPtr = std::shared_ptr<__VA_ARGS__>;                                                                      \
   using ConstSharedPtr = std::shared_ptr<const __VA_ARGS__>;
 
-#define __VESTA_MAKE_SHARED_DEFINITION(...)                                    \
-  template <typename... Args>                                                  \
-  static std::shared_ptr<__VA_ARGS__> make_shared(Args &&...args) {            \
-    return std::make_shared<__VA_ARGS__>(std::forward<Args>(args)...);         \
+#define __VESTA_MAKE_SHARED_DEFINITION(...)                                                                            \
+  template <typename... Args>                                                                                          \
+  static std::shared_ptr<__VA_ARGS__> make_shared(Args&&... args)                                                      \
+  {                                                                                                                    \
+    return std::make_shared<__VA_ARGS__>(std::forward<Args>(args)...);                                                 \
   }
 
-#define __VESTA_WEAK_PTR_ALIAS(...)                                            \
-  using WeakPtr = std::weak_ptr<__VA_ARGS__>;                                  \
+#define __VESTA_WEAK_PTR_ALIAS(...)                                                                                    \
+  using WeakPtr = std::weak_ptr<__VA_ARGS__>;                                                                          \
   using ConstWeakPtr = std::weak_ptr<const __VA_ARGS__>;
 
-#define __VESTA_UNIQUE_PTR_ALIAS(...)                                          \
-  using UniquePtr = std::unique_ptr<__VA_ARGS__>;
+#define __VESTA_UNIQUE_PTR_ALIAS(...) using UniquePtr = std::unique_ptr<__VA_ARGS__>;
 
-#define __VESTA_MAKE_UNIQUE_DEFINITION(...)                                    \
-  template <typename... Args>                                                  \
-  static std::unique_ptr<__VA_ARGS__> make_unique(Args &&...args) {            \
-    return std::make_unique<__VA_ARGS__>(std::forward<Args>(args)...);         \
+#define __VESTA_MAKE_UNIQUE_DEFINITION(...)                                                                            \
+  template <typename... Args>                                                                                          \
+  static std::unique_ptr<__VA_ARGS__> make_unique(Args&&... args)                                                      \
+  {                                                                                                                    \
+    return std::make_unique<__VA_ARGS__>(std::forward<Args>(args)...);                                                 \
   }

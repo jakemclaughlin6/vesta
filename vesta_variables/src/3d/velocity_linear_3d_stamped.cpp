@@ -42,15 +42,16 @@
 
 #include <ostream>
 
-namespace vesta_variables {
+namespace vesta_variables
+{
 
-VelocityLinear3DStamped::VelocityLinear3DStamped(
-    const vesta_core::Timestamp &stamp, const vesta_core::UUID &device_id)
-    : FixedSizeVariable(
-          vesta_core::uuid::generate(detail::type(), stamp, device_id)),
-      Stamped(stamp, device_id) {}
+VelocityLinear3DStamped::VelocityLinear3DStamped(const vesta_core::Timestamp& stamp, const vesta_core::UUID& device_id)
+  : FixedSizeVariable(vesta_core::uuid::generate(detail::type(), stamp, device_id)), Stamped(stamp, device_id)
+{
+}
 
-void VelocityLinear3DStamped::print(std::ostream &stream) const {
+void VelocityLinear3DStamped::print(std::ostream& stream) const
+{
   stream << type() << ":\n"
          << "  uuid: " << uuid() << "\n"
          << "  stamp: " << stamp() << "\n"
@@ -62,6 +63,6 @@ void VelocityLinear3DStamped::print(std::ostream &stream) const {
          << "  - z: " << z() << "\n";
 }
 
-} // namespace vesta_variables
+}  // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::VelocityLinear3DStamped);

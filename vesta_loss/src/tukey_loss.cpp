@@ -39,16 +39,21 @@
 
 #include <ostream>
 
-namespace vesta_loss {
+namespace vesta_loss
+{
 
-TukeyLoss::TukeyLoss(const double a) : a_(a) {}
+TukeyLoss::TukeyLoss(const double a) : a_(a)
+{
+}
 
-void TukeyLoss::print(std::ostream &stream) const {
+void TukeyLoss::print(std::ostream& stream) const
+{
   stream << type() << "\n"
          << "  a: " << a_ << "\n";
 }
 
-ceres::LossFunction *TukeyLoss::lossFunction() const {
+ceres::LossFunction* TukeyLoss::lossFunction() const
+{
 #if CERES_VERSION_AT_LEAST(2, 0, 0)
   return new ceres::TukeyLoss(a_);
 #else
@@ -72,6 +77,6 @@ ceres::LossFunction *TukeyLoss::lossFunction() const {
 #endif
 }
 
-} // namespace vesta_loss
+}  // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::TukeyLoss);

@@ -36,7 +36,8 @@
 
 #include <ceres/sized_cost_function.h>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Implements a cost function that models a difference between two 2D
@@ -57,7 +58,8 @@ namespace vesta_constraints {
  * covariance). This is a specialization of the generic "normal delta" cost
  * function that handles the 2*pi roll-over that occurs with rotations.
  */
-class NormalDeltaOrientation2D : public ceres::SizedCostFunction<1, 1, 1> {
+class NormalDeltaOrientation2D : public ceres::SizedCostFunction<1, 1, 1>
+{
 public:
   /**
    * @brief Constructor
@@ -83,13 +85,12 @@ public:
    * @brief Compute the cost values/residuals, and optionally the Jacobians,
    * using the provided variable/parameter values
    */
-  virtual bool Evaluate(double const *const *parameters, double *residuals,
-                        double **jacobians) const;
+  virtual bool Evaluate(double const* const* parameters, double* residuals, double** jacobians) const;
 
 private:
-  double A_; //!< The residual weighting matrix, most likely the square root
-             //!< information matrix
-  double b_; //!< The measured difference between variable x0 and variable x1
+  double A_;  //!< The residual weighting matrix, most likely the square root
+              //!< information matrix
+  double b_;  //!< The measured difference between variable x0 and variable x1
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

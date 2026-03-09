@@ -42,7 +42,8 @@
 #include <deque>
 #include <utility>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief A utility class that maintains a history of received messages, and
@@ -55,7 +56,9 @@ namespace vesta_core {
  *
  * It is assumed that all messages are received sequentially.
  */
-template <typename Message> class MessageBuffer {
+template <typename Message>
+class MessageBuffer
+{
 public:
   VESTA_SMART_PTR_DEFINITIONS(MessageBuffer<Message>);
 
@@ -68,9 +71,7 @@ public:
    * member. When dereferenced, an iterator returns a
    * std::pair<vesta_core::Timestamp, MESSAGE>&.
    */
-  using message_range =
-      boost::any_range<const std::pair<vesta_core::Timestamp, Message>,
-                       boost::forward_traversal_tag>;
+  using message_range = boost::any_range<const std::pair<vesta_core::Timestamp, Message>, boost::forward_traversal_tag>;
 
   /**
    * @brief A range of timestamps
@@ -81,8 +82,7 @@ public:
    * member. When dereferenced, an iterator returns a const
    * vesta_core::Timestamp&.
    */
-  using stamp_range = boost::any_range<const vesta_core::Timestamp,
-                                       boost::forward_traversal_tag>;
+  using stamp_range = boost::any_range<const vesta_core::Timestamp, boost::forward_traversal_tag>;
 
   /**
    * Constructor
@@ -91,8 +91,7 @@ public:
    * queries arrive involving timestamps that are older than the buffer length,
    * an exception will be thrown.
    */
-  explicit MessageBuffer(
-      const vesta_core::Duration &buffer_length = vesta_core::Duration::MAX);
+  explicit MessageBuffer(const vesta_core::Duration& buffer_length = vesta_core::Duration::MAX);
 
   /**
    * @brief Destructor
@@ -102,12 +101,16 @@ public:
   /**
    * @brief Read-only access to the buffer length
    */
-  const vesta_core::Duration &bufferLength() const { return buffer_length_; }
+  const vesta_core::Duration& bufferLength() const
+  {
+    return buffer_length_;
+  }
 
   /**
    * @brief Write access to the buffer length
    */
-  void bufferLength(const vesta_core::Duration &buffer_length) {
+  void bufferLength(const vesta_core::Duration& buffer_length)
+  {
     buffer_length_ = buffer_length;
   }
 
@@ -120,7 +123,7 @@ public:
    * @param[in] stamp The stamp to assign to the message
    * @param[in] msg   A message
    */
-  void insert(const vesta_core::Timestamp &stamp, const Message &msg);
+  void insert(const vesta_core::Timestamp& stamp, const Message& msg);
 
   /**
    * @brief Query the buffer for the set of messages between two timestamps
@@ -139,8 +142,7 @@ public:
    * @return                    An iterator range containing all of the messages
    * between the specified stamps.
    */
-  message_range query(const vesta_core::Timestamp &beginning_stamp,
-                      const vesta_core::Timestamp &ending_stamp,
+  message_range query(const vesta_core::Timestamp& beginning_stamp, const vesta_core::Timestamp& ending_stamp,
                       bool extended_range = true);
 
   /**
@@ -153,19 +155,18 @@ public:
 
 protected:
   using Buffer = std::deque<std::pair<vesta_core::Timestamp, Message>>;
-  Buffer buffer_; //!< The container of received messages, sorted by timestamp
-  vesta_core::Duration
-      buffer_length_; //!< The length of the motion model history. Segments
-                      //!< older than \p buffer_length_ will be removed from the
-                      //!< motion model history
+  Buffer buffer_;                       //!< The container of received messages, sorted by timestamp
+  vesta_core::Duration buffer_length_;  //!< The length of the motion model history. Segments
+                                        //!< older than \p buffer_length_ will be removed from the
+                                        //!< motion model history
 
   /**
    * @brief Helper function used with boost::transform_iterators to convert the
    * internal Buffer value type into a const vesta_core::Timestamp& iterator
    * compatible with stamp_range
    */
-  static const vesta_core::Timestamp &
-  extractStamp(const typename Buffer::value_type &element) {
+  static const vesta_core::Timestamp& extractStamp(const typename Buffer::value_type& element)
+  {
     return element.first;
   }
 
@@ -179,6 +180,6 @@ protected:
   void purgeHistory();
 };
 
-} // namespace vesta_core
+}  // namespace vesta_core
 
 #include <vesta_core/message_buffer_impl.h>

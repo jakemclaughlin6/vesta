@@ -35,48 +35,63 @@
 
 #include <vesta_core/uuid.h>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 UuidOrdering::UuidOrdering(std::initializer_list<vesta_core::UUID> uuid_list)
-    : UuidOrdering(uuid_list.begin(), uuid_list.end()) {}
+  : UuidOrdering(uuid_list.begin(), uuid_list.end())
+{
+}
 
-bool UuidOrdering::empty() const { return index_to_uuid_.empty(); }
+bool UuidOrdering::empty() const
+{
+  return index_to_uuid_.empty();
+}
 
-size_t UuidOrdering::size() const { return index_to_uuid_.size(); }
+size_t UuidOrdering::size() const
+{
+  return index_to_uuid_.size();
+}
 
-bool UuidOrdering::exists(const unsigned int index) const {
+bool UuidOrdering::exists(const unsigned int index) const
+{
   return (index < index_to_uuid_.size());
 }
 
-bool UuidOrdering::exists(const vesta_core::UUID &uuid) const {
+bool UuidOrdering::exists(const vesta_core::UUID& uuid) const
+{
   return (uuid_to_index_.count(uuid) > 0);
 }
 
-bool UuidOrdering::push_back(const vesta_core::UUID &uuid) {
-  if (uuid_to_index_.count(uuid) > 0) {
+bool UuidOrdering::push_back(const vesta_core::UUID& uuid)
+{
+  if (uuid_to_index_.count(uuid) > 0)
+  {
     return false;
   }
-  uuid_to_index_.emplace(uuid,
-                         static_cast<unsigned int>(index_to_uuid_.size()));
+  uuid_to_index_.emplace(uuid, static_cast<unsigned int>(index_to_uuid_.size()));
   index_to_uuid_.push_back(uuid);
   return true;
 }
 
-const vesta_core::UUID &
-UuidOrdering::operator[](const unsigned int index) const {
+const vesta_core::UUID& UuidOrdering::operator[](const unsigned int index) const
+{
   return index_to_uuid_[index];
 }
 
-unsigned int UuidOrdering::operator[](const vesta_core::UUID &uuid) {
+unsigned int UuidOrdering::operator[](const vesta_core::UUID& uuid)
+{
   push_back(uuid);
   return uuid_to_index_[uuid];
 }
 
-const vesta_core::UUID &UuidOrdering::at(const unsigned int index) const {
+const vesta_core::UUID& UuidOrdering::at(const unsigned int index) const
+{
   return index_to_uuid_.at(index);
 }
 
-unsigned int UuidOrdering::at(const vesta_core::UUID &uuid) const {
+unsigned int UuidOrdering::at(const vesta_core::UUID& uuid) const
+{
   return uuid_to_index_.at(uuid);
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

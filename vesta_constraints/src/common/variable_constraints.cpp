@@ -36,56 +36,62 @@
 #include <initializer_list>
 #include <numeric>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
-void VariableConstraints::reserve(const size_t variable_count) {
+void VariableConstraints::reserve(const size_t variable_count)
+{
   variable_constraints_.reserve(variable_count);
 }
 
-bool VariableConstraints::empty() const {
+bool VariableConstraints::empty() const
+{
   return variable_constraints_.empty();
 }
 
-size_t VariableConstraints::size() const {
-  auto sum_edges = [](const size_t input, const ConstraintCollection &edges) {
-    return input + edges.size();
-  };
-  return std::accumulate(variable_constraints_.begin(),
-                         variable_constraints_.end(), 0u, sum_edges);
+size_t VariableConstraints::size() const
+{
+  auto sum_edges = [](const size_t input, const ConstraintCollection& edges) { return input + edges.size(); };
+  return std::accumulate(variable_constraints_.begin(), variable_constraints_.end(), 0u, sum_edges);
 }
 
-unsigned int VariableConstraints::nextVariableIndex() const {
+unsigned int VariableConstraints::nextVariableIndex() const
+{
   return variable_constraints_.size();
 }
 
-void VariableConstraints::insert(const unsigned int constraint,
-                                 const unsigned int variable) {
-  if (variable >= variable_constraints_.size()) {
+void VariableConstraints::insert(const unsigned int constraint, const unsigned int variable)
+{
+  if (variable >= variable_constraints_.size())
+  {
     variable_constraints_.resize(variable + 1);
   }
   variable_constraints_[variable].insert(constraint);
 }
 
-void VariableConstraints::insert(
-    const unsigned int constraint,
-    std::initializer_list<unsigned int> variable_list) {
+void VariableConstraints::insert(const unsigned int constraint, std::initializer_list<unsigned int> variable_list)
+{
   return insert(constraint, variable_list.begin(), variable_list.end());
 }
 
-void VariableConstraints::insert(const unsigned int variable) {
-  if (variable >= variable_constraints_.size()) {
+void VariableConstraints::insert(const unsigned int variable)
+{
+  if (variable >= variable_constraints_.size())
+  {
     // This automatically create a new variable entry with an empty
     // ConstraintCollection
     variable_constraints_.resize(variable + 1);
   }
 }
 
-void VariableConstraints::print(std::ostream &stream) const {
-  for (size_t variable = 0; variable < variable_constraints_.size();
-       ++variable) {
+void VariableConstraints::print(std::ostream& stream) const
+{
+  for (size_t variable = 0; variable < variable_constraints_.size(); ++variable)
+  {
     stream << variable << ": [";
 
-    for (const auto &constraint : variable_constraints_[variable]) {
+    for (const auto& constraint : variable_constraints_[variable])
+    {
       stream << constraint << ", ";
     }
 
@@ -93,10 +99,10 @@ void VariableConstraints::print(std::ostream &stream) const {
   }
 }
 
-std::ostream &operator<<(std::ostream &stream,
-                         const VariableConstraints &variable_constraints) {
+std::ostream& operator<<(std::ostream& stream, const VariableConstraints& variable_constraints)
+{
   variable_constraints.print(stream);
   return stream;
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

@@ -29,7 +29,8 @@ using vesta_variables::Orientation3DStamped;
 using vesta_variables::Position3DStamped;
 using vesta_variables::VelocityLinear3DStamped;
 
-TEST(RelativeImuState3DStampedConstraint, Constructor) {
+TEST(RelativeImuState3DStampedConstraint, Constructor)
+{
   auto device_id = vesta_core::uuid::generate("imu_rel");
   auto stamp1 = vesta_core::Timestamp(1, 0);
   auto stamp2 = vesta_core::Timestamp(2, 0);
@@ -53,10 +54,10 @@ TEST(RelativeImuState3DStampedConstraint, Constructor) {
   const Eigen::Vector3d zero_gyro = Eigen::Vector3d::Zero();
   const Eigen::Vector3d gravity_compensating_accel(0.0, 0.0, kGravityNominal);
 
-  for (int i = 0; i <= num_steps; ++i) {
+  for (int i = 0; i <= num_steps; ++i)
+  {
     int64_t ns = static_cast<int64_t>(1e9 + i * dt * 1e9);
-    ImuData imu(vesta_core::Timestamp(ns), zero_gyro,
-                gravity_compensating_accel);
+    ImuData imu(vesta_core::Timestamp(ns), zero_gyro, gravity_compensating_accel);
     preintegrator.data.emplace(imu.stamp, imu);
   }
 
@@ -64,13 +65,13 @@ TEST(RelativeImuState3DStampedConstraint, Constructor) {
   Eigen::Vector3d ba = Eigen::Vector3d::Zero();
   preintegrator.integrate(stamp2, bg, ba, true, true, true);
 
-  EXPECT_NO_THROW(RelativeImuState3DStampedConstraint constraint(
-      "test", orientation1, position1, velocity1, gyro_bias1, accel_bias1,
-      orientation2, position2, velocity2, gyro_bias2, accel_bias2,
-      preintegrator, bg, ba));
+  EXPECT_NO_THROW(RelativeImuState3DStampedConstraint constraint("test", orientation1, position1, velocity1, gyro_bias1,
+                                                                 accel_bias1, orientation2, position2, velocity2,
+                                                                 gyro_bias2, accel_bias2, preintegrator, bg, ba));
 }
 
-TEST(RelativeImuState3DStampedConstraint, Optimization) {
+TEST(RelativeImuState3DStampedConstraint, Optimization)
+{
   // Two-state optimization test:
   // State1 is fixed at identity/origin with zero velocity.
   // IMU data simulates constant acceleration of [1,0,0] for 1 second.
@@ -115,7 +116,8 @@ TEST(RelativeImuState3DStampedConstraint, Optimization) {
   const Eigen::Vector3d zero_gyro = Eigen::Vector3d::Zero();
   const Eigen::Vector3d accel(1.0, 0.0, kGravityNominal);
 
-  for (int i = 0; i <= num_steps; ++i) {
+  for (int i = 0; i <= num_steps; ++i)
+  {
     int64_t ns = static_cast<int64_t>(i * dt * 1e9);
     ImuData imu(vesta_core::Timestamp(ns), zero_gyro, accel);
     preintegrator.data.emplace(imu.stamp, imu);
@@ -130,10 +132,8 @@ TEST(RelativeImuState3DStampedConstraint, Optimization) {
   // v2 = v1 + g*dt + R1*delta_v
   const double T = preintegrator.delta.dt;
   Eigen::Vector3d expected_pos =
-      Eigen::Vector3d::Zero() + Eigen::Vector3d::Zero() * T +
-      0.5 * kGravityWorld * T * T + preintegrator.delta.p;
-  Eigen::Vector3d expected_vel =
-      Eigen::Vector3d::Zero() + kGravityWorld * T + preintegrator.delta.v;
+      Eigen::Vector3d::Zero() + Eigen::Vector3d::Zero() * T + 0.5 * kGravityWorld * T * T + preintegrator.delta.p;
+  Eigen::Vector3d expected_vel = Eigen::Vector3d::Zero() + kGravityWorld * T + preintegrator.delta.v;
 
   // State 2 variables (initialize to predicted values with small perturbation)
   auto orientation2 = Orientation3DStamped::make_shared(stamp2, device_id);
@@ -164,9 +164,8 @@ TEST(RelativeImuState3DStampedConstraint, Optimization) {
 
   // Create relative constraint
   auto relative = RelativeImuState3DStampedConstraint::make_shared(
-      "test", *orientation1, *position1, *velocity1, *gyro_bias1, *accel_bias1,
-      *orientation2, *position2, *velocity2, *gyro_bias2, *accel_bias2,
-      preintegrator, bg, ba);
+      "test", *orientation1, *position1, *velocity1, *gyro_bias1, *accel_bias1, *orientation2, *position2, *velocity2,
+      *gyro_bias2, *accel_bias2, preintegrator, bg, ba);
 
   // Build the problem
   ceres::Problem::Options problem_options;
@@ -174,17 +173,13 @@ TEST(RelativeImuState3DStampedConstraint, Optimization) {
   ceres::Problem problem(problem_options);
 
   // Add parameter blocks
-  problem.AddParameterBlock(orientation1->data(), orientation1->size(),
-                            orientation1->manifold());
-  problem.AddParameterBlock(position1->data(), position1->size(),
-                            position1->manifold());
+  problem.AddParameterBlock(orientation1->data(), orientation1->size(), orientation1->manifold());
+  problem.AddParameterBlock(position1->data(), position1->size(), position1->manifold());
   problem.AddParameterBlock(velocity1->data(), velocity1->size());
   problem.AddParameterBlock(gyro_bias1->data(), gyro_bias1->size());
   problem.AddParameterBlock(accel_bias1->data(), accel_bias1->size());
-  problem.AddParameterBlock(orientation2->data(), orientation2->size(),
-                            orientation2->manifold());
-  problem.AddParameterBlock(position2->data(), position2->size(),
-                            position2->manifold());
+  problem.AddParameterBlock(orientation2->data(), orientation2->size(), orientation2->manifold());
+  problem.AddParameterBlock(position2->data(), position2->size(), position2->manifold());
   problem.AddParameterBlock(velocity2->data(), velocity2->size());
   problem.AddParameterBlock(gyro_bias2->data(), gyro_bias2->size());
   problem.AddParameterBlock(accel_bias2->data(), accel_bias2->size());
@@ -197,7 +192,7 @@ TEST(RelativeImuState3DStampedConstraint, Optimization) {
   problem.SetParameterBlockConstant(accel_bias1->data());
 
   // Add relative constraint
-  std::vector<double *> relative_blocks;
+  std::vector<double*> relative_blocks;
   relative_blocks.push_back(orientation1->data());
   relative_blocks.push_back(position1->data());
   relative_blocks.push_back(velocity1->data());
@@ -209,8 +204,7 @@ TEST(RelativeImuState3DStampedConstraint, Optimization) {
   relative_blocks.push_back(gyro_bias2->data());
   relative_blocks.push_back(accel_bias2->data());
 
-  problem.AddResidualBlock(relative->costFunction(), relative->lossFunction(),
-                           relative_blocks);
+  problem.AddResidualBlock(relative->costFunction(), relative->lossFunction(), relative_blocks);
 
   // Solve
   ceres::Solver::Options options;
@@ -232,7 +226,8 @@ TEST(RelativeImuState3DStampedConstraint, Optimization) {
   EXPECT_NEAR(0.0, orientation2->z(), 1e-3);
 }
 
-TEST(RelativeImuState3DStampedConstraint, Serialization) {
+TEST(RelativeImuState3DStampedConstraint, Serialization)
+{
   auto device_id = vesta_core::uuid::generate("imu_ser");
   auto stamp1 = vesta_core::Timestamp(1, 0);
   auto stamp2 = vesta_core::Timestamp(2, 0);
@@ -256,7 +251,8 @@ TEST(RelativeImuState3DStampedConstraint, Serialization) {
   const Eigen::Vector3d gyro(0.0, 0.0, 0.1);
   const Eigen::Vector3d accel(1.0, 0.0, kGravityNominal);
 
-  for (int i = 0; i <= num_steps; ++i) {
+  for (int i = 0; i <= num_steps; ++i)
+  {
     int64_t ns = static_cast<int64_t>(1e9 + i * dt_step * 1e9);
     ImuData imu(vesta_core::Timestamp(ns), gyro, accel);
     preintegrator.data.emplace(imu.stamp, imu);
@@ -266,10 +262,9 @@ TEST(RelativeImuState3DStampedConstraint, Serialization) {
   Eigen::Vector3d ba = Eigen::Vector3d::Zero();
   preintegrator.integrate(stamp2, bg, ba, true, true, true);
 
-  RelativeImuState3DStampedConstraint expected(
-      "test", orientation1, position1, velocity1, gyro_bias1, accel_bias1,
-      orientation2, position2, velocity2, gyro_bias2, accel_bias2,
-      preintegrator, bg, ba);
+  RelativeImuState3DStampedConstraint expected("test", orientation1, position1, velocity1, gyro_bias1, accel_bias1,
+                                               orientation2, position2, velocity2, gyro_bias2, accel_bias2,
+                                               preintegrator, bg, ba);
 
   // Serialize
   std::stringstream stream;
@@ -289,8 +284,7 @@ TEST(RelativeImuState3DStampedConstraint, Serialization) {
   EXPECT_EQ(expected.uuid(), actual.uuid());
   EXPECT_EQ(expected.variables(), actual.variables());
   EXPECT_NEAR(expected.dt(), actual.dt(), 1e-12);
-  EXPECT_MATRIX_NEAR(expected.sqrtInformation(), actual.sqrtInformation(),
-                     1e-9);
+  EXPECT_MATRIX_NEAR(expected.sqrtInformation(), actual.sqrtInformation(), 1e-9);
   EXPECT_NEAR(expected.deltaQ().w(), actual.deltaQ().w(), 1e-12);
   EXPECT_NEAR(expected.deltaQ().x(), actual.deltaQ().x(), 1e-12);
   EXPECT_NEAR(expected.deltaQ().y(), actual.deltaQ().y(), 1e-12);
@@ -300,7 +294,8 @@ TEST(RelativeImuState3DStampedConstraint, Serialization) {
   EXPECT_MATRIX_NEAR(expected.gravity(), actual.gravity(), 1e-12);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

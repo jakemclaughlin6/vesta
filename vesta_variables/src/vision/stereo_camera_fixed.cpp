@@ -37,17 +37,19 @@
 
 #include <boost/serialization/export.hpp>
 
-namespace vesta_variables {
+namespace vesta_variables
+{
 
 StereoCameraFixed::StereoCameraFixed(uint64_t camera_id)
-    : StereoCamera(vesta_core::uuid::generate(detail::type(), camera_id),
-                   camera_id) {}
+  : StereoCamera(vesta_core::uuid::generate(detail::type(), camera_id), camera_id)
+{
+}
 
-StereoCameraFixed::StereoCameraFixed(uint64_t camera_id, double fx, double fy,
-                                     double cx, double cy, double baseline)
-    : StereoCamera(vesta_core::uuid::generate(detail::type(), camera_id),
-                   camera_id, fx, fy, cx, cy, baseline) {}
+StereoCameraFixed::StereoCameraFixed(uint64_t camera_id, double fx, double fy, double cx, double cy, double baseline)
+  : StereoCamera(vesta_core::uuid::generate(detail::type(), camera_id), camera_id, fx, fy, cx, cy, baseline)
+{
+}
 
-} // namespace vesta_variables
+}  // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::StereoCameraFixed);

@@ -49,7 +49,8 @@
 
 #include <ostream>
 
-namespace vesta_variables {
+namespace vesta_variables
+{
 /**
  * @brief Variable representing intrinsic parameters of a camera.
  *
@@ -57,14 +58,20 @@ namespace vesta_variables {
  * construction and dependent on a user input database id. As such, the database
  * id cannot be altered after construction.
  */
-class PinholeCameraRadial : public BaseCamera<3> {
+class PinholeCameraRadial : public BaseCamera<3>
+{
 public:
   VESTA_VARIABLE_DEFINITIONS(PinholeCameraRadial);
 
   /**
    * @brief Can be used to directly index variables in the data array
    */
-  enum : size_t { F = 0, R1 = 1, R2 = 2 };
+  enum : size_t
+  {
+    F = 0,
+    R1 = 1,
+    R2 = 2
+  };
 
   /**
    * @brief Default constructor
@@ -76,7 +83,7 @@ public:
    *
    * @param[in] camera_id  The id associated to a camera
    */
-  explicit PinholeCameraRadial(const uint64_t &camera_id);
+  explicit PinholeCameraRadial(const uint64_t& camera_id);
 
   /**
    * @brief Construct a pinhole camera variable given a camera id and intrinsic
@@ -84,39 +91,56 @@ public:
    *
    * @param[in] camera_id  The id associated to a camera
    */
-  explicit PinholeCameraRadial(const vesta_core::UUID &uuid,
-                               const uint64_t &camera_id, const double &f,
-                               const double &r1, const double &r2);
+  explicit PinholeCameraRadial(const vesta_core::UUID& uuid, const uint64_t& camera_id, const double& f,
+                               const double& r1, const double& r2);
 
   /**
    * @brief Read-write access to the cx parameter.
    */
-  double &f() { return data_[F]; }
+  double& f()
+  {
+    return data_[F];
+  }
 
   /**
    * @brief Read-only access to the cx parameter.
    */
-  const double &f() const { return data_[F]; }
+  const double& f() const
+  {
+    return data_[F];
+  }
 
   /**
    * @brief Read-write access to the cy parameter.
    */
-  double &r1() { return data_[R1]; }
+  double& r1()
+  {
+    return data_[R1];
+  }
 
   /**
    * @brief Read-only access to the cy parameter.
    */
-  const double &r1() const { return data_[R1]; }
+  const double& r1() const
+  {
+    return data_[R1];
+  }
 
   /**
    * @brief Read-write access to the fx parameter.
    */
-  double &r2() { return data_[R2]; }
+  double& r2()
+  {
+    return data_[R2];
+  }
 
   /**
    * @brief Read-only access to the fx parameter.
    */
-  const double &r2() const { return data_[R2]; }
+  const double& r2() const
+  {
+    return data_[R2];
+  }
 
   /**
    * @brief Print a human-readable description of the variable to the provided
@@ -124,7 +148,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
 protected:
   /**
@@ -132,7 +156,7 @@ protected:
    *
    * @param[in] camera_id  The id associated to a camera_id
    */
-  PinholeCameraRadial(const vesta_core::UUID &uuid, const uint64_t &camera_id);
+  PinholeCameraRadial(const vesta_core::UUID& uuid, const uint64_t& camera_id);
 
 private:
   // Allow Boost Serialization access to private methods
@@ -149,11 +173,12 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<BaseCamera<SIZE>>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<BaseCamera<SIZE>>(*this);
   }
 };
 
-} // namespace vesta_variables
+}  // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_KEY(vesta_variables::PinholeCameraRadial);

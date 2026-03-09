@@ -55,7 +55,8 @@
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief A constraint that represents an observation of a 3D landmark (ARTag or
@@ -71,11 +72,10 @@ namespace vesta_constraints {
  * the calibraton.
  *
  */
-class Fixed3DLandmarkSimpleCovarianceConstraint
-    : public vesta_core::Constraint {
+class Fixed3DLandmarkSimpleCovarianceConstraint : public vesta_core::Constraint
+{
 public:
-  VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(
-      Fixed3DLandmarkSimpleCovarianceConstraint);
+  VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(Fixed3DLandmarkSimpleCovarianceConstraint);
 
   /**
    * @brief Default constructor
@@ -102,14 +102,12 @@ public:
    * @param[in] covariance    The detection covariance, in pixels (2x2 matrix:
    * u, v)
    */
-  Fixed3DLandmarkSimpleCovarianceConstraint(
-      const std::string &source,
-      const vesta_variables::Position3DStamped &position,
-      const vesta_variables::Orientation3DStamped &orientation,
-      const vesta_variables::PinholeCamera &calibraton,
-      const vesta_core::MatrixXd &pts3d,
-      const vesta_core::MatrixXd &observations,
-      const vesta_core::Vector7d &mean, const vesta_core::Matrix2d &covariance);
+  Fixed3DLandmarkSimpleCovarianceConstraint(const std::string& source,
+                                            const vesta_variables::Position3DStamped& position,
+                                            const vesta_variables::Orientation3DStamped& orientation,
+                                            const vesta_variables::PinholeCamera& calibraton,
+                                            const vesta_core::MatrixXd& pts3d, const vesta_core::MatrixXd& observations,
+                                            const vesta_core::Vector7d& mean, const vesta_core::Matrix2d& covariance);
 
   /**
    * @brief Create a constraint using a known 3D fiducial marker. Convenience
@@ -133,13 +131,12 @@ public:
    * @param[in] covariance    The detection covariance, in pixels (2x2 matrix:
    * u, v)
    */
-  Fixed3DLandmarkSimpleCovarianceConstraint(
-      const std::string &source,
-      const vesta_variables::Position3DStamped &position,
-      const vesta_variables::Orientation3DStamped &orientation,
-      const vesta_variables::PinholeCamera &calibraton,
-      const double &marker_size, const vesta_core::MatrixXd &observations,
-      const vesta_core::Vector7d &mean, const vesta_core::Matrix2d &covariance);
+  Fixed3DLandmarkSimpleCovarianceConstraint(const std::string& source,
+                                            const vesta_variables::Position3DStamped& position,
+                                            const vesta_variables::Orientation3DStamped& orientation,
+                                            const vesta_variables::PinholeCamera& calibraton, const double& marker_size,
+                                            const vesta_core::MatrixXd& observations, const vesta_core::Vector7d& mean,
+                                            const vesta_core::Matrix2d& covariance);
 
   /**
    * @brief Destructor
@@ -151,14 +148,18 @@ public:
    *
    * Order is (x, y, z, qw, qx, qy, qz)
    */
-  const vesta_core::Vector7d &mean() const { return mean_; }
+  const vesta_core::Vector7d& mean() const
+  {
+    return mean_;
+  }
 
   /**
    * @brief Read-only access to the square root information matrix.
    *
    * Order is (u, v)
    */
-  const vesta_core::Matrix2d &sqrtInformation() const {
+  const vesta_core::Matrix2d& sqrtInformation() const
+  {
     return sqrt_information_;
   }
 
@@ -167,7 +168,8 @@ public:
    *
    * Order is (u, v)
    */
-  vesta_core::Matrix2d covariance() const {
+  vesta_core::Matrix2d covariance() const
+  {
     return (sqrt_information_.transpose() * sqrt_information_).inverse();
   }
 
@@ -176,14 +178,20 @@ public:
    *
    * Order is (x, y, z)
    */
-  const vesta_core::MatrixXd &pts3d() const { return pts3d_; }
+  const vesta_core::MatrixXd& pts3d() const
+  {
+    return pts3d_;
+  }
 
   /**
    * @brief Read-only access to the observation Matrix (Nx2).
    *
    * Order is (u, v)
    */
-  const vesta_core::MatrixXd &observations() const { return observations_; }
+  const vesta_core::MatrixXd& observations() const
+  {
+    return observations_;
+  }
 
   /**
    * @brief Print a human-readable description of the constraint to the provided
@@ -191,7 +199,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
@@ -204,16 +212,14 @@ public:
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction *costFunction() const override;
+  ceres::CostFunction* costFunction() const override;
 
 protected:
-  vesta_core::MatrixXd pts3d_; //!< The 3D points in marker Coordinate frame
-  vesta_core::MatrixXd observations_; //!< The 2D observations (in pixel space)
-                                      //!< of the marker at postion mean_
-  vesta_core::Vector7d
-      mean_; //!< The measured/prior mean vector for this variable
-  vesta_core::Matrix2d
-      sqrt_information_; //!< The square root information matrix
+  vesta_core::MatrixXd pts3d_;             //!< The 3D points in marker Coordinate frame
+  vesta_core::MatrixXd observations_;      //!< The 2D observations (in pixel space)
+                                           //!< of the marker at postion mean_
+  vesta_core::Vector7d mean_;              //!< The measured/prior mean vector for this variable
+  vesta_core::Matrix2d sqrt_information_;  //!< The square root information matrix
 
 private:
   // Allow Boost Serialization access to private methods
@@ -229,8 +235,9 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & pts3d_;
     archive & observations_;
     archive & mean_;
@@ -238,7 +245,6 @@ private:
   }
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
-BOOST_CLASS_EXPORT_KEY(
-    vesta_constraints::Fixed3DLandmarkSimpleCovarianceConstraint);
+BOOST_CLASS_EXPORT_KEY(vesta_constraints::Fixed3DLandmarkSimpleCovarianceConstraint);

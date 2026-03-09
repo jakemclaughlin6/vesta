@@ -36,41 +36,41 @@
 
 #include <vesta_constraints/2d/normal_prior_orientation_2d.h>
 
-#include <Eigen/Dense>
 #include <ceres/normal_prior.h>
+#include <Eigen/Dense>
 
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 template <class Variable>
-AbsoluteConstraint<Variable>::AbsoluteConstraint(
-    const std::string &source, const Variable &variable,
-    const vesta_core::VectorXd &mean, const vesta_core::MatrixXd &covariance)
-    : vesta_core::Constraint(source,
-                             {variable.uuid()}), // NOLINT(whitespace/braces)
-      mean_(mean), sqrt_information_(covariance.inverse().llt().matrixU()) {
+AbsoluteConstraint<Variable>::AbsoluteConstraint(const std::string& source, const Variable& variable,
+                                                 const vesta_core::VectorXd& mean,
+                                                 const vesta_core::MatrixXd& covariance)
+  : vesta_core::Constraint(source, { variable.uuid() })
+  ,  // NOLINT(whitespace/braces)
+  mean_(mean)
+  , sqrt_information_(covariance.inverse().llt().matrixU())
+{
   assert(mean.rows() == static_cast<int>(variable.size()));
   assert(covariance.rows() == static_cast<int>(variable.size()));
   assert(covariance.cols() == static_cast<int>(variable.size()));
 }
 
 template <class Variable>
-AbsoluteConstraint<Variable>::AbsoluteConstraint(
-    const std::string &source, const Variable &variable,
-    const vesta_core::VectorXd &partial_mean,
-    const vesta_core::MatrixXd &partial_covariance,
-    const std::vector<size_t> &indices)
-    : vesta_core::Constraint(source,
-                             {variable.uuid()}) // NOLINT(whitespace/braces)
+AbsoluteConstraint<Variable>::AbsoluteConstraint(const std::string& source, const Variable& variable,
+                                                 const vesta_core::VectorXd& partial_mean,
+                                                 const vesta_core::MatrixXd& partial_covariance,
+                                                 const std::vector<size_t>& indices)
+  : vesta_core::Constraint(source, { variable.uuid() })  // NOLINT(whitespace/braces)
 {
   assert(partial_mean.rows() == static_cast<int>(indices.size()));
   assert(partial_covariance.rows() == static_cast<int>(indices.size()));
   assert(partial_covariance.cols() == static_cast<int>(indices.size()));
   // Compute the sqrt information of the provided cov matrix
-  vesta_core::MatrixXd partial_sqrt_information =
-      partial_covariance.inverse().llt().matrixU();
+  vesta_core::MatrixXd partial_sqrt_information = partial_covariance.inverse().llt().matrixU();
   // Assemble a mean vector and sqrt information matrix from the provided
   // values, but in proper Variable order What are we doing here? The constraint
   // equation is defined as: cost(x) = ||A * (x - b)||^2 If we are measuring a
@@ -80,16 +80,17 @@ AbsoluteConstraint<Variable>::AbsoluteConstraint(
   // cost for one measured dimensions, and the columns are in the order defined
   // by the variable.
   mean_ = vesta_core::VectorXd::Zero(variable.size());
-  sqrt_information_ =
-      vesta_core::MatrixXd::Zero(indices.size(), variable.size());
-  for (size_t i = 0; i < indices.size(); ++i) {
+  sqrt_information_ = vesta_core::MatrixXd::Zero(indices.size(), variable.size());
+  for (size_t i = 0; i < indices.size(); ++i)
+  {
     mean_(indices[i]) = partial_mean(i);
     sqrt_information_.col(indices[i]) = partial_sqrt_information.col(i);
   }
 }
 
 template <class Variable>
-vesta_core::MatrixXd AbsoluteConstraint<Variable>::covariance() const {
+vesta_core::MatrixXd AbsoluteConstraint<Variable>::covariance() const
+{
   // We want to compute:
   // cov = (sqrt_info' * sqrt_info)^-1
   // With some linear algebra, we can swap the transpose and the inverse.
@@ -98,14 +99,14 @@ vesta_core::MatrixXd AbsoluteConstraint<Variable>::covariance() const {
   // instead. Eigen doesn't have a pseudoinverse function (for probably very
   // legitimate reasons). So we set the right hand side to identity, then solve
   // using one of Eigen's many decompositions.
-  auto I = vesta_core::MatrixXd::Identity(sqrt_information_.rows(),
-                                          sqrt_information_.cols());
+  auto I = vesta_core::MatrixXd::Identity(sqrt_information_.rows(), sqrt_information_.cols());
   vesta_core::MatrixXd pinv = sqrt_information_.colPivHouseholderQr().solve(I);
   return pinv * pinv.transpose();
 }
 
 template <class Variable>
-void AbsoluteConstraint<Variable>::print(std::ostream &stream) const {
+void AbsoluteConstraint<Variable>::print(std::ostream& stream) const
+{
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
@@ -113,14 +114,16 @@ void AbsoluteConstraint<Variable>::print(std::ostream &stream) const {
          << "  mean: " << mean().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 
-  if (loss()) {
+  if (loss())
+  {
     stream << "  loss: ";
     loss()->print(stream);
   }
 }
 
 template <class Variable>
-ceres::CostFunction *AbsoluteConstraint<Variable>::costFunction() const {
+ceres::CostFunction* AbsoluteConstraint<Variable>::costFunction() const
+{
   // Ceres ships with a "prior" cost function. Just use that here.
   return new ceres::NormalPrior(sqrt_information_, mean_);
 }
@@ -129,55 +132,53 @@ ceres::CostFunction *AbsoluteConstraint<Variable>::costFunction() const {
 // We need to handle the 2*pi rollover for 2D orientations, so simple
 // subtraction does not produce the correct cost
 template <>
-inline ceres::CostFunction *
-AbsoluteConstraint<vesta_variables::Orientation2DStamped>::costFunction()
-    const {
+inline ceres::CostFunction* AbsoluteConstraint<vesta_variables::Orientation2DStamped>::costFunction() const
+{
   return new NormalPriorOrientation2D(sqrt_information_(0, 0), mean_(0));
 }
 
 // Specialize the type() method to return the name that is registered with the
 // plugins
 template <>
-inline std::string
-AbsoluteConstraint<vesta_variables::AccelerationAngular2DStamped>::type()
-    const {
+inline std::string AbsoluteConstraint<vesta_variables::AccelerationAngular2DStamped>::type() const
+{
   return "vesta_constraints::AbsoluteAccelerationAngular2DStampedConstraint";
 }
 
 template <>
-inline std::string
-AbsoluteConstraint<vesta_variables::AccelerationLinear2DStamped>::type() const {
+inline std::string AbsoluteConstraint<vesta_variables::AccelerationLinear2DStamped>::type() const
+{
   return "vesta_constraints::AbsoluteAccelerationLinear2DStampedConstraint";
 }
 
 template <>
-inline std::string
-AbsoluteConstraint<vesta_variables::Orientation2DStamped>::type() const {
+inline std::string AbsoluteConstraint<vesta_variables::Orientation2DStamped>::type() const
+{
   return "vesta_constraints::AbsoluteOrientation2DStampedConstraint";
 }
 
 template <>
-inline std::string
-AbsoluteConstraint<vesta_variables::Position2DStamped>::type() const {
+inline std::string AbsoluteConstraint<vesta_variables::Position2DStamped>::type() const
+{
   return "vesta_constraints::AbsolutePosition2DStampedConstraint";
 }
 
 template <>
-inline std::string
-AbsoluteConstraint<vesta_variables::Position3DStamped>::type() const {
+inline std::string AbsoluteConstraint<vesta_variables::Position3DStamped>::type() const
+{
   return "vesta_constraints::AbsolutePosition3DStampedConstraint";
 }
 
 template <>
-inline std::string
-AbsoluteConstraint<vesta_variables::VelocityAngular2DStamped>::type() const {
+inline std::string AbsoluteConstraint<vesta_variables::VelocityAngular2DStamped>::type() const
+{
   return "vesta_constraints::AbsoluteVelocityAngular2DStampedConstraint";
 }
 
 template <>
-inline std::string
-AbsoluteConstraint<vesta_variables::VelocityLinear2DStamped>::type() const {
+inline std::string AbsoluteConstraint<vesta_variables::VelocityLinear2DStamped>::type() const
+{
   return "vesta_constraints::AbsoluteVelocityLinear2DStampedConstraint";
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

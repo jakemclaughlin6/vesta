@@ -40,7 +40,8 @@
 
 #include <string>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief The interface definition for motion model plugins in the vesta
@@ -49,7 +50,8 @@ namespace vesta_core {
  * A model model plugin is responsible for generating constraints that link
  * together timestamps introduced by other sensors in the system.
  */
-class MotionModel {
+class MotionModel
+{
 public:
   VESTA_SMART_PTR_ALIASES_ONLY(MotionModel);
 
@@ -70,7 +72,7 @@ public:
    * @return                    True if the motion models were generated
    * successfully, false otherwise
    */
-  virtual bool apply(Transaction &transaction) = 0;
+  virtual bool apply(Transaction& transaction) = 0;
 
   /**
    * @brief Function to be executed whenever the optimizer has completed a Graph
@@ -89,7 +91,9 @@ public:
    * @param[in] graph A read-only pointer to the graph object, allowing queries
    * to be performed whenever needed.
    */
-  virtual void graphCallback(Graph::ConstSharedPtr /*graph*/) {}
+  virtual void graphCallback(Graph::ConstSharedPtr /*graph*/)
+  {
+  }
 
   /**
    * @brief Perform any required post-construction initialization, such as
@@ -102,12 +106,12 @@ public:
    *
    * @param[in] name A unique name to give this plugin instance
    */
-  virtual void initialize(const std::string &name) = 0;
+  virtual void initialize(const std::string& name) = 0;
 
   /**
    * @brief Get the unique name of this motion model
    */
-  virtual const std::string &name() const = 0;
+  virtual const std::string& name() const = 0;
 
   /**
    * @brief Function to be executed whenever the optimizer is ready to receive
@@ -120,7 +124,9 @@ public:
    * to reset any internal state before the optimizer begins processing after a
    * reset. No calls to apply() will happen before the optimizer calls start().
    */
-  virtual void start() {}
+  virtual void start()
+  {
+  }
 
   /**
    * @brief Function to be executed whenever the optimizer is no longer ready to
@@ -133,7 +139,9 @@ public:
    * optimizer begins processing after a reset. No calls to apply() will happen
    * until start() has been called again.
    */
-  virtual void stop() {}
+  virtual void stop()
+  {
+  }
 
 protected:
   /**
@@ -142,4 +150,4 @@ protected:
   MotionModel() = default;
 };
 
-} // namespace vesta_core
+}  // namespace vesta_core

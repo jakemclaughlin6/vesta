@@ -43,12 +43,14 @@
 
 using vesta_variables::StereoCameraFixed;
 
-TEST(StereoCameraFixed, Type) {
+TEST(StereoCameraFixed, Type)
+{
   StereoCameraFixed variable(0);
   EXPECT_EQ("vesta_variables::StereoCameraFixed", variable.type());
 }
 
-TEST(StereoCameraFixed, UUID) {
+TEST(StereoCameraFixed, UUID)
+{
   // Same camera id produces same UUID
   {
     StereoCameraFixed variable1(0);
@@ -69,12 +71,14 @@ TEST(StereoCameraFixed, UUID) {
   }
 }
 
-TEST(StereoCameraFixed, HoldConstant) {
+TEST(StereoCameraFixed, HoldConstant)
+{
   StereoCameraFixed variable(0);
   EXPECT_TRUE(variable.holdConstant());
 }
 
-TEST(StereoCameraFixed, Accessors) {
+TEST(StereoCameraFixed, Accessors)
+{
   StereoCameraFixed variable(0, 500.0, 500.0, 320.0, 240.0, 0.12);
   EXPECT_DOUBLE_EQ(500.0, variable.fx());
   EXPECT_DOUBLE_EQ(500.0, variable.fy());
@@ -83,8 +87,11 @@ TEST(StereoCameraFixed, Accessors) {
   EXPECT_DOUBLE_EQ(0.12, variable.baseline());
 }
 
-struct StereoCostFunctor {
-  template <typename T> bool operator()(const T *const k, T *residual) const {
+struct StereoCostFunctor
+{
+  template <typename T>
+  bool operator()(const T* const k, T* residual) const
+  {
     residual[0] = k[0] - T(500.0);
     residual[1] = k[1] - T(500.0);
     residual[2] = k[2] - T(320.0);
@@ -94,19 +101,20 @@ struct StereoCostFunctor {
   }
 };
 
-TEST(StereoCameraFixed, Optimization) {
+TEST(StereoCameraFixed, Optimization)
+{
   // Create a fixed stereo camera with initial values
   StereoCameraFixed K(0, 640.0, 480.0, 300.0, 200.0, 0.10);
 
   // Build the problem
-  ceres::CostFunction *cost_function =
-      new ceres::AutoDiffCostFunction<StereoCostFunctor, 5, 5>(
-          new StereoCostFunctor());
+  ceres::CostFunction* cost_function =
+      new ceres::AutoDiffCostFunction<StereoCostFunctor, 5, 5>(new StereoCostFunctor());
 
   ceres::Problem problem;
   problem.AddParameterBlock(K.data(), K.size());
 
-  if (K.holdConstant()) {
+  if (K.holdConstant())
+  {
     problem.SetParameterBlockConstant(K.data());
   }
   problem.AddResidualBlock(cost_function, nullptr, K.data());
@@ -124,7 +132,8 @@ TEST(StereoCameraFixed, Optimization) {
   EXPECT_DOUBLE_EQ(0.10, K.baseline());
 }
 
-TEST(StereoCameraFixed, Serialization) {
+TEST(StereoCameraFixed, Serialization)
+{
   StereoCameraFixed expected(0, 500.0, 500.0, 320.0, 240.0, 0.12);
 
   // Serialize
@@ -152,7 +161,8 @@ TEST(StereoCameraFixed, Serialization) {
   EXPECT_TRUE(actual.holdConstant());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

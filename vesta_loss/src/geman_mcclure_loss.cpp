@@ -38,19 +38,24 @@
 
 #include <ostream>
 
-namespace vesta_loss {
+namespace vesta_loss
+{
 
-GemanMcClureLoss::GemanMcClureLoss(const double a) : a_(a) {}
+GemanMcClureLoss::GemanMcClureLoss(const double a) : a_(a)
+{
+}
 
-void GemanMcClureLoss::print(std::ostream &stream) const {
+void GemanMcClureLoss::print(std::ostream& stream) const
+{
   stream << type() << "\n"
          << "  a: " << a_ << "\n";
 }
 
-ceres::LossFunction *GemanMcClureLoss::lossFunction() const {
+ceres::LossFunction* GemanMcClureLoss::lossFunction() const
+{
   return new ceres::GemanMcClureLoss(a_);
 }
 
-} // namespace vesta_loss
+}  // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::GemanMcClureLoss);

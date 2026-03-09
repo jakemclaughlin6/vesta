@@ -38,49 +38,50 @@
 #include <string>
 #include <utility>
 
-namespace vesta_optimizers {
+namespace vesta_optimizers
+{
 
-BatchOptimizer::BatchOptimizer(const BatchOptimizerParams &params,
-                               vesta_core::Graph::UniquePtr graph)
-    : params_(params), graph_(std::move(graph)),
-      combined_transaction_(vesta_core::Transaction::make_shared()),
-      started_(false) {}
+BatchOptimizer::BatchOptimizer(const BatchOptimizerParams& params, vesta_core::Graph::UniquePtr graph)
+  : params_(params)
+  , graph_(std::move(graph))
+  , combined_transaction_(vesta_core::Transaction::make_shared())
+  , started_(false)
+{
+}
 
-void BatchOptimizer::addTransaction(
-    const std::string &sensor_name,
-    vesta_core::Transaction::SharedPtr transaction) {
+void BatchOptimizer::addTransaction(const std::string& sensor_name, vesta_core::Transaction::SharedPtr transaction)
+{
   vesta_core::Timestamp transaction_time = transaction->stamp();
-  pending_transactions_.emplace(
-      transaction_time,
-      TransactionQueueElement(sensor_name, std::move(transaction)));
-  if (!started_) {
+  pending_transactions_.emplace(transaction_time, TransactionQueueElement(sensor_name, std::move(transaction)));
+  if (!started_)
+  {
     started_ = true;
   }
 }
 
-ceres::Solver::Summary BatchOptimizer::optimize() {
+ceres::Solver::Summary BatchOptimizer::optimize()
+{
   // Process pending transactions into the combined transaction
   // Use the most recent transaction time as the current time
   vesta_core::Timestamp current_time(0);
-  if (!pending_transactions_.empty()) {
+  if (!pending_transactions_.empty())
+  {
     current_time = pending_transactions_.rbegin()->first;
   }
 
   // Attempt to process each pending transaction
   auto iter = pending_transactions_.begin();
-  while (iter != pending_transactions_.end()) {
-    auto &element = iter->second;
+  while (iter != pending_transactions_.end())
+  {
+    auto& element = iter->second;
     // Check if this transaction has timed out
-    if (element.transaction->stamp() + params_.transaction_timeout <
-        current_time) {
-      LOG(ERROR) << "The queued transaction with timestamp "
-                 << element.transaction->stamp()
-                 << " could not be processed after "
-                 << (current_time - element.transaction->stamp())
+    if (element.transaction->stamp() + params_.transaction_timeout < current_time)
+    {
+      LOG(ERROR) << "The queued transaction with timestamp " << element.transaction->stamp()
+                 << " could not be processed after " << (current_time - element.transaction->stamp())
                  << " seconds, which is greater than the 'transaction_timeout' "
                     "value of "
-                 << params_.transaction_timeout
-                 << ". Ignoring this transaction.";
+                 << params_.transaction_timeout << ". Ignoring this transaction.";
       iter = pending_transactions_.erase(iter);
       continue;
     }
@@ -99,13 +100,17 @@ ceres::Solver::Summary BatchOptimizer::optimize() {
   return graph_->optimize(params_.solver_options);
 }
 
-void BatchOptimizer::reset() {
+void BatchOptimizer::reset()
+{
   pending_transactions_.clear();
   combined_transaction_ = vesta_core::Transaction::make_shared();
   graph_->clear();
   started_ = false;
 }
 
-const vesta_core::Graph &BatchOptimizer::graph() const { return *graph_; }
+const vesta_core::Graph& BatchOptimizer::graph() const
+{
+  return *graph_;
+}
 
-} // namespace vesta_optimizers
+}  // namespace vesta_optimizers

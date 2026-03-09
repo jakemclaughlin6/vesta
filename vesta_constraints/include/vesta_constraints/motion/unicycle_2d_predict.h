@@ -40,7 +40,8 @@
 
 #include <array>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Given a state and time delta, predicts a new state
@@ -63,16 +64,15 @@ namespace vesta_constraints {
  * @param[out] acc_linear2_y - Second Y acceleration
  */
 template <typename T>
-inline void predict(const T position1_x, const T position1_y, const T yaw1,
-                    const T vel_linear1_x, const T vel_linear1_y,
-                    const T vel_yaw1, const T acc_linear1_x,
-                    const T acc_linear1_y, const T dt, T &position2_x,
-                    T &position2_y, T &yaw2, T &vel_linear2_x, T &vel_linear2_y,
-                    T &vel_yaw2, T &acc_linear2_x, T &acc_linear2_y) {
+inline void predict(const T position1_x, const T position1_y, const T yaw1, const T vel_linear1_x,
+                    const T vel_linear1_y, const T vel_yaw1, const T acc_linear1_x, const T acc_linear1_y, const T dt,
+                    T& position2_x, T& position2_y, T& yaw2, T& vel_linear2_x, T& vel_linear2_y, T& vel_yaw2,
+                    T& acc_linear2_x, T& acc_linear2_y)
+{
   // There are better models for this projection, but this matches the one used
   // by r_l.
-  T sy = ceres::sin(yaw1); // Should probably be sin((yaw1 + yaw2) / 2), but r_l
-                           // uses this model
+  T sy = ceres::sin(yaw1);  // Should probably be sin((yaw1 + yaw2) / 2), but r_l
+                            // uses this model
   T cy = ceres::cos(yaw1);
   T delta_x = vel_linear1_x * dt + T(0.5) * acc_linear1_x * dt * dt;
   T delta_y = vel_linear1_y * dt + T(0.5) * acc_linear1_y * dt * dt;
@@ -110,18 +110,16 @@ inline void predict(const T position1_x, const T position1_y, const T yaw1,
  * @param[out] acc_linear2_y - Second Y acceleration
  * @param[out] jacobians - Jacobians wrt the state
  */
-inline void predict(const double position1_x, const double position1_y,
-                    const double yaw1, const double vel_linear1_x,
-                    const double vel_linear1_y, const double vel_yaw1,
-                    const double acc_linear1_x, const double acc_linear1_y,
-                    const double dt, double &position2_x, double &position2_y,
-                    double &yaw2, double &vel_linear2_x, double &vel_linear2_y,
-                    double &vel_yaw2, double &acc_linear2_x,
-                    double &acc_linear2_y, double **jacobians) {
+inline void predict(const double position1_x, const double position1_y, const double yaw1, const double vel_linear1_x,
+                    const double vel_linear1_y, const double vel_yaw1, const double acc_linear1_x,
+                    const double acc_linear1_y, const double dt, double& position2_x, double& position2_y, double& yaw2,
+                    double& vel_linear2_x, double& vel_linear2_y, double& vel_yaw2, double& acc_linear2_x,
+                    double& acc_linear2_y, double** jacobians)
+{
   // There are better models for this projection, but this matches the one used
   // by r_l.
-  const double sy = ceres::sin(yaw1); // Should probably be sin((yaw1 + yaw2) /
-                                      // 2), but r_l uses this model
+  const double sy = ceres::sin(yaw1);  // Should probably be sin((yaw1 + yaw2) /
+                                       // 2), but r_l uses this model
   const double cy = ceres::cos(yaw1);
 
   const double half_dt2 = 0.5 * dt * dt;
@@ -142,43 +140,47 @@ inline void predict(const double position1_x, const double position1_y,
 
   vesta_core::wrapAngle2D(yaw2);
 
-  if (jacobians) {
+  if (jacobians)
+  {
     // Jacobian wrt position1
-    if (jacobians[0]) {
+    if (jacobians[0])
+    {
       Eigen::Map<vesta_core::Matrix<double, 8, 2>> jacobian(jacobians[0]);
       jacobian << 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
     }
 
     // Jacobian wrt yaw1
-    if (jacobians[1]) {
+    if (jacobians[1])
+    {
       Eigen::Map<vesta_core::Vector8d> jacobian(jacobians[1]);
       jacobian << -delta_y_rot, delta_x_rot, 1, 0, 0, 0, 0, 0;
     }
 
     // Jacobian wrt vel_linear1
-    if (jacobians[2]) {
+    if (jacobians[2])
+    {
       const double cy_dt = cy * dt;
       const double sy_dt = sy * dt;
 
       Eigen::Map<vesta_core::Matrix<double, 8, 2>> jacobian(jacobians[2]);
-      jacobian << cy_dt, -sy_dt, sy_dt, cy_dt, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0,
-          0;
+      jacobian << cy_dt, -sy_dt, sy_dt, cy_dt, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0;
     }
 
     // Jacobian wrt vel_yaw1
-    if (jacobians[3]) {
+    if (jacobians[3])
+    {
       Eigen::Map<vesta_core::Vector8d> jacobian(jacobians[3]);
       jacobian << 0, 0, dt, 0, 0, 1, 0, 0;
     }
 
     // Jacobian wrt acc_linear1
-    if (jacobians[4]) {
+    if (jacobians[4])
+    {
       const double cy_half_dt2 = cy * half_dt2;
       const double sy_half_dt2 = sy * half_dt2;
 
       Eigen::Map<vesta_core::Matrix<double, 8, 2>> jacobian(jacobians[4]);
-      jacobian << cy_half_dt2, -sy_half_dt2, sy_half_dt2, cy_half_dt2, 0, 0, dt,
-          0, 0, dt, 0, 0, 1, 0, 0, 1;
+      jacobian << cy_half_dt2, -sy_half_dt2, sy_half_dt2, cy_half_dt2, 0, 0, dt, 0, 0, dt, 0, 0, 1, 0, 0, 1;
     }
   }
 }
@@ -203,15 +205,13 @@ inline void predict(const double position1_x, const double position1_y,
  * 0, y at index 1)
  */
 template <typename T>
-inline void predict(const T *const position1, const T *const yaw1,
-                    const T *const vel_linear1, const T *const vel_yaw1,
-                    const T *const acc_linear1, const T dt, T *const position2,
-                    T *const yaw2, T *const vel_linear2, T *const vel_yaw2,
-                    T *const acc_linear2) {
-  predict(position1[0], position1[1], *yaw1, vel_linear1[0], vel_linear1[1],
-          *vel_yaw1, acc_linear1[0], acc_linear1[1], dt, position2[0],
-          position2[1], *yaw2, vel_linear2[0], vel_linear2[1], *vel_yaw2,
-          acc_linear2[0], acc_linear2[1]);
+inline void predict(const T* const position1, const T* const yaw1, const T* const vel_linear1, const T* const vel_yaw1,
+                    const T* const acc_linear1, const T dt, T* const position2, T* const yaw2, T* const vel_linear2,
+                    T* const vel_yaw2, T* const acc_linear2)
+{
+  predict(position1[0], position1[1], *yaw1, vel_linear1[0], vel_linear1[1], *vel_yaw1, acc_linear1[0], acc_linear1[1],
+          dt, position2[0], position2[1], *yaw2, vel_linear2[0], vel_linear2[1], *vel_yaw2, acc_linear2[0],
+          acc_linear2[1]);
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

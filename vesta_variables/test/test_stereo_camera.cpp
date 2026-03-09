@@ -43,12 +43,14 @@
 
 using vesta_variables::StereoCamera;
 
-TEST(StereoCamera, Type) {
+TEST(StereoCamera, Type)
+{
   StereoCamera variable(0);
   EXPECT_EQ("vesta_variables::StereoCamera", variable.type());
 }
 
-TEST(StereoCamera, UUID) {
+TEST(StereoCamera, UUID)
+{
   // Verify two cameras with the same ids produce the same uuids
   {
     StereoCamera variable1(0);
@@ -64,7 +66,8 @@ TEST(StereoCamera, UUID) {
   }
 }
 
-TEST(StereoCamera, Accessors) {
+TEST(StereoCamera, Accessors)
+{
   StereoCamera K(0);
   K.fx() = 500.0;
   K.fy() = 500.0;
@@ -81,7 +84,8 @@ TEST(StereoCamera, Accessors) {
   EXPECT_EQ(0u, K.id());
 }
 
-TEST(StereoCamera, ConstructorWithParameters) {
+TEST(StereoCamera, ConstructorWithParameters)
+{
   vesta_core::UUID uuid = vesta_core::uuid::generate("test", 42);
   StereoCamera K(uuid, 42, 500.0, 500.0, 320.0, 240.0, 0.12);
 
@@ -93,10 +97,15 @@ TEST(StereoCamera, ConstructorWithParameters) {
   EXPECT_EQ(42u, K.id());
 }
 
-struct StereoCostFunctor {
-  StereoCostFunctor() {}
+struct StereoCostFunctor
+{
+  StereoCostFunctor()
+  {
+  }
 
-  template <typename T> bool operator()(const T *const k, T *residual) const {
+  template <typename T>
+  bool operator()(const T* const k, T* residual) const
+  {
     residual[0] = k[0] - T(500.0);
     residual[1] = k[1] - T(500.0);
     residual[2] = k[2] - T(320.0);
@@ -106,7 +115,8 @@ struct StereoCostFunctor {
   }
 };
 
-TEST(StereoCamera, Optimization) {
+TEST(StereoCamera, Optimization)
+{
   // Create a StereoCamera
   StereoCamera K(0);
   K.fx() = 510.0;
@@ -116,14 +126,13 @@ TEST(StereoCamera, Optimization) {
   K.baseline() = 0.15;
 
   // Create a simple constraint
-  ceres::CostFunction *cost_function =
-      new ceres::AutoDiffCostFunction<StereoCostFunctor, 5, 5>(
-          new StereoCostFunctor());
+  ceres::CostFunction* cost_function =
+      new ceres::AutoDiffCostFunction<StereoCostFunctor, 5, 5>(new StereoCostFunctor());
 
   // Build the problem
   ceres::Problem problem;
   problem.AddParameterBlock(K.data(), K.size());
-  std::vector<double *> parameter_blocks;
+  std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(K.data());
   problem.AddResidualBlock(cost_function, nullptr, parameter_blocks);
 
@@ -140,7 +149,8 @@ TEST(StereoCamera, Optimization) {
   EXPECT_NEAR(0.12, K.baseline(), 1.0e-5);
 }
 
-TEST(StereoCamera, Serialization) {
+TEST(StereoCamera, Serialization)
+{
   // Create a StereoCamera
   StereoCamera expected(0);
   expected.fx() = 500.0;
@@ -173,7 +183,8 @@ TEST(StereoCamera, Serialization) {
   EXPECT_EQ(expected.baseline(), actual.baseline());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

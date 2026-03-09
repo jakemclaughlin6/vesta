@@ -39,7 +39,8 @@
 #include <unordered_map>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief A class that represents a sequential ordering of UUIDs
@@ -57,7 +58,8 @@ namespace vesta_constraints {
  * but not removed. UUIDs are assigned an index based on the order of insertion
  * and cannot be modified.
  */
-class UuidOrdering {
+class UuidOrdering
+{
 public:
   /**
    * @brief Default constructor
@@ -109,7 +111,7 @@ public:
   /**
    * @brief Return true if the UUID exists in the ordering
    */
-  bool exists(const vesta_core::UUID &uuid) const;
+  bool exists(const vesta_core::UUID& uuid) const;
 
   /**
    * @brief Add a new UUID to the back of the ordering
@@ -119,14 +121,14 @@ public:
    * @param[in] uuid The UUID to insert
    * @return True if the UUID was inserted, false if the UUID already existed
    */
-  bool push_back(const vesta_core::UUID &uuid);
+  bool push_back(const vesta_core::UUID& uuid);
 
   /**
    * @brief Access the UUID stored at the provided index
    *
    * Accessing an index that does not exist results in undefined behavior
    */
-  const vesta_core::UUID &operator[](const unsigned int index) const;
+  const vesta_core::UUID& operator[](const unsigned int index) const;
 
   /**
    * @brief Access the index associated with the provided UUID
@@ -134,7 +136,7 @@ public:
    * Accessing a UUID that does not exist results in the provided UUID being
    * added to the ordering
    */
-  unsigned int operator[](const vesta_core::UUID &uuid);
+  unsigned int operator[](const vesta_core::UUID& uuid);
 
   /**
    * @brief Access the UUID stored at the provided index
@@ -142,7 +144,7 @@ public:
    * If the requested index does not exist, an out_of_range exception will be
    * thrown.
    */
-  const vesta_core::UUID &at(const unsigned int index) const;
+  const vesta_core::UUID& at(const unsigned int index) const;
 
   /**
    * @brief Access the index associated with the provided UUID
@@ -150,7 +152,7 @@ public:
    * If the requested UUID does not exist, an out_of_range exception will be
    * thrown.
    */
-  unsigned int at(const vesta_core::UUID &uuid) const;
+  unsigned int at(const vesta_core::UUID& uuid) const;
 
 private:
   std::vector<vesta_core::UUID> index_to_uuid_;
@@ -158,10 +160,12 @@ private:
 };
 
 template <typename UuidConstIterator>
-UuidOrdering::UuidOrdering(UuidConstIterator first, UuidConstIterator last) {
-  for (; first != last; ++first) {
+UuidOrdering::UuidOrdering(UuidConstIterator first, UuidConstIterator last)
+{
+  for (; first != last; ++first)
+  {
     push_back(*first);
   }
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

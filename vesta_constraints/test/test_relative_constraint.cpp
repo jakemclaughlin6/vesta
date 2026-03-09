@@ -53,193 +53,162 @@
 #include <utility>
 #include <vector>
 
-TEST(RelativeConstraint, Constructor) {
+TEST(RelativeConstraint, Constructor)
+{
   // Construct a constraint for every type, just to make sure they compile.
   {
-    vesta_variables::AccelerationAngular2DStamped x1(
-        vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("robby"));
-    vesta_variables::AccelerationAngular2DStamped x2(
-        vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("robby"));
+    vesta_variables::AccelerationAngular2DStamped x1(vesta_core::Timestamp(1234, 5678),
+                                                     vesta_core::uuid::generate("robby"));
+    vesta_variables::AccelerationAngular2DStamped x2(vesta_core::Timestamp(1235, 5678),
+                                                     vesta_core::uuid::generate("robby"));
     vesta_core::Vector1d delta;
     delta << 3.0;
     vesta_core::Matrix1d cov;
     cov << 1.0;
     EXPECT_NO_THROW(
-        vesta_constraints::RelativeAccelerationAngular2DStampedConstraint
-            constraint("test", x1, x2, delta, cov));
+        vesta_constraints::RelativeAccelerationAngular2DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
   {
-    vesta_variables::AccelerationLinear2DStamped x1(
-        vesta_core::Timestamp(1234, 5678),
-        vesta_core::uuid::generate("bender"));
-    vesta_variables::AccelerationLinear2DStamped x2(
-        vesta_core::Timestamp(1235, 5678),
-        vesta_core::uuid::generate("bender"));
+    vesta_variables::AccelerationLinear2DStamped x1(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("bend"
+                                                                                                                  "e"
+                                                                                                                  "r"));
+    vesta_variables::AccelerationLinear2DStamped x2(vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("bend"
+                                                                                                                  "e"
+                                                                                                                  "r"));
     vesta_core::Vector2d delta;
     delta << 1.0, 2.0;
     vesta_core::Matrix2d cov;
     cov << 1.0, 0.1, 0.1, 2.0;
     EXPECT_NO_THROW(
-        vesta_constraints::RelativeAccelerationLinear2DStampedConstraint
-            constraint("test", x1, x2, delta, cov));
+        vesta_constraints::RelativeAccelerationLinear2DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
   {
-    vesta_variables::Orientation2DStamped x1(
-        vesta_core::Timestamp(1234, 5678),
-        vesta_core::uuid::generate("johnny5"));
-    vesta_variables::Orientation2DStamped x2(
-        vesta_core::Timestamp(1235, 5678),
-        vesta_core::uuid::generate("johnny5"));
+    vesta_variables::Orientation2DStamped x1(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("johnny5"));
+    vesta_variables::Orientation2DStamped x2(vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("johnny5"));
     vesta_core::Vector1d delta;
     delta << 3.0;
     vesta_core::Matrix1d cov;
     cov << 1.0;
-    EXPECT_NO_THROW(
-        vesta_constraints::RelativeOrientation2DStampedConstraint constraint(
-            "test", x1, x2, delta, cov));
+    EXPECT_NO_THROW(vesta_constraints::RelativeOrientation2DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
   {
-    vesta_variables::Position2DStamped x1(vesta_core::Timestamp(1234, 5678),
-                                          vesta_core::uuid::generate("rosie"));
-    vesta_variables::Position2DStamped x2(vesta_core::Timestamp(1235, 5678),
-                                          vesta_core::uuid::generate("rosie"));
+    vesta_variables::Position2DStamped x1(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("rosie"));
+    vesta_variables::Position2DStamped x2(vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("rosie"));
     vesta_core::Vector2d delta;
     delta << 1.0, 2.0;
     vesta_core::Matrix2d cov;
     cov << 1.0, 0.1, 0.1, 2.0;
-    EXPECT_NO_THROW(
-        vesta_constraints::RelativePosition2DStampedConstraint constraint(
-            "test", x1, x2, delta, cov));
+    EXPECT_NO_THROW(vesta_constraints::RelativePosition2DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
   {
-    vesta_variables::Position3DStamped x1(vesta_core::Timestamp(1234, 5678),
-                                          vesta_core::uuid::generate("clank"));
-    vesta_variables::Position3DStamped x2(vesta_core::Timestamp(1235, 5678),
-                                          vesta_core::uuid::generate("clank"));
+    vesta_variables::Position3DStamped x1(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("clank"));
+    vesta_variables::Position3DStamped x2(vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("clank"));
     vesta_core::Vector3d delta;
     delta << 1.0, 2.0, 3.0;
     vesta_core::Matrix3d cov;
     cov << 1.0, 0.1, 0.2, 0.3, 2.0, 0.3, 0.2, 0.3, 3.0;
-    EXPECT_NO_THROW(
-        vesta_constraints::RelativePosition3DStampedConstraint constraint(
-            "test", x1, x2, delta, cov));
+    EXPECT_NO_THROW(vesta_constraints::RelativePosition3DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
   {
-    vesta_variables::VelocityAngular2DStamped x1(
-        vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("gort"));
-    vesta_variables::VelocityAngular2DStamped x2(
-        vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("gort"));
+    vesta_variables::VelocityAngular2DStamped x1(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("gort"));
+    vesta_variables::VelocityAngular2DStamped x2(vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("gort"));
     vesta_core::Vector1d delta;
     delta << 3.0;
     vesta_core::Matrix1d cov;
     cov << 1.0;
     EXPECT_NO_THROW(
-        vesta_constraints::RelativeVelocityAngular2DStampedConstraint
-            constraint("test", x1, x2, delta, cov));
+        vesta_constraints::RelativeVelocityAngular2DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
   {
-    vesta_variables::VelocityLinear2DStamped x1(
-        vesta_core::Timestamp(1234, 5678),
-        vesta_core::uuid::generate("bishop"));
-    vesta_variables::VelocityLinear2DStamped x2(
-        vesta_core::Timestamp(1235, 5678),
-        vesta_core::uuid::generate("bishop"));
+    vesta_variables::VelocityLinear2DStamped x1(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("bisho"
+                                                                                                              "p"));
+    vesta_variables::VelocityLinear2DStamped x2(vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("bisho"
+                                                                                                              "p"));
     vesta_core::Vector2d delta;
     delta << 1.0, 2.0;
     vesta_core::Matrix2d cov;
     cov << 1.0, 0.1, 0.1, 2.0;
     EXPECT_NO_THROW(
-        vesta_constraints::RelativeVelocityLinear2DStampedConstraint constraint(
-            "test", x1, x2, delta, cov));
+        vesta_constraints::RelativeVelocityLinear2DStampedConstraint constraint("test", x1, x2, delta, cov));
   }
 }
 
-TEST(RelativeConstraint, PartialMeasurement) {
-  vesta_variables::Position3DStamped x1(vesta_core::Timestamp(1234, 5678),
-                                        vesta_core::uuid::generate("vici"));
-  vesta_variables::Position3DStamped x2(vesta_core::Timestamp(1235, 5678),
-                                        vesta_core::uuid::generate("vici"));
+TEST(RelativeConstraint, PartialMeasurement)
+{
+  vesta_variables::Position3DStamped x1(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("vici"));
+  vesta_variables::Position3DStamped x2(vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("vici"));
   vesta_core::Vector2d delta;
   delta << 3.0, 1.0;
   vesta_core::Matrix2d cov;
   cov << 3.0, 0.2, 0.2, 1.0;
-  auto indices = std::vector<size_t>{2, 0};
+  auto indices = std::vector<size_t>{ 2, 0 };
   EXPECT_NO_THROW(
-      vesta_constraints::RelativePosition3DStampedConstraint constraint(
-          "test", x1, x2, delta, cov, indices));
+      vesta_constraints::RelativePosition3DStampedConstraint constraint("test", x1, x2, delta, cov, indices));
 }
 
-TEST(RelativeConstraint, Covariance) {
+TEST(RelativeConstraint, Covariance)
+{
   // Test the covariance of a full measurement
   {
     // Verify the covariance <--> sqrt information conversions are correct
-    vesta_variables::AccelerationLinear2DStamped x1(
-        vesta_core::Timestamp(1234, 5678),
-        vesta_core::uuid::generate("chappie"));
-    vesta_variables::AccelerationLinear2DStamped x2(
-        vesta_core::Timestamp(1235, 5678),
-        vesta_core::uuid::generate("chappie"));
+    vesta_variables::AccelerationLinear2DStamped x1(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("chap"
+                                                                                                                  "pi"
+                                                                                                                  "e"));
+    vesta_variables::AccelerationLinear2DStamped x2(vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("chap"
+                                                                                                                  "pi"
+                                                                                                                  "e"));
     vesta_core::Vector2d delta;
     delta << 1.0, 2.0;
     vesta_core::Matrix2d cov;
     cov << 1.0, 0.1, 0.1, 2.0;
-    vesta_constraints::RelativeAccelerationLinear2DStampedConstraint constraint(
-        "test", x1, x2, delta, cov);
+    vesta_constraints::RelativeAccelerationLinear2DStampedConstraint constraint("test", x1, x2, delta, cov);
     // Define the expected matrices (used Octave to compute sqrt_info:
     // 'chol(inv(A))')
     vesta_core::Matrix2d expected_sqrt_info;
-    expected_sqrt_info << 1.002509414234171, -0.050125470711709,
-        0.000000000000000, 0.707106781186547;
+    expected_sqrt_info << 1.002509414234171, -0.050125470711709, 0.000000000000000, 0.707106781186547;
     vesta_core::Matrix2d expected_cov = cov;
     // Compare
     EXPECT_TRUE(expected_cov.isApprox(constraint.covariance(), 1.0e-9));
-    EXPECT_TRUE(
-        expected_sqrt_info.isApprox(constraint.sqrtInformation(), 1.0e-9));
+    EXPECT_TRUE(expected_sqrt_info.isApprox(constraint.sqrtInformation(), 1.0e-9));
   }
   // Test the covariance of a partial measurement
   {
-    vesta_variables::Position3DStamped x1(
-        vesta_core::Timestamp(1234, 5678),
-        vesta_core::uuid::generate("astroboy"));
-    vesta_variables::Position3DStamped x2(
-        vesta_core::Timestamp(1235, 5678),
-        vesta_core::uuid::generate("astroboy"));
+    vesta_variables::Position3DStamped x1(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("astroboy"));
+    vesta_variables::Position3DStamped x2(vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("astroboy"));
     vesta_core::Vector2d delta;
     delta << 3.0, 1.0;
     vesta_core::Matrix2d cov;
     cov << 3.0, 0.2, 0.2, 1.0;
-    auto indices = std::vector<size_t>{2, 0};
-    vesta_constraints::RelativePosition3DStampedConstraint constraint(
-        "test", x1, x2, delta, cov, indices);
+    auto indices = std::vector<size_t>{ 2, 0 };
+    vesta_constraints::RelativePosition3DStampedConstraint constraint("test", x1, x2, delta, cov, indices);
     // Define the expected matrices
     vesta_core::Vector3d expected_delta;
     expected_delta << 1.0, 0.0, 3.0;
     vesta_core::Matrix3d expected_cov;
     expected_cov << 1.0, 0.0, 0.2, 0.0, 0.0, 0.0, 0.2, 0.0, 3.0;
     vesta_core::MatrixXd expected_sqrt_info(2, 3);
-    expected_sqrt_info << -0.116247638743819, 0.000000000000000,
-        0.581238193719096, 1.000000000000000, 0.000000000000000,
-        0.000000000000000;
+    expected_sqrt_info << -0.116247638743819, 0.000000000000000, 0.581238193719096, 1.000000000000000,
+        0.000000000000000, 0.000000000000000;
     // Compare
     EXPECT_TRUE(expected_delta.isApprox(constraint.delta(), 1.0e-9));
     EXPECT_TRUE(expected_cov.isApprox(constraint.covariance(), 1.0e-9));
-    EXPECT_TRUE(
-        expected_sqrt_info.isApprox(constraint.sqrtInformation(), 1.0e-9));
+    EXPECT_TRUE(expected_sqrt_info.isApprox(constraint.sqrtInformation(), 1.0e-9));
   }
 }
 
-TEST(RelativeConstraint, Optimization) {
+TEST(RelativeConstraint, Optimization)
+{
   // Test optimizing a full measurement
   {
     // Optimize a two-variable system with a prior on the first variable and a
     // relative constraint connecting the two. Verify the expected value and
     // covariance are generated. Create the variables
-    auto x1 = vesta_variables::AccelerationLinear2DStamped::make_shared(
-        vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("t800"));
+    auto x1 = vesta_variables::AccelerationLinear2DStamped::make_shared(vesta_core::Timestamp(1234, 5678),
+                                                                        vesta_core::uuid::generate("t800"));
     x1->x() = 10.7;
     x1->y() = -3.2;
-    auto x2 = vesta_variables::AccelerationLinear2DStamped::make_shared(
-        vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("t800"));
+    auto x2 = vesta_variables::AccelerationLinear2DStamped::make_shared(vesta_core::Timestamp(1235, 5678),
+                                                                        vesta_core::uuid::generate("t800"));
     x2->x() = -4.2;
     x2->y() = 1.9;
     // Create an absolute constraint
@@ -247,32 +216,27 @@ TEST(RelativeConstraint, Optimization) {
     mean << 1.0, 2.0;
     vesta_core::Matrix2d cov1;
     cov1 << 1.0, 0.1, 0.1, 2.0;
-    auto prior =
-        vesta_constraints::AbsoluteAccelerationLinear2DStampedConstraint::
-            make_shared("test", *x1, mean, cov1);
+    auto prior = vesta_constraints::AbsoluteAccelerationLinear2DStampedConstraint::make_shared("test", *x1, mean, cov1);
     // Create an relative constraint
     vesta_core::Vector2d delta;
     delta << 0.1, 0.2;
     vesta_core::Matrix2d cov2;
     cov2 << 1.0, 0.0, 0.0, 2.0;
     auto relative =
-        vesta_constraints::RelativeAccelerationLinear2DStampedConstraint::
-            make_shared("test", *x1, *x2, delta, cov2);
+        vesta_constraints::RelativeAccelerationLinear2DStampedConstraint::make_shared("test", *x1, *x2, delta, cov2);
     // Build the problem
     ceres::Problem::Options problem_options;
     problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
     ceres::Problem problem(problem_options);
     problem.AddParameterBlock(x1->data(), x1->size(), x1->manifold());
     problem.AddParameterBlock(x2->data(), x2->size(), x2->manifold());
-    std::vector<double *> prior_parameter_blocks;
+    std::vector<double*> prior_parameter_blocks;
     prior_parameter_blocks.push_back(x1->data());
-    problem.AddResidualBlock(prior->costFunction(), prior->lossFunction(),
-                             prior_parameter_blocks);
-    std::vector<double *> relative_parameter_blocks;
+    problem.AddResidualBlock(prior->costFunction(), prior->lossFunction(), prior_parameter_blocks);
+    std::vector<double*> relative_parameter_blocks;
     relative_parameter_blocks.push_back(x1->data());
     relative_parameter_blocks.push_back(x2->data());
-    problem.AddResidualBlock(relative->costFunction(), relative->lossFunction(),
-                             relative_parameter_blocks);
+    problem.AddResidualBlock(relative->costFunction(), relative->lossFunction(), relative_parameter_blocks);
     // Run the solver
     ceres::Solver::Options options;
     ceres::Solver::Summary summary;
@@ -283,7 +247,7 @@ TEST(RelativeConstraint, Optimization) {
     EXPECT_NEAR(1.1, x2->x(), 1.0e-5);
     EXPECT_NEAR(2.2, x2->y(), 1.0e-5);
     // Compute the covariance
-    std::vector<std::pair<const double *, const double *>> covariance_blocks;
+    std::vector<std::pair<const double*, const double*>> covariance_blocks;
     covariance_blocks.emplace_back(x1->data(), x1->data());
     covariance_blocks.emplace_back(x2->data(), x2->data());
     ceres::Covariance::Options cov_options;
@@ -291,16 +255,14 @@ TEST(RelativeConstraint, Optimization) {
     covariance.Compute(covariance_blocks, &problem);
     // Check the x1 marginal covariance
     std::vector<double> x1_covariance_vector(x1->size() * x1->size());
-    covariance.GetCovarianceBlock(x1->data(), x1->data(),
-                                  x1_covariance_vector.data());
+    covariance.GetCovarianceBlock(x1->data(), x1->data(), x1_covariance_vector.data());
     vesta_core::Matrix2d x1_actual_covariance(x1_covariance_vector.data());
     vesta_core::Matrix2d x1_expected_covariance;
     x1_expected_covariance << 1.0, 0.1, 0.1, 2.0;
     EXPECT_TRUE(x1_expected_covariance.isApprox(x1_actual_covariance, 1.0e-9));
     // Check the x2 marginal covariance
     std::vector<double> x2_covariance_vector(x2->size() * x2->size());
-    covariance.GetCovarianceBlock(x2->data(), x2->data(),
-                                  x2_covariance_vector.data());
+    covariance.GetCovarianceBlock(x2->data(), x2->data(), x2_covariance_vector.data());
     vesta_core::Matrix2d x2_actual_covariance(x2_covariance_vector.data());
     vesta_core::Matrix2d x2_expected_covariance;
     x2_expected_covariance << 2.0, 0.1, 0.1, 4.0;
@@ -314,13 +276,13 @@ TEST(RelativeConstraint, Optimization) {
     // Optimize a two-variable system with a prior on the first variable and a
     // relative constraint connecting the two. Verify the expected value and
     // covariance are generated. Create the variables
-    auto x1 = vesta_variables::Position3DStamped::make_shared(
-        vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("t1000"));
+    auto x1 = vesta_variables::Position3DStamped::make_shared(vesta_core::Timestamp(1234, 5678),
+                                                              vesta_core::uuid::generate("t1000"));
     x1->x() = 10.7;
     x1->y() = -3.2;
     x1->z() = 0.4;
-    auto x2 = vesta_variables::Position3DStamped::make_shared(
-        vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("t1000"));
+    auto x2 = vesta_variables::Position3DStamped::make_shared(vesta_core::Timestamp(1235, 5678),
+                                                              vesta_core::uuid::generate("t1000"));
     x2->x() = -4.2;
     x2->y() = 1.9;
     x2->z() = 19.2;
@@ -329,46 +291,38 @@ TEST(RelativeConstraint, Optimization) {
     mean1 << 1.0, 2.0, 3.0;
     vesta_core::Matrix3d cov1;
     cov1 << 1.0, 0.1, 0.2, 0.1, 2.0, 0.3, 0.2, 0.3, 3.0;
-    auto c1 =
-        vesta_constraints::AbsolutePosition3DStampedConstraint::make_shared(
-            "test", *x1, mean1, cov1);
+    auto c1 = vesta_constraints::AbsolutePosition3DStampedConstraint::make_shared("test", *x1, mean1, cov1);
     // Create an relative constraint
     vesta_core::Vector3d delta2;
     delta2 << 0.1, 0.2, 0.3;
     vesta_core::Matrix3d cov2;
     cov2 << 1.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 3.0;
-    auto c2 =
-        vesta_constraints::RelativePosition3DStampedConstraint::make_shared(
-            "test", *x1, *x2, delta2, cov2);
+    auto c2 = vesta_constraints::RelativePosition3DStampedConstraint::make_shared("test", *x1, *x2, delta2, cov2);
     // Create an partial relative constraint
     vesta_core::Vector2d delta3;
     delta3 << 0.1, 0.2;
     vesta_core::Matrix2d cov3;
     cov3 << 1.0, 0.0, 0.0, 3.0;
-    auto indices3 = std::vector<size_t>{2, 0};
+    auto indices3 = std::vector<size_t>{ 2, 0 };
     auto c3 =
-        vesta_constraints::RelativePosition3DStampedConstraint::make_shared(
-            "test", *x1, *x2, delta3, cov3, indices3);
+        vesta_constraints::RelativePosition3DStampedConstraint::make_shared("test", *x1, *x2, delta3, cov3, indices3);
     // Build the problem
     ceres::Problem::Options problem_options;
     problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
     ceres::Problem problem(problem_options);
     problem.AddParameterBlock(x1->data(), x1->size(), x1->manifold());
     problem.AddParameterBlock(x2->data(), x2->size(), x2->manifold());
-    std::vector<double *> c1_parameter_blocks;
+    std::vector<double*> c1_parameter_blocks;
     c1_parameter_blocks.push_back(x1->data());
-    problem.AddResidualBlock(c1->costFunction(), c1->lossFunction(),
-                             c1_parameter_blocks);
-    std::vector<double *> c2_parameter_blocks;
+    problem.AddResidualBlock(c1->costFunction(), c1->lossFunction(), c1_parameter_blocks);
+    std::vector<double*> c2_parameter_blocks;
     c2_parameter_blocks.push_back(x1->data());
     c2_parameter_blocks.push_back(x2->data());
-    problem.AddResidualBlock(c2->costFunction(), c2->lossFunction(),
-                             c2_parameter_blocks);
-    std::vector<double *> c3_parameter_blocks;
+    problem.AddResidualBlock(c2->costFunction(), c2->lossFunction(), c2_parameter_blocks);
+    std::vector<double*> c3_parameter_blocks;
     c3_parameter_blocks.push_back(x1->data());
     c3_parameter_blocks.push_back(x2->data());
-    problem.AddResidualBlock(c3->costFunction(), c3->lossFunction(),
-                             c3_parameter_blocks);
+    problem.AddResidualBlock(c3->costFunction(), c3->lossFunction(), c3_parameter_blocks);
     // Run the solver
     ceres::Solver::Options options;
     ceres::Solver::Summary summary;
@@ -381,7 +335,7 @@ TEST(RelativeConstraint, Optimization) {
     EXPECT_NEAR(2.2, x2->y(), 1.0e-5);
     EXPECT_NEAR(3.15, x2->z(), 1.0e-5);
     // Compute the marginal covariances
-    std::vector<std::pair<const double *, const double *>> covariance_blocks;
+    std::vector<std::pair<const double*, const double*>> covariance_blocks;
     covariance_blocks.emplace_back(x1->data(), x1->data());
     covariance_blocks.emplace_back(x2->data(), x2->data());
     ceres::Covariance::Options cov_options;
@@ -389,16 +343,14 @@ TEST(RelativeConstraint, Optimization) {
     covariance.Compute(covariance_blocks, &problem);
     // Check the x1 marginal covariance
     std::vector<double> x1_covariance_vector(x1->size() * x1->size());
-    covariance.GetCovarianceBlock(x1->data(), x1->data(),
-                                  x1_covariance_vector.data());
+    covariance.GetCovarianceBlock(x1->data(), x1->data(), x1_covariance_vector.data());
     vesta_core::Matrix3d x1_actual_covariance(x1_covariance_vector.data());
     vesta_core::Matrix3d x1_expected_covariance;
     x1_expected_covariance << 1.0, 0.1, 0.2, 0.1, 2.0, 0.3, 0.2, 0.3, 3.0;
     EXPECT_TRUE(x1_expected_covariance.isApprox(x1_actual_covariance, 1.0e-9));
     // Check the x2 marginal covariance
     std::vector<double> x2_covariance_vector(x2->size() * x2->size());
-    covariance.GetCovarianceBlock(x2->data(), x2->data(),
-                                  x2_covariance_vector.data());
+    covariance.GetCovarianceBlock(x2->data(), x2->data(), x2_covariance_vector.data());
     vesta_core::Matrix3d x2_actual_covariance(x2_covariance_vector.data());
     vesta_core::Matrix3d x2_expected_covariance;
     x2_expected_covariance << 1.75, 0.1, 0.2, 0.1, 4.0, 0.3, 0.2, 0.3, 3.75;
@@ -406,47 +358,42 @@ TEST(RelativeConstraint, Optimization) {
   }
 }
 
-TEST(RelativeConstraint, RelativeOrientation2DOptimization) {
+TEST(RelativeConstraint, RelativeOrientation2DOptimization)
+{
   // Optimize a two-variable system with a prior on the first variable and a
   // relative constraint connecting the two. Verify the expected value and
   // covariance are generated. Create the variables
-  auto x1 = vesta_variables::Orientation2DStamped::make_shared(
-      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("t800"));
+  auto x1 = vesta_variables::Orientation2DStamped::make_shared(vesta_core::Timestamp(1234, 5678),
+                                                               vesta_core::uuid::generate("t800"));
   x1->setYaw(0.7);
-  auto x2 = vesta_variables::Orientation2DStamped::make_shared(
-      vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("t800"));
+  auto x2 = vesta_variables::Orientation2DStamped::make_shared(vesta_core::Timestamp(1235, 5678),
+                                                               vesta_core::uuid::generate("t800"));
   x2->setYaw(-2.2);
   // Create an absolute constraint
   vesta_core::Vector1d mean;
   mean << 1.0;
   vesta_core::Matrix1d cov1;
   cov1 << 2.0;
-  auto prior =
-      vesta_constraints::AbsoluteOrientation2DStampedConstraint::make_shared(
-          "test", *x1, mean, cov1);
+  auto prior = vesta_constraints::AbsoluteOrientation2DStampedConstraint::make_shared("test", *x1, mean, cov1);
   // Create an relative constraint
   vesta_core::Vector1d delta;
   delta << 0.1;
   vesta_core::Matrix1d cov2;
   cov2 << 1.0;
-  auto relative =
-      vesta_constraints::RelativeOrientation2DStampedConstraint::make_shared(
-          "test", *x1, *x2, delta, cov2);
+  auto relative = vesta_constraints::RelativeOrientation2DStampedConstraint::make_shared("test", *x1, *x2, delta, cov2);
   // Build the problem
   ceres::Problem::Options problem_options;
   problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
   problem.AddParameterBlock(x1->data(), x1->size(), x1->manifold());
   problem.AddParameterBlock(x2->data(), x2->size(), x2->manifold());
-  std::vector<double *> prior_parameter_blocks;
+  std::vector<double*> prior_parameter_blocks;
   prior_parameter_blocks.push_back(x1->data());
-  problem.AddResidualBlock(prior->costFunction(), prior->lossFunction(),
-                           prior_parameter_blocks);
-  std::vector<double *> relative_parameter_blocks;
+  problem.AddResidualBlock(prior->costFunction(), prior->lossFunction(), prior_parameter_blocks);
+  std::vector<double*> relative_parameter_blocks;
   relative_parameter_blocks.push_back(x1->data());
   relative_parameter_blocks.push_back(x2->data());
-  problem.AddResidualBlock(relative->costFunction(), relative->lossFunction(),
-                           relative_parameter_blocks);
+  problem.AddResidualBlock(relative->costFunction(), relative->lossFunction(), relative_parameter_blocks);
   // Run the solver
   ceres::Solver::Options options;
   ceres::Solver::Summary summary;
@@ -455,7 +402,7 @@ TEST(RelativeConstraint, RelativeOrientation2DOptimization) {
   EXPECT_NEAR(1.0, x1->getYaw(), 1.0e-5);
   EXPECT_NEAR(1.1, x2->getYaw(), 1.0e-5);
   // Compute the covariance
-  std::vector<std::pair<const double *, const double *>> covariance_blocks;
+  std::vector<std::pair<const double*, const double*>> covariance_blocks;
   covariance_blocks.emplace_back(x1->data(), x1->data());
   covariance_blocks.emplace_back(x2->data(), x2->data());
   ceres::Covariance::Options cov_options;
@@ -463,34 +410,32 @@ TEST(RelativeConstraint, RelativeOrientation2DOptimization) {
   covariance.Compute(covariance_blocks, &problem);
   // Check the x1 marginal covariance
   std::vector<double> x1_covariance_vector(x1->size() * x1->size());
-  covariance.GetCovarianceBlock(x1->data(), x1->data(),
-                                x1_covariance_vector.data());
+  covariance.GetCovarianceBlock(x1->data(), x1->data(), x1_covariance_vector.data());
   vesta_core::Matrix1d x1_actual_covariance(x1_covariance_vector.data());
   vesta_core::Matrix1d x1_expected_covariance;
   x1_expected_covariance << 2.0;
   EXPECT_TRUE(x1_expected_covariance.isApprox(x1_actual_covariance, 1.0e-9));
   // Check the x2 marginal covariance
   std::vector<double> x2_covariance_vector(x2->size() * x2->size());
-  covariance.GetCovarianceBlock(x2->data(), x2->data(),
-                                x2_covariance_vector.data());
+  covariance.GetCovarianceBlock(x2->data(), x2->data(), x2_covariance_vector.data());
   vesta_core::Matrix1d x2_actual_covariance(x2_covariance_vector.data());
   vesta_core::Matrix1d x2_expected_covariance;
   x2_expected_covariance << 3.0;
   EXPECT_TRUE(x2_expected_covariance.isApprox(x2_actual_covariance, 1.0e-9));
 }
 
-TEST(RelativeConstraint, Serialization) {
+TEST(RelativeConstraint, Serialization)
+{
   // Construct a constraint
-  vesta_variables::AccelerationAngular2DStamped x1(
-      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("robby"));
-  vesta_variables::AccelerationAngular2DStamped x2(
-      vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("robby"));
+  vesta_variables::AccelerationAngular2DStamped x1(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("robb"
+                                                                                                                 "y"));
+  vesta_variables::AccelerationAngular2DStamped x2(vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("robb"
+                                                                                                                 "y"));
   vesta_core::Vector1d delta;
   delta << 3.0;
   vesta_core::Matrix1d cov;
   cov << 1.0;
-  vesta_constraints::RelativeAccelerationAngular2DStampedConstraint expected(
-      "test", x1, x2, delta, cov);
+  vesta_constraints::RelativeAccelerationAngular2DStampedConstraint expected("test", x1, x2, delta, cov);
 
   // Serialize the constraint into an archive
   std::stringstream stream;
@@ -513,7 +458,8 @@ TEST(RelativeConstraint, Serialization) {
   EXPECT_MATRIX_EQ(expected.sqrtInformation(), actual.sqrtInformation());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

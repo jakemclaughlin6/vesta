@@ -51,7 +51,8 @@
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief A constraint that represents a measurement on the difference between
@@ -64,7 +65,8 @@ namespace vesta_constraints {
  * also permits measurement of a subset of the relative pose provided in the
  * position and orientation varables.
  */
-class RelativePose2DStampedConstraint : public vesta_core::Constraint {
+class RelativePose2DStampedConstraint : public vesta_core::Constraint
+{
 public:
   VESTA_CONSTRAINT_DEFINITIONS(RelativePose2DStampedConstraint);
 
@@ -108,18 +110,13 @@ public:
    * "{vesta_variables::Orientation2DStamped::Yaw}"
    */
   RelativePose2DStampedConstraint(
-      const std::string &source,
-      const vesta_variables::Position2DStamped &position1,
-      const vesta_variables::Orientation2DStamped &orientation1,
-      const vesta_variables::Position2DStamped &position2,
-      const vesta_variables::Orientation2DStamped &orientation2,
-      const vesta_core::VectorXd &partial_delta,
-      const vesta_core::MatrixXd &partial_covariance,
-      const std::vector<size_t> &linear_indices =
-          {vesta_variables::Position2DStamped::X,
-           vesta_variables::Position2DStamped::Y}, // NOLINT
-      const std::vector<size_t> &angular_indices = {
-          vesta_variables::Orientation2DStamped::YAW}); // NOLINT
+      const std::string& source, const vesta_variables::Position2DStamped& position1,
+      const vesta_variables::Orientation2DStamped& orientation1, const vesta_variables::Position2DStamped& position2,
+      const vesta_variables::Orientation2DStamped& orientation2, const vesta_core::VectorXd& partial_delta,
+      const vesta_core::MatrixXd& partial_covariance,
+      const std::vector<size_t>& linear_indices = { vesta_variables::Position2DStamped::X,
+                                                    vesta_variables::Position2DStamped::Y },         // NOLINT
+      const std::vector<size_t>& angular_indices = { vesta_variables::Orientation2DStamped::YAW });  // NOLINT
 
   /**
    * @brief Destructor
@@ -132,7 +129,10 @@ public:
    * Order is (dx, dy, dyaw). Note that the returned vector will be full sized
    * (3x1) and in the stated order.
    */
-  const vesta_core::Vector3d &delta() const { return delta_; }
+  const vesta_core::Vector3d& delta() const
+  {
+    return delta_;
+  }
 
   /**
    * @brief Read-only access to the square root information matrix.
@@ -140,7 +140,8 @@ public:
    * If only a partial covariance matrix was provided in the constructor, this
    * covariance matrix will not be square.
    */
-  const vesta_core::MatrixXd &sqrtInformation() const {
+  const vesta_core::MatrixXd& sqrtInformation() const
+  {
     return sqrt_information_;
   }
 
@@ -160,7 +161,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Access the cost function for this constraint
@@ -173,13 +174,12 @@ public:
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction *costFunction() const override;
+  ceres::CostFunction* costFunction() const override;
 
 protected:
-  vesta_core::Vector3d delta_; //!< The measured pose change (dx, dy, dyaw)
-  vesta_core::MatrixXd
-      sqrt_information_; //!< The square root information matrix (derived from
-                         //!< the covariance matrix)
+  vesta_core::Vector3d delta_;             //!< The measured pose change (dx, dy, dyaw)
+  vesta_core::MatrixXd sqrt_information_;  //!< The square root information matrix (derived from
+                                           //!< the covariance matrix)
 
 private:
   // Allow Boost Serialization access to private methods
@@ -195,13 +195,14 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & delta_;
     archive & sqrt_information_;
   }
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::RelativePose2DStampedConstraint);

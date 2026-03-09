@@ -55,7 +55,8 @@
  * This test fixture provides methods to compare variables and constraints, and
  * allows to retrieve the last failure description, if any.
  */
-class HashGraphTestFixture : public ::testing::Test {
+class HashGraphTestFixture : public ::testing::Test
+{
 public:
   /**
    * @brief Compare all the properties of two Variable objects
@@ -64,11 +65,12 @@ public:
    * @param[in] actual - The actual variable
    * @return True if all the properties match, false otherwise
    */
-  bool compareVariables(const vesta_core::Variable &expected,
-                        const vesta_core::Variable &actual) {
+  bool compareVariables(const vesta_core::Variable& expected, const vesta_core::Variable& actual)
+  {
     failure_description = "";
     bool variables_equal = true;
-    if (expected.type() != actual.type()) {
+    if (expected.type() != actual.type())
+    {
       variables_equal = false;
       failure_description += "The variables have different types.\n"
                              "  expected type is '" +
@@ -77,7 +79,8 @@ public:
                              "    actual type is '" +
                              actual.type() + "'\n";
     }
-    if (expected.size() != actual.size()) {
+    if (expected.size() != actual.size())
+    {
       variables_equal = false;
       failure_description += "The variables have different sizes.\n"
                              "  expected size is '" +
@@ -86,7 +89,8 @@ public:
                              "    actual size is '" +
                              std::to_string(actual.size()) + "'\n";
     }
-    if (expected.uuid() != actual.uuid()) {
+    if (expected.uuid() != actual.uuid())
+    {
       variables_equal = false;
       failure_description += "The variables have different UUIDs.\n"
                              "  expected UUID is '" +
@@ -95,17 +99,17 @@ public:
                              "    actual UUID is '" +
                              vesta_core::uuid::to_string(actual.uuid()) + "'\n";
     }
-    for (size_t i = 0; i < expected.size(); ++i) {
-      if (expected.data()[i] != actual.data()[i]) {
+    for (size_t i = 0; i < expected.size(); ++i)
+    {
+      if (expected.data()[i] != actual.data()[i])
+      {
         variables_equal = false;
         failure_description += "The variables have different values.\n"
                                "  expected data(" +
-                               std::to_string(i) + ") is '" +
-                               std::to_string(expected.data()[i]) +
+                               std::to_string(i) + ") is '" + std::to_string(expected.data()[i]) +
                                "'\n"
                                "    actual data(" +
-                               std::to_string(i) + ") is '" +
-                               std::to_string(actual.data()[i]) + "'\n";
+                               std::to_string(i) + ") is '" + std::to_string(actual.data()[i]) + "'\n";
       }
     }
     return variables_equal;
@@ -118,11 +122,12 @@ public:
    * @param[in] actual - The actual constraint
    * @return True if all the properties match, false otherwise
    */
-  bool compareConstraints(const vesta_core::Constraint &expected,
-                          const vesta_core::Constraint &actual) {
+  bool compareConstraints(const vesta_core::Constraint& expected, const vesta_core::Constraint& actual)
+  {
     failure_description = "";
     bool constraints_equal = true;
-    if (expected.type() != actual.type()) {
+    if (expected.type() != actual.type())
+    {
       constraints_equal = false;
       failure_description += "The constraints have different types.\n"
                              "  expected type is '" +
@@ -131,7 +136,8 @@ public:
                              "    actual type is '" +
                              actual.type() + "'\n";
     }
-    if (expected.uuid() != actual.uuid()) {
+    if (expected.uuid() != actual.uuid())
+    {
       constraints_equal = false;
       failure_description += "The constraints have different UUIDs.\n"
                              "  expected UUID is '" +
@@ -140,39 +146,38 @@ public:
                              "    actual UUID is '" +
                              vesta_core::uuid::to_string(actual.uuid()) + "'\n";
     }
-    if (expected.variables().size() != actual.variables().size()) {
+    if (expected.variables().size() != actual.variables().size())
+    {
       constraints_equal = false;
-      failure_description +=
-          "The constraints involve a different number of variables.\n"
-          "  expected variable count is '" +
-          std::to_string(expected.variables().size()) +
-          "'\n"
-          "    actual variable count is '" +
-          std::to_string(actual.variables().size()) + "'\n";
+      failure_description += "The constraints involve a different number of variables.\n"
+                             "  expected variable count is '" +
+                             std::to_string(expected.variables().size()) +
+                             "'\n"
+                             "    actual variable count is '" +
+                             std::to_string(actual.variables().size()) + "'\n";
     }
-    for (size_t i = 0; i < expected.variables().size(); ++i) {
-      if (expected.variables().at(i) != actual.variables().at(i)) {
+    for (size_t i = 0; i < expected.variables().size(); ++i)
+    {
+      if (expected.variables().at(i) != actual.variables().at(i))
+      {
         constraints_equal = false;
         std::string i_str = std::to_string(i);
-        failure_description +=
-            "The constraints involve different variable UUIDs.\n"
-            "  expected variables(" +
-            i_str + ") is '" +
-            vesta_core::uuid::to_string(expected.variables()[i]) +
-            "'\n"
-            "    actual variables(" +
-            i_str + ") is '" +
-            vesta_core::uuid::to_string(actual.variables()[i]) + "'\n";
+        failure_description += "The constraints involve different variable UUIDs.\n"
+                               "  expected variables(" +
+                               i_str + ") is '" + vesta_core::uuid::to_string(expected.variables()[i]) +
+                               "'\n"
+                               "    actual variables(" +
+                               i_str + ") is '" + vesta_core::uuid::to_string(actual.variables()[i]) + "'\n";
       }
     }
     return constraints_equal;
   }
 
-  std::string failure_description{
-      ""}; //!< The last failure description. Empty if no failure happened
+  std::string failure_description{ "" };  //!< The last failure description. Empty if no failure happened
 };
 
-TEST_F(HashGraphTestFixture, AddVariable) {
+TEST_F(HashGraphTestFixture, AddVariable)
+{
   // Test adding variables to the graph
   // Also tests the variableExists() function
 
@@ -217,7 +222,8 @@ TEST_F(HashGraphTestFixture, AddVariable) {
   EXPECT_TRUE(graph.variableExists(variable3->uuid()));
 }
 
-TEST_F(HashGraphTestFixture, RemoveVariable) {
+TEST_F(HashGraphTestFixture, RemoveVariable)
+{
   // Test removing variables from the graph
 
   // Create the graph
@@ -278,7 +284,8 @@ TEST_F(HashGraphTestFixture, RemoveVariable) {
   EXPECT_TRUE(graph.variableExists(variable2->uuid()));
 }
 
-TEST_F(HashGraphTestFixture, GetVariable) {
+TEST_F(HashGraphTestFixture, GetVariable)
+{
   // Test accessing a single variables from the graph
 
   // Create the graph
@@ -294,14 +301,15 @@ TEST_F(HashGraphTestFixture, GetVariable) {
   graph.addVariable(variable2);
 
   // Verify all of the variables are available
-  const vesta_core::Variable &actual1 = graph.getVariable(variable1->uuid());
+  const vesta_core::Variable& actual1 = graph.getVariable(variable1->uuid());
   EXPECT_TRUE(compareVariables(*variable1, actual1)) << failure_description;
 
-  const vesta_core::Variable &actual2 = graph.getVariable(variable2->uuid());
+  const vesta_core::Variable& actual2 = graph.getVariable(variable2->uuid());
   EXPECT_TRUE(compareVariables(*variable2, actual2)) << failure_description;
 }
 
-TEST_F(HashGraphTestFixture, GetVariables) {
+TEST_F(HashGraphTestFixture, GetVariables)
+{
   // Test accessing the variables collection from the graph
 
   // Create the graph
@@ -325,26 +333,30 @@ TEST_F(HashGraphTestFixture, GetVariables) {
   ASSERT_EQ(3, std::distance(variables.begin(), variables.end()));
 
   // Verify we received the correct variables
-  for (const auto &actual : variables) {
-    if (actual.uuid() == variable1->uuid()) {
+  for (const auto& actual : variables)
+  {
+    if (actual.uuid() == variable1->uuid())
+    {
       EXPECT_TRUE(compareVariables(*variable1, actual)) << failure_description;
       continue;
     }
-    if (actual.uuid() == variable2->uuid()) {
+    if (actual.uuid() == variable2->uuid())
+    {
       EXPECT_TRUE(compareVariables(*variable2, actual)) << failure_description;
       continue;
     }
-    if (actual.uuid() == variable3->uuid()) {
+    if (actual.uuid() == variable3->uuid())
+    {
       EXPECT_TRUE(compareVariables(*variable3, actual)) << failure_description;
       continue;
     }
     // The actual variable is not in the expected set. Fail the test.
-    FAIL() << "The actual variable '" << actual.uuid()
-           << "' was not in the expected collection.";
+    FAIL() << "The actual variable '" << actual.uuid() << "' was not in the expected collection.";
   }
 }
 
-TEST_F(HashGraphTestFixture, GetConnectedVariables) {
+TEST_F(HashGraphTestFixture, GetConnectedVariables)
+{
   // Test accessing the variables connected to a specific constraint
 
   // Create the graph
@@ -372,46 +384,43 @@ TEST_F(HashGraphTestFixture, GetConnectedVariables) {
 
   {
     auto actual_variables = graph.getConnectedVariables(constraint1->uuid());
-    ASSERT_EQ(1,
-              std::distance(actual_variables.begin(), actual_variables.end()));
-    for (const auto &actual : actual_variables) {
-      if (actual.uuid() == variable1->uuid()) {
-        EXPECT_TRUE(compareVariables(*variable1, actual))
-            << failure_description;
+    ASSERT_EQ(1, std::distance(actual_variables.begin(), actual_variables.end()));
+    for (const auto& actual : actual_variables)
+    {
+      if (actual.uuid() == variable1->uuid())
+      {
+        EXPECT_TRUE(compareVariables(*variable1, actual)) << failure_description;
         continue;
       }
       // The constraint was not one of the expected constraints. Fail the test.
-      FAIL() << "The actual variable '" << actual.uuid()
-             << "' was not in the expected collection.";
+      FAIL() << "The actual variable '" << actual.uuid() << "' was not in the expected collection.";
     }
   }
 
   {
     auto actual_variables = graph.getConnectedVariables(constraint2->uuid());
-    ASSERT_EQ(1,
-              std::distance(actual_variables.begin(), actual_variables.end()));
-    for (const auto &actual : actual_variables) {
-      if (actual.uuid() == variable2->uuid()) {
-        EXPECT_TRUE(compareVariables(*variable2, actual))
-            << failure_description;
+    ASSERT_EQ(1, std::distance(actual_variables.begin(), actual_variables.end()));
+    for (const auto& actual : actual_variables)
+    {
+      if (actual.uuid() == variable2->uuid())
+      {
+        EXPECT_TRUE(compareVariables(*variable2, actual)) << failure_description;
         continue;
       }
       // The constraint was not one of the expected constraints. Fail the test.
-      FAIL() << "The actual variable '" << actual.uuid()
-             << "' was not in the expected collection.";
+      FAIL() << "The actual variable '" << actual.uuid() << "' was not in the expected collection.";
     }
   }
 
   {
     // Don't add constraint3 to the graph
-    auto constraint3 =
-        ExampleConstraint::make_shared("test", variable3->uuid());
-    EXPECT_THROW(graph.getConnectedVariables(constraint3->uuid()),
-                 std::logic_error);
+    auto constraint3 = ExampleConstraint::make_shared("test", variable3->uuid());
+    EXPECT_THROW(graph.getConnectedVariables(constraint3->uuid()), std::logic_error);
   }
 }
 
-TEST_F(HashGraphTestFixture, AddConstraint) {
+TEST_F(HashGraphTestFixture, AddConstraint)
+{
   // Test adding constraints to the graph
   // Also tests the constraintExists() function
 
@@ -472,7 +481,8 @@ TEST_F(HashGraphTestFixture, AddConstraint) {
   EXPECT_THROW(graph.addConstraint(constraint4), std::logic_error);
 }
 
-TEST_F(HashGraphTestFixture, RemoveConstraint) {
+TEST_F(HashGraphTestFixture, RemoveConstraint)
+{
   // Test removing constraints from the graph
 
   // Create the graph
@@ -516,7 +526,8 @@ TEST_F(HashGraphTestFixture, RemoveConstraint) {
   EXPECT_FALSE(graph.removeConstraint(constraint1->uuid()));
 }
 
-TEST_F(HashGraphTestFixture, GetConstraint) {
+TEST_F(HashGraphTestFixture, GetConstraint)
+{
   // Test accessing the constraints in the graph
 
   // Create the graph
@@ -539,16 +550,15 @@ TEST_F(HashGraphTestFixture, GetConstraint) {
   graph.addConstraint(constraint2);
 
   // Verify all of the constraints are available
-  const vesta_core::Constraint &actual1 =
-      graph.getConstraint(constraint1->uuid());
+  const vesta_core::Constraint& actual1 = graph.getConstraint(constraint1->uuid());
   EXPECT_TRUE(compareConstraints(*constraint1, actual1)) << failure_description;
 
-  const vesta_core::Constraint &actual2 =
-      graph.getConstraint(constraint2->uuid());
+  const vesta_core::Constraint& actual2 = graph.getConstraint(constraint2->uuid());
   EXPECT_TRUE(compareConstraints(*constraint2, actual2)) << failure_description;
 }
 
-TEST_F(HashGraphTestFixture, GetConstraints) {
+TEST_F(HashGraphTestFixture, GetConstraints)
+{
   // Test accessing the constraints in the graph
 
   // Create the graph
@@ -576,29 +586,30 @@ TEST_F(HashGraphTestFixture, GetConstraints) {
   ASSERT_EQ(3, std::distance(constraints.begin(), constraints.end()));
 
   // Verify we received the correct constraints
-  for (const auto &actual : constraints) {
-    if (actual.uuid() == constraint1->uuid()) {
-      EXPECT_TRUE(compareConstraints(*constraint1, actual))
-          << failure_description;
+  for (const auto& actual : constraints)
+  {
+    if (actual.uuid() == constraint1->uuid())
+    {
+      EXPECT_TRUE(compareConstraints(*constraint1, actual)) << failure_description;
       continue;
     }
-    if (actual.uuid() == constraint2->uuid()) {
-      EXPECT_TRUE(compareConstraints(*constraint2, actual))
-          << failure_description;
+    if (actual.uuid() == constraint2->uuid())
+    {
+      EXPECT_TRUE(compareConstraints(*constraint2, actual)) << failure_description;
       continue;
     }
-    if (actual.uuid() == constraint3->uuid()) {
-      EXPECT_TRUE(compareConstraints(*constraint3, actual))
-          << failure_description;
+    if (actual.uuid() == constraint3->uuid())
+    {
+      EXPECT_TRUE(compareConstraints(*constraint3, actual)) << failure_description;
       continue;
     }
     // The constraint was not one of the expected constraints. Fail the test.
-    FAIL() << "The actual constraint '" << actual.uuid()
-           << "' was not in the expected collection.";
+    FAIL() << "The actual constraint '" << actual.uuid() << "' was not in the expected collection.";
   }
 }
 
-TEST_F(HashGraphTestFixture, GetConnectedConstraints) {
+TEST_F(HashGraphTestFixture, GetConnectedConstraints)
+{
   // Test accessing the constraints connected to a specific variable
 
   // Create the graph
@@ -629,56 +640,53 @@ TEST_F(HashGraphTestFixture, GetConnectedConstraints) {
 
   {
     auto actual_constraints = graph.getConnectedConstraints(variable1->uuid());
-    ASSERT_EQ(
-        2, std::distance(actual_constraints.begin(), actual_constraints.end()));
-    for (const auto &actual : actual_constraints) {
-      if (actual.uuid() == constraint1->uuid()) {
-        EXPECT_TRUE(compareConstraints(*constraint1, actual))
-            << failure_description;
+    ASSERT_EQ(2, std::distance(actual_constraints.begin(), actual_constraints.end()));
+    for (const auto& actual : actual_constraints)
+    {
+      if (actual.uuid() == constraint1->uuid())
+      {
+        EXPECT_TRUE(compareConstraints(*constraint1, actual)) << failure_description;
         continue;
       }
-      if (actual.uuid() == constraint3->uuid()) {
-        EXPECT_TRUE(compareConstraints(*constraint3, actual))
-            << failure_description;
+      if (actual.uuid() == constraint3->uuid())
+      {
+        EXPECT_TRUE(compareConstraints(*constraint3, actual)) << failure_description;
         continue;
       }
       // The constraint was not one of the expected constraints. Fail the test.
-      FAIL() << "The actual constraint '" << actual.uuid()
-             << "' was not in the expected collection.";
+      FAIL() << "The actual constraint '" << actual.uuid() << "' was not in the expected collection.";
     }
   }
 
   {
     auto actual_constraints = graph.getConnectedConstraints(variable2->uuid());
-    ASSERT_EQ(
-        1, std::distance(actual_constraints.begin(), actual_constraints.end()));
-    for (const auto &actual : actual_constraints) {
-      if (actual.uuid() == constraint2->uuid()) {
-        EXPECT_TRUE(compareConstraints(*constraint2, actual))
-            << failure_description;
+    ASSERT_EQ(1, std::distance(actual_constraints.begin(), actual_constraints.end()));
+    for (const auto& actual : actual_constraints)
+    {
+      if (actual.uuid() == constraint2->uuid())
+      {
+        EXPECT_TRUE(compareConstraints(*constraint2, actual)) << failure_description;
         continue;
       }
       // The constraint was not one of the expected constraints. Fail the test.
-      FAIL() << "The actual constraint '" << actual.uuid()
-             << "' was not in the expected collection.";
+      FAIL() << "The actual constraint '" << actual.uuid() << "' was not in the expected collection.";
     }
   }
 
   {
     auto actual_constraints = graph.getConnectedConstraints(variable3->uuid());
-    ASSERT_EQ(
-        0, std::distance(actual_constraints.begin(), actual_constraints.end()));
+    ASSERT_EQ(0, std::distance(actual_constraints.begin(), actual_constraints.end()));
   }
 
   {
     // Don't add variable4 to the graph
     auto variable4 = ExampleVariable::make_shared();
-    EXPECT_THROW(graph.getConnectedConstraints(variable4->uuid()),
-                 std::logic_error);
+    EXPECT_THROW(graph.getConnectedConstraints(variable4->uuid()), std::logic_error);
   }
 }
 
-TEST_F(HashGraphTestFixture, Optimize) {
+TEST_F(HashGraphTestFixture, Optimize)
+{
   // Test optimizing a set of variables/constraints
 
   // Create the graph
@@ -714,7 +722,8 @@ TEST_F(HashGraphTestFixture, Optimize) {
   EXPECT_NEAR(-3.0, variable2->data()[0], 1.0e-7);
 }
 
-TEST_F(HashGraphTestFixture, HoldVariable) {
+TEST_F(HashGraphTestFixture, HoldVariable)
+{
   // Test placing a variable on hold. The value of the variable should remain
   // constant even after the optimization
 
@@ -757,7 +766,8 @@ TEST_F(HashGraphTestFixture, HoldVariable) {
   EXPECT_FALSE(graph.isVariableOnHold(variable1->uuid()));
 }
 
-TEST_F(HashGraphTestFixture, GetCovariance) {
+TEST_F(HashGraphTestFixture, GetCovariance)
+{
   // Create variables that match the Ceres unit test
   auto x = ExampleVariable::make_shared(2);
   x->data()[0] = 1;
@@ -769,8 +779,7 @@ TEST_F(HashGraphTestFixture, GetCovariance) {
   auto z = ExampleVariable::make_shared(1);
   z->data()[0] = 3;
   // Create a constraint that matches the Ceres unit test
-  auto constraint = CovarianceConstraint::make_shared("test", x->uuid(),
-                                                      y->uuid(), z->uuid());
+  auto constraint = CovarianceConstraint::make_shared("test", x->uuid(), y->uuid(), z->uuid());
 
   // Add the variables and constraints to the graph
   vesta_graphs::HashGraph graph;
@@ -785,13 +794,11 @@ TEST_F(HashGraphTestFixture, GetCovariance) {
   // Test providing an empty covariance request
   {
     // Create an empty covariance request
-    std::vector<std::pair<vesta_core::UUID, vesta_core::UUID>>
-        covariance_requests;
+    std::vector<std::pair<vesta_core::UUID, vesta_core::UUID>> covariance_requests;
 
     // The empty request should not throw an error
     std::vector<std::vector<double>> covariance_matrices;
-    EXPECT_NO_THROW(
-        graph.getCovariance(covariance_requests, covariance_matrices));
+    EXPECT_NO_THROW(graph.getCovariance(covariance_requests, covariance_matrices));
 
     // The output covariances should be empty
     EXPECT_EQ(0ul, covariance_matrices.size());
@@ -802,23 +809,20 @@ TEST_F(HashGraphTestFixture, GetCovariance) {
   // https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/covariance_test.cc#L598
   {
     // Compute selected covariance blocks
-    std::vector<std::pair<vesta_core::UUID, vesta_core::UUID>>
-        covariance_requests;
+    std::vector<std::pair<vesta_core::UUID, vesta_core::UUID>> covariance_requests;
     covariance_requests.emplace_back(x->uuid(), x->uuid());
     covariance_requests.emplace_back(x->uuid(), y->uuid());
-    covariance_requests.emplace_back(
-        y->uuid(), x->uuid()); // Adding both versions Cov(X,Y) and Cov(Y,X)
-    covariance_requests.emplace_back(
-        x->uuid(),
-        y->uuid()); // Adding a duplicate to verify everything still works.
+    covariance_requests.emplace_back(y->uuid(), x->uuid());  // Adding both versions Cov(X,Y) and Cov(Y,X)
+    covariance_requests.emplace_back(x->uuid(),
+                                     y->uuid());  // Adding a duplicate to verify everything still works.
     covariance_requests.emplace_back(z->uuid(), y->uuid());
     std::vector<std::vector<double>> covariance_matrices;
     graph.getCovariance(covariance_requests, covariance_matrices);
-    const std::vector<double> &actual0 = covariance_matrices.at(0);
-    const std::vector<double> &actual1 = covariance_matrices.at(1);
-    const std::vector<double> &actual2 = covariance_matrices.at(2);
-    const std::vector<double> &actual3 = covariance_matrices.at(3);
-    const std::vector<double> &actual4 = covariance_matrices.at(4);
+    const std::vector<double>& actual0 = covariance_matrices.at(0);
+    const std::vector<double>& actual1 = covariance_matrices.at(1);
+    const std::vector<double>& actual2 = covariance_matrices.at(2);
+    const std::vector<double>& actual3 = covariance_matrices.at(3);
+    const std::vector<double>& actual4 = covariance_matrices.at(4);
 
     // Compare with the expected blocks
     //  full covariance = {
@@ -836,45 +840,46 @@ TEST_F(HashGraphTestFixture, GetCovariance) {
     // [ XX (2x2), XY(2x3), XZ (2x1)]
     // [ YX (3x2), YY(3x3), YZ (3x1)]
     // [ ZX (1x2), ZY(1x3), ZZ (1x1)]
-    std::vector<double> expected0 = {7.0747e-02, -8.4923e-03, -8.4923e-03,
-                                     8.1352e-02}; // XX
-    std::vector<double> expected1 = {1.6821e-02, 3.3643e-02, 5.0464e-02,
-                                     2.4758e-02, 4.9517e-02, 7.4275e-02}; // XY
-    std::vector<double> expected2 = {1.6821e-02, 2.4758e-02, 3.3643e-02,
-                                     4.9517e-02, 5.0464e-02, 7.4275e-02}; // YX
-    std::vector<double> expected3 = {1.6821e-02, 3.3643e-02, 5.0464e-02,
-                                     2.4758e-02, 4.9517e-02, 7.4275e-02}; // XY
-    std::vector<double> expected4 = {-6.5325e-05, -1.3065e-04,
-                                     -1.9598e-04}; // ZY
+    std::vector<double> expected0 = { 7.0747e-02, -8.4923e-03, -8.4923e-03, 8.1352e-02 };                        // XX
+    std::vector<double> expected1 = { 1.6821e-02, 3.3643e-02, 5.0464e-02, 2.4758e-02, 4.9517e-02, 7.4275e-02 };  // XY
+    std::vector<double> expected2 = { 1.6821e-02, 2.4758e-02, 3.3643e-02, 4.9517e-02, 5.0464e-02, 7.4275e-02 };  // YX
+    std::vector<double> expected3 = { 1.6821e-02, 3.3643e-02, 5.0464e-02, 2.4758e-02, 4.9517e-02, 7.4275e-02 };  // XY
+    std::vector<double> expected4 = { -6.5325e-05, -1.3065e-04, -1.9598e-04 };                                   // ZY
 
     ASSERT_EQ(expected0.size(), actual0.size());
-    for (size_t i = 0; i < expected0.size(); ++i) {
+    for (size_t i = 0; i < expected0.size(); ++i)
+    {
       EXPECT_NEAR(expected0[i], actual0[i], 1.0e-5);
     }
 
     ASSERT_EQ(expected1.size(), actual1.size());
-    for (size_t i = 0; i < expected1.size(); ++i) {
+    for (size_t i = 0; i < expected1.size(); ++i)
+    {
       EXPECT_NEAR(expected1[i], actual1[i], 1.0e-5);
     }
 
     ASSERT_EQ(expected2.size(), actual2.size());
-    for (size_t i = 0; i < expected2.size(); ++i) {
+    for (size_t i = 0; i < expected2.size(); ++i)
+    {
       EXPECT_NEAR(expected2[i], actual2[i], 1.0e-5);
     }
 
     ASSERT_EQ(expected3.size(), actual3.size());
-    for (size_t i = 0; i < expected3.size(); ++i) {
+    for (size_t i = 0; i < expected3.size(); ++i)
+    {
       EXPECT_NEAR(expected3[i], actual3[i], 1.0e-5);
     }
 
     ASSERT_EQ(expected4.size(), actual4.size());
-    for (size_t i = 0; i < expected4.size(); ++i) {
+    for (size_t i = 0; i < expected4.size(); ++i)
+    {
       EXPECT_NEAR(expected4[i], actual4[i], 1.0e-5);
     }
   }
 }
 
-TEST_F(HashGraphTestFixture, Copy) {
+TEST_F(HashGraphTestFixture, Copy)
+{
   // Create the graph
   vesta_graphs::HashGraph graph;
 
@@ -900,10 +905,12 @@ TEST_F(HashGraphTestFixture, Copy) {
   {
     vesta_graphs::HashGraph other(graph);
     // Verify the copy
-    for (const auto &constraint : graph.getConstraints()) {
+    for (const auto& constraint : graph.getConstraints())
+    {
       EXPECT_TRUE(other.constraintExists(constraint.uuid()));
     }
-    for (const auto &variable : graph.getVariables()) {
+    for (const auto& variable : graph.getVariables())
+    {
       EXPECT_TRUE(other.variableExists(variable.uuid()));
     }
     // Modify the variable values of the 'other' graph
@@ -919,10 +926,12 @@ TEST_F(HashGraphTestFixture, Copy) {
     vesta_graphs::HashGraph other;
     other = graph;
     // Verify the copy
-    for (const auto &constraint : graph.getConstraints()) {
+    for (const auto& constraint : graph.getConstraints())
+    {
       EXPECT_TRUE(other.constraintExists(constraint.uuid()));
     }
-    for (const auto &variable : graph.getVariables()) {
+    for (const auto& variable : graph.getVariables())
+    {
       EXPECT_TRUE(other.variableExists(variable.uuid()));
     }
     // Modify the variable values of the 'other' graph
@@ -937,10 +946,12 @@ TEST_F(HashGraphTestFixture, Copy) {
   {
     auto other = graph.clone();
     // Verify the copy
-    for (const auto &constraint : graph.getConstraints()) {
+    for (const auto& constraint : graph.getConstraints())
+    {
       EXPECT_TRUE(other->constraintExists(constraint.uuid()));
     }
-    for (const auto &variable : graph.getVariables()) {
+    for (const auto& variable : graph.getVariables())
+    {
       EXPECT_TRUE(other->variableExists(variable.uuid()));
     }
     // Modify the variable values of the 'other' graph
@@ -952,7 +963,8 @@ TEST_F(HashGraphTestFixture, Copy) {
   }
 }
 
-TEST_F(HashGraphTestFixture, Serialization) {
+TEST_F(HashGraphTestFixture, Serialization)
+{
   // Create the graph
   vesta_graphs::HashGraph expected;
 
@@ -989,15 +1001,18 @@ TEST_F(HashGraphTestFixture, Serialization) {
   }
 
   // Verify the copy
-  for (const auto &constraint : expected.getConstraints()) {
+  for (const auto& constraint : expected.getConstraints())
+  {
     EXPECT_TRUE(actual.constraintExists(constraint.uuid()));
   }
-  for (const auto &variable : expected.getVariables()) {
+  for (const auto& variable : expected.getVariables())
+  {
     EXPECT_TRUE(actual.variableExists(variable.uuid()));
   }
 }
 
-TEST_F(HashGraphTestFixture, GetConstraintCosts) {
+TEST_F(HashGraphTestFixture, GetConstraintCosts)
+{
   // Test the getConstraintCosts method by adding a few variables and
   // constraints to the graph
   // @todo(swilliams) Implement a more thorough test of the getConstraintCosts()
@@ -1030,8 +1045,7 @@ TEST_F(HashGraphTestFixture, GetConstraintCosts) {
   constraint_uuids.push_back(constraint1->uuid());
 
   auto costs = std::vector<vesta_core::Graph::ConstraintCost>();
-  graph.getConstraintCosts(constraint_uuids.begin(), constraint_uuids.end(),
-                           std::back_inserter(costs));
+  graph.getConstraintCosts(constraint_uuids.begin(), constraint_uuids.end(), std::back_inserter(costs));
 
   ASSERT_EQ(costs.size(), 2u);
   EXPECT_NEAR(costs[0].cost, 2.5, 1.0e-5);
@@ -1045,7 +1059,8 @@ TEST_F(HashGraphTestFixture, GetConstraintCosts) {
   EXPECT_NEAR(costs[1].residuals[0], 1.0, 1.0e-5);
 }
 
-TEST_F(HashGraphTestFixture, IncrementalOptimize) {
+TEST_F(HashGraphTestFixture, IncrementalOptimize)
+{
   // Test that the incremental problem management produces the same results as
   // from-scratch optimization. Add variables + constraints, optimize, add more,
   // optimize again.
@@ -1081,11 +1096,9 @@ TEST_F(HashGraphTestFixture, IncrementalOptimize) {
 
   // Verify against a from-scratch graph with all the same data
   vesta_graphs::HashGraph reference;
-  auto ref_v1 = std::shared_ptr<ExampleVariable>(
-      static_cast<ExampleVariable *>(variable1->clone().release()));
-  ref_v1->data()[0] = 1.0; // Reset to initial value
-  auto ref_v2 = std::shared_ptr<ExampleVariable>(
-      static_cast<ExampleVariable *>(variable2->clone().release()));
+  auto ref_v1 = std::shared_ptr<ExampleVariable>(static_cast<ExampleVariable*>(variable1->clone().release()));
+  ref_v1->data()[0] = 1.0;  // Reset to initial value
+  auto ref_v2 = std::shared_ptr<ExampleVariable>(static_cast<ExampleVariable*>(variable2->clone().release()));
   reference.addVariable(ref_v1);
   reference.addVariable(ref_v2);
 
@@ -1097,13 +1110,12 @@ TEST_F(HashGraphTestFixture, IncrementalOptimize) {
   reference.addConstraint(ref_c2);
   reference.optimize();
 
-  EXPECT_NEAR(reference.getVariable(ref_v1->uuid()).data()[0],
-              variable1->data()[0], 1.0e-7);
-  EXPECT_NEAR(reference.getVariable(ref_v2->uuid()).data()[0],
-              variable2->data()[0], 1.0e-7);
+  EXPECT_NEAR(reference.getVariable(ref_v1->uuid()).data()[0], variable1->data()[0], 1.0e-7);
+  EXPECT_NEAR(reference.getVariable(ref_v2->uuid()).data()[0], variable2->data()[0], 1.0e-7);
 }
 
-TEST_F(HashGraphTestFixture, IncrementalRemove) {
+TEST_F(HashGraphTestFixture, IncrementalRemove)
+{
   // Test that removing a constraint incrementally and re-optimizing produces
   // correct results.
 
@@ -1144,7 +1156,8 @@ TEST_F(HashGraphTestFixture, IncrementalRemove) {
   EXPECT_NEAR(-3.0, variable2->data()[0], 1.0e-7);
 }
 
-TEST_F(HashGraphTestFixture, HoldVariableBetweenOptimizations) {
+TEST_F(HashGraphTestFixture, HoldVariableBetweenOptimizations)
+{
   // Test that holding a variable constant between optimizations works correctly
   // with incremental management.
 
@@ -1191,7 +1204,8 @@ TEST_F(HashGraphTestFixture, HoldVariableBetweenOptimizations) {
   EXPECT_NEAR(-3.0, variable2->data()[0], 1.0e-7);
 }
 
-TEST_F(HashGraphTestFixture, ClearAndReoptimize) {
+TEST_F(HashGraphTestFixture, ClearAndReoptimize)
+{
   // Test that clearing the graph and re-adding data produces correct results.
 
   vesta_graphs::HashGraph graph;
@@ -1225,7 +1239,8 @@ TEST_F(HashGraphTestFixture, ClearAndReoptimize) {
   EXPECT_NEAR(-7.0, variable2->data()[0], 1.0e-7);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

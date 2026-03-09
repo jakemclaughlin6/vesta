@@ -40,7 +40,8 @@
 
 #include <Eigen/Core>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Create a prior cost function on both the position and orientation
@@ -67,7 +68,8 @@ namespace vesta_constraints {
  * the matrix A is the square root information matrix (the inverse of the
  * covariance).
  */
-class NormalPriorPose2DCostFunctor {
+class NormalPriorPose2DCostFunctor
+{
 public:
   /**
    * @brief Construct a cost function instance
@@ -82,30 +84,28 @@ public:
    * information matrix in order (x, y, yaw)
    * @param[in] b The pose measurement or prior in order (x, y, yaw)
    */
-  NormalPriorPose2DCostFunctor(const vesta_core::MatrixXd &A,
-                               const vesta_core::Vector3d &b);
+  NormalPriorPose2DCostFunctor(const vesta_core::MatrixXd& A, const vesta_core::Vector3d& b);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
    */
   template <typename T>
-  bool operator()(const T *const position, const T *const orientation,
-                  T *residual) const;
+  bool operator()(const T* const position, const T* const orientation, T* residual) const;
 
 private:
-  vesta_core::MatrixXd A_; //!< The residual weighting matrix, most likely the
-                           //!< square root information matrix
-  vesta_core::Vector3d b_; //!< The measured 2D pose value
+  vesta_core::MatrixXd A_;  //!< The residual weighting matrix, most likely the
+                            //!< square root information matrix
+  vesta_core::Vector3d b_;  //!< The measured 2D pose value
 };
 
-NormalPriorPose2DCostFunctor::NormalPriorPose2DCostFunctor(
-    const vesta_core::MatrixXd &A, const vesta_core::Vector3d &b)
-    : A_(A), b_(b) {}
+NormalPriorPose2DCostFunctor::NormalPriorPose2DCostFunctor(const vesta_core::MatrixXd& A, const vesta_core::Vector3d& b)
+  : A_(A), b_(b)
+{
+}
 
 template <typename T>
-bool NormalPriorPose2DCostFunctor::operator()(const T *const position,
-                                              const T *const orientation,
-                                              T *residual) const {
+bool NormalPriorPose2DCostFunctor::operator()(const T* const position, const T* const orientation, T* residual) const
+{
   Eigen::Matrix<T, 3, 1> full_residuals_vector;
   full_residuals_vector(0) = position[0] - T(b_(0));
   full_residuals_vector(1) = position[1] - T(b_(1));
@@ -113,11 +113,10 @@ bool NormalPriorPose2DCostFunctor::operator()(const T *const position,
 
   // Scale the residuals by the square root information matrix to account for
   // the measurement uncertainty.
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>> residuals_vector(residual,
-                                                                   A_.rows());
+  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>> residuals_vector(residual, A_.rows());
   residuals_vector = A_.template cast<T>() * full_residuals_vector;
 
   return true;
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

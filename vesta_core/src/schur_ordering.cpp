@@ -37,36 +37,42 @@
 
 #include <memory>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
-std::shared_ptr<ceres::ParameterBlockOrdering>
-buildSchurOrdering(const Graph &graph) {
+std::shared_ptr<ceres::ParameterBlockOrdering> buildSchurOrdering(const Graph& graph)
+{
   bool has_group_zero = false;
   auto ordering = std::make_shared<ceres::ParameterBlockOrdering>();
 
-  for (const auto &variable : graph.getVariables()) {
+  for (const auto& variable : graph.getVariables())
+  {
     const int group = variable.schurGroup();
-    if (group < -1 || group > 1) {
-      LOG(WARNING) << "Variable '" << variable.type()
-                   << "' returned unexpected schurGroup() value " << group
+    if (group < -1 || group > 1)
+    {
+      LOG(WARNING) << "Variable '" << variable.type() << "' returned unexpected schurGroup() value " << group
                    << ". Treating as group 1 (kept in reduced system).";
     }
     // The const_cast is safe: Graph::getVariables() returns const references to
     // the same Variable objects stored in the graph. The data() pointers match
     // those used by the persistent ceres::Problem, which is what the ordering
     // must reference.
-    if (group == 0) {
+    if (group == 0)
+    {
       has_group_zero = true;
-      ordering->AddElementToGroup(const_cast<double *>(variable.data()), 0);
-    } else {
-      ordering->AddElementToGroup(const_cast<double *>(variable.data()), 1);
+      ordering->AddElementToGroup(const_cast<double*>(variable.data()), 0);
+    }
+    else
+    {
+      ordering->AddElementToGroup(const_cast<double*>(variable.data()), 1);
     }
   }
 
-  if (!has_group_zero) {
+  if (!has_group_zero)
+  {
     return nullptr;
   }
   return ordering;
 }
 
-} // namespace vesta_core
+}  // namespace vesta_core

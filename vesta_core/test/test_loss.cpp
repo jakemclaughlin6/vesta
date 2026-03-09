@@ -35,8 +35,9 @@
 
 #include <gtest/gtest.h>
 
-TEST(Loss, Constructor) {
-  const double a{0.3};
+TEST(Loss, Constructor)
+{
+  const double a{ 0.3 };
   ExampleLoss loss(a);
   ASSERT_EQ(a, loss.a);
 
@@ -44,12 +45,14 @@ TEST(Loss, Constructor) {
 
   ASSERT_NE(nullptr, loss_function);
 
-  if (vesta_core::Loss::Ownership == ceres::Ownership::TAKE_OWNERSHIP) {
+  if (vesta_core::Loss::Ownership == ceres::Ownership::TAKE_OWNERSHIP)
+  {
     delete loss_function;
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

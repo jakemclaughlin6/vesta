@@ -40,11 +40,15 @@
  * Test fixture that adds a known set of entries to the timestamp manager.
  * Used to test the interactions with existing entries.
  */
-class MessageBufferTestFixture : public ::testing::Test {
+class MessageBufferTestFixture : public ::testing::Test
+{
 public:
-  MessageBufferTestFixture() : buffer(vesta_core::Duration::MAX) {}
+  MessageBufferTestFixture() : buffer(vesta_core::Duration::MAX)
+  {
+  }
 
-  void populate() {
+  void populate()
+  {
     // Add a standard set of entries into the motion model
     buffer.insert(vesta_core::Timestamp(10, 0), 1);
     buffer.insert(vesta_core::Timestamp(20, 0), 2);
@@ -55,36 +59,30 @@ public:
   vesta_core::MessageBuffer<int> buffer;
 };
 
-TEST_F(MessageBufferTestFixture, Exceptions) {
+TEST_F(MessageBufferTestFixture, Exceptions)
+{
   // Call the query with the parameters in the wrong order. This should throw.
-  EXPECT_THROW(buffer.query(vesta_core::Timestamp(20, 0),
-                            vesta_core::Timestamp(10, 0), false),
-               std::invalid_argument);
+  EXPECT_THROW(buffer.query(vesta_core::Timestamp(20, 0), vesta_core::Timestamp(10, 0), false), std::invalid_argument);
 
   // Call the query when the buffer is empty. This should throw.
-  EXPECT_THROW(buffer.query(vesta_core::Timestamp(10, 0),
-                            vesta_core::Timestamp(25, 0), false),
-               std::out_of_range);
+  EXPECT_THROW(buffer.query(vesta_core::Timestamp(10, 0), vesta_core::Timestamp(25, 0), false), std::out_of_range);
 
   populate();
 
   // Call the query with a beginning stamp that is too early
-  EXPECT_THROW(buffer.query(vesta_core::Timestamp(1, 0),
-                            vesta_core::Timestamp(25, 0), false),
-               std::out_of_range);
+  EXPECT_THROW(buffer.query(vesta_core::Timestamp(1, 0), vesta_core::Timestamp(25, 0), false), std::out_of_range);
 
   // Call the query function with a timestamp within the range. This should not
   // throw.
-  EXPECT_NO_THROW(
-      buffer.query(vesta_core::Timestamp(20, 0), vesta_core::Timestamp(30, 0)));
+  EXPECT_NO_THROW(buffer.query(vesta_core::Timestamp(20, 0), vesta_core::Timestamp(30, 0)));
 }
 
-TEST_F(MessageBufferTestFixture, StandardRangeAligned) {
+TEST_F(MessageBufferTestFixture, StandardRangeAligned)
+{
   // Query the buffer with the standard range flag, where the query boundaries
   // line up exactly with existing elements
   populate();
-  auto msg_range = buffer.query(vesta_core::Timestamp(10, 0),
-                                vesta_core::Timestamp(30, 0), false);
+  auto msg_range = buffer.query(vesta_core::Timestamp(10, 0), vesta_core::Timestamp(30, 0), false);
   // Verify the returned message range contains the correct entries
   ASSERT_EQ(1, std::distance(msg_range.begin(), msg_range.end()));
   auto msg_range_iter = msg_range.begin();
@@ -92,12 +90,12 @@ TEST_F(MessageBufferTestFixture, StandardRangeAligned) {
   EXPECT_EQ(2, msg_range_iter->second);
 }
 
-TEST_F(MessageBufferTestFixture, StandardRangeUnaligned) {
+TEST_F(MessageBufferTestFixture, StandardRangeUnaligned)
+{
   // Query the buffer with the standard range flag, where the query boundaries
   // do not line up with existing elements
   populate();
-  auto msg_range = buffer.query(vesta_core::Timestamp(15, 0),
-                                vesta_core::Timestamp(25, 0), false);
+  auto msg_range = buffer.query(vesta_core::Timestamp(15, 0), vesta_core::Timestamp(25, 0), false);
   // Verify the returned message range contains the correct entries
   ASSERT_EQ(1, std::distance(msg_range.begin(), msg_range.end()));
   auto msg_range_iter = msg_range.begin();
@@ -105,12 +103,12 @@ TEST_F(MessageBufferTestFixture, StandardRangeUnaligned) {
   EXPECT_EQ(2, msg_range_iter->second);
 }
 
-TEST_F(MessageBufferTestFixture, ExtendedRangeAligned) {
+TEST_F(MessageBufferTestFixture, ExtendedRangeAligned)
+{
   // Query the buffer with the extended range flag, where the query boundaries
   // line up exactly with existing elements
   populate();
-  auto msg_range = buffer.query(vesta_core::Timestamp(10, 0),
-                                vesta_core::Timestamp(30, 0), true);
+  auto msg_range = buffer.query(vesta_core::Timestamp(10, 0), vesta_core::Timestamp(30, 0), true);
   // Verify the returned message range contains the correct entries
   ASSERT_EQ(3, std::distance(msg_range.begin(), msg_range.end()));
   auto msg_range_iter = msg_range.begin();
@@ -124,12 +122,12 @@ TEST_F(MessageBufferTestFixture, ExtendedRangeAligned) {
   EXPECT_EQ(3, msg_range_iter->second);
 }
 
-TEST_F(MessageBufferTestFixture, ExtendedRangeUnaligned) {
+TEST_F(MessageBufferTestFixture, ExtendedRangeUnaligned)
+{
   // Query the buffer with the extended range flag, where the query boundaries
   // do not line up with existing elements
   populate();
-  auto msg_range = buffer.query(vesta_core::Timestamp(15, 0),
-                                vesta_core::Timestamp(25, 0), true);
+  auto msg_range = buffer.query(vesta_core::Timestamp(15, 0), vesta_core::Timestamp(25, 0), true);
   // Verify the returned message range contains the correct entries
   ASSERT_EQ(3, std::distance(msg_range.begin(), msg_range.end()));
   auto msg_range_iter = msg_range.begin();
@@ -143,7 +141,8 @@ TEST_F(MessageBufferTestFixture, ExtendedRangeUnaligned) {
   EXPECT_EQ(3, msg_range_iter->second);
 }
 
-TEST_F(MessageBufferTestFixture, Purge) {
+TEST_F(MessageBufferTestFixture, Purge)
+{
   // Verify the finite buffer length purges old data correctly
 
   // Set a finite buffer length and populate it with some queries
@@ -204,7 +203,8 @@ TEST_F(MessageBufferTestFixture, Purge) {
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

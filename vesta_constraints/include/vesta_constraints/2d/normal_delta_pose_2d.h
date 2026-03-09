@@ -38,7 +38,8 @@
 
 #include <ceres/sized_cost_function.h>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Implements a cost function that models a difference between pose
@@ -71,8 +72,8 @@ namespace vesta_constraints {
  * the matrix A is the square root information matrix (the inverse of the
  * covariance).
  */
-class NormalDeltaPose2D
-    : public ceres::SizedCostFunction<ceres::DYNAMIC, 2, 1, 2, 1> {
+class NormalDeltaPose2D : public ceres::SizedCostFunction<ceres::DYNAMIC, 2, 1, 2, 1>
+{
 public:
   /**
    * @brief Constructor
@@ -87,21 +88,18 @@ public:
    * information matrix in order (x, y, yaw)
    * @param[in] b The exposed pose difference in order (x, y, yaw)
    */
-  NormalDeltaPose2D(const vesta_core::MatrixXd &A,
-                    const vesta_core::Vector3d &b);
+  NormalDeltaPose2D(const vesta_core::MatrixXd& A, const vesta_core::Vector3d& b);
 
   /**
    * @brief Compute the cost values/residuals, and optionally the Jacobians,
    * using the provided variable/parameter values
    */
-  virtual bool Evaluate(double const *const *parameters, double *residuals,
-                        double **jacobians) const;
+  virtual bool Evaluate(double const* const* parameters, double* residuals, double** jacobians) const;
 
 private:
-  vesta_core::MatrixXd A_; //!< The residual weighting matrix, most likely the
-                           //!< square root information matrix
-  vesta_core::Vector3d
-      b_; //!< The measured difference between variable x0 and variable x1
+  vesta_core::MatrixXd A_;  //!< The residual weighting matrix, most likely the
+                            //!< square root information matrix
+  vesta_core::Vector3d b_;  //!< The measured difference between variable x0 and variable x1
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

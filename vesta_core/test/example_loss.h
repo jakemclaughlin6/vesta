@@ -50,21 +50,29 @@
 /**
  * @brief Dummy loss implementation for testing
  */
-class ExampleLoss : public vesta_core::Loss {
+class ExampleLoss : public vesta_core::Loss
+{
 public:
   VESTA_LOSS_DEFINITIONS(ExampleLoss);
 
-  explicit ExampleLoss(const double a = 1.0) : a(a) {}
+  explicit ExampleLoss(const double a = 1.0) : a(a)
+  {
+  }
 
-  void initialize(const std::string & /*name*/) override {}
+  void initialize(const std::string& /*name*/) override
+  {
+  }
 
-  void print(std::ostream & /*stream = std::cout*/) const override {}
+  void print(std::ostream& /*stream = std::cout*/) const override
+  {
+  }
 
-  ceres::LossFunction *lossFunction() const override {
+  ceres::LossFunction* lossFunction() const override
+  {
     return new ceres::HuberLoss(a);
   }
 
-  double a{1.0}; //!< Public member variable just for testing
+  double a{ 1.0 };  //!< Public member variable just for testing
 
 private:
   // Allow Boost Serialization access to private methods
@@ -80,8 +88,9 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Loss>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Loss>(*this);
     archive & a;
   }
 };

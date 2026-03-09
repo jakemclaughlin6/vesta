@@ -52,7 +52,8 @@
 #include <set>
 #include <vector>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief A transaction is a group of variable and constraint additions and
@@ -64,7 +65,8 @@ namespace vesta_core {
  * are contained within a Transaction object so that all operations are treated
  * equally.
  */
-class Transaction {
+class Transaction
+{
 public:
   VESTA_SMART_PTR_DEFINITIONS(Transaction);
 
@@ -76,8 +78,7 @@ public:
    * empty() method, and a front() method for directly accessing the first
    * member. When dereferenced, an iterator returns a const Constraint&.
    */
-  using const_constraint_range =
-      boost::any_range<const Constraint, boost::forward_traversal_tag>;
+  using const_constraint_range = boost::any_range<const Constraint, boost::forward_traversal_tag>;
 
   /**
    * @brief A range of vesta_core::Timestamp objects
@@ -88,8 +89,7 @@ public:
    * member. When dereferenced, an iterator returns a const
    * vesta_core::Timestamp&.
    */
-  using const_stamp_range = boost::any_range<const vesta_core::Timestamp,
-                                             boost::forward_traversal_tag>;
+  using const_stamp_range = boost::any_range<const vesta_core::Timestamp, boost::forward_traversal_tag>;
 
   /**
    * @brief A range of UUID objects
@@ -99,8 +99,7 @@ public:
    * empty() method, and a front() method for directly accessing the first
    * member. When dereferenced, an iterator returns a const UUID&.
    */
-  using const_uuid_range =
-      boost::any_range<const UUID, boost::forward_traversal_tag>;
+  using const_uuid_range = boost::any_range<const UUID, boost::forward_traversal_tag>;
 
   /**
    * @brief A range of Variable::SharedPtr objects
@@ -110,18 +109,23 @@ public:
    * empty() method, and a front() method for directly accessing the first
    * member. When dereferenced, an iterator returns a const Variable&.
    */
-  using const_variable_range =
-      boost::any_range<const Variable, boost::forward_traversal_tag>;
+  using const_variable_range = boost::any_range<const Variable, boost::forward_traversal_tag>;
 
   /**
    * @brief Read-only access to this transaction's timestamp
    */
-  const vesta_core::Timestamp &stamp() const { return stamp_; }
+  const vesta_core::Timestamp& stamp() const
+  {
+    return stamp_;
+  }
 
   /**
    * @brief Write access to this transaction's timestamp
    */
-  void stamp(const vesta_core::Timestamp &stamp) { stamp_ = stamp; }
+  void stamp(const vesta_core::Timestamp& stamp)
+  {
+    stamp_ = stamp;
+  }
 
   /**
    * @brief Read-only access to the set of timestamps involved in this
@@ -130,7 +134,10 @@ public:
    * @return An iterator range containing all involved timestamps, ordered
    * oldest to newest
    */
-  const_stamp_range involvedStamps() const { return involved_stamps_; }
+  const_stamp_range involvedStamps() const
+  {
+    return involved_stamps_;
+  }
 
   /**
    * @brief Read-only access to the minimum (oldest), timestamp among the
@@ -138,7 +145,7 @@ public:
    *
    * @return The minimum (oldest) timestamp.
    */
-  const vesta_core::Timestamp &minStamp() const;
+  const vesta_core::Timestamp& minStamp() const;
 
   /**
    * @brief Read-only access to the maximum (newest) timestamp among the
@@ -146,7 +153,7 @@ public:
    *
    * @return The maximum (newest) timestamp.
    */
-  const vesta_core::Timestamp &maxStamp() const;
+  const vesta_core::Timestamp& maxStamp() const;
 
   /**
    * @brief Read-only access to the added constraints
@@ -160,7 +167,10 @@ public:
    *
    * @return  An iterator range containing all removed constraint UUIDs
    */
-  const_uuid_range removedConstraints() const { return removed_constraints_; }
+  const_uuid_range removedConstraints() const
+  {
+    return removed_constraints_;
+  }
 
   /**
    * @brief Read-only access to the added variables
@@ -174,7 +184,10 @@ public:
    *
    * @return  An iterator range containing all removed variable UUIDs
    */
-  const_uuid_range removedVariables() const { return removed_variables_; }
+  const_uuid_range removedVariables() const
+  {
+    return removed_variables_;
+  }
 
   /**
    * @brief Check if the transaction is empty, i.e. it has no added or removed
@@ -192,7 +205,7 @@ public:
    *
    * @param[in] stamp The timestamp to be added
    */
-  void addInvolvedStamp(const vesta_core::Timestamp &stamp);
+  void addInvolvedStamp(const vesta_core::Timestamp& stamp);
 
   /**
    * @brief Add a constraint to this transaction
@@ -217,7 +230,7 @@ public:
    *
    * @param[in] constraint_uuid The UUID of the constraint to remove
    */
-  void removeConstraint(const UUID &constraint_uuid);
+  void removeConstraint(const UUID& constraint_uuid);
 
   /**
    * @brief Add a variable to this transaction
@@ -242,7 +255,7 @@ public:
    *
    * @param[in] variable_uuid The UUID of the variable to remove
    */
-  void removeVariable(const UUID &variable_uuid);
+  void removeVariable(const UUID& variable_uuid);
 
   /**
    * @brief Merge the contents of another transaction into this one.
@@ -251,7 +264,7 @@ public:
    * @param[in] overwrite Flag indicating that variables and constraints in \p
    * other should overwrite existing variables and constraints with the UUIDs.
    */
-  void merge(const Transaction &other, bool overwrite = false);
+  void merge(const Transaction& other, bool overwrite = false);
 
   /**
    * @brief Print a human-readable description of the transaction to the
@@ -259,7 +272,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const;
+  void print(std::ostream& stream = std::cout) const;
 
   /**
    * @brief Perform a deep copy of the Transaction and return a unique pointer
@@ -276,14 +289,14 @@ public:
    *
    * @param[out] archive - The archive to serialize this constraint into
    */
-  void serialize(vesta_core::BinaryOutputArchive & /* archive */) const;
+  void serialize(vesta_core::BinaryOutputArchive& /* archive */) const;
 
   /**
    * @brief Serialize this Constraint into the provided text archive
    *
    * @param[out] archive - The archive to serialize this constraint into
    */
-  void serialize(vesta_core::TextOutputArchive & /* archive */) const;
+  void serialize(vesta_core::TextOutputArchive& /* archive */) const;
 
   /**
    * @brief Deserialize data from the provided binary archive into this
@@ -291,26 +304,22 @@ public:
    *
    * @param[in] archive - The archive holding serialized Constraint data
    */
-  void deserialize(vesta_core::BinaryInputArchive & /* archive */);
+  void deserialize(vesta_core::BinaryInputArchive& /* archive */);
 
   /**
    * @brief Deserialize data from the provided text archive into this Constraint
    *
    * @param[in] archive - The archive holding serialized Constraint data
    */
-  void deserialize(vesta_core::TextInputArchive & /* archive */);
+  void deserialize(vesta_core::TextInputArchive& /* archive */);
 
 private:
-  vesta_core::Timestamp stamp_; //!< The transaction message timestamp
-  std::vector<Constraint::SharedPtr>
-      added_constraints_; //!< The constraints to be added
-  std::vector<Variable::SharedPtr>
-      added_variables_; //!< The variables to be added
-  std::set<vesta_core::Timestamp>
-      involved_stamps_; //!< The set of timestamps involved in this transaction
-  std::vector<UUID>
-      removed_constraints_;             //!< The constraint UUIDs to be removed
-  std::vector<UUID> removed_variables_; //!< The variable UUIDs to be removed
+  vesta_core::Timestamp stamp_;                           //!< The transaction message timestamp
+  std::vector<Constraint::SharedPtr> added_constraints_;  //!< The constraints to be added
+  std::vector<Variable::SharedPtr> added_variables_;      //!< The variables to be added
+  std::set<vesta_core::Timestamp> involved_stamps_;       //!< The set of timestamps involved in this transaction
+  std::vector<UUID> removed_constraints_;                 //!< The constraint UUIDs to be removed
+  std::vector<UUID> removed_variables_;                   //!< The variable UUIDs to be removed
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
@@ -325,7 +334,8 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
     archive & stamp_;
     archive & added_constraints_;
     archive & added_variables_;
@@ -338,6 +348,6 @@ private:
 /**
  * Stream operator for printing Transaction objects.
  */
-std::ostream &operator<<(std::ostream &stream, const Transaction &transaction);
+std::ostream& operator<<(std::ostream& stream, const Transaction& transaction);
 
-} // namespace vesta_core
+}  // namespace vesta_core

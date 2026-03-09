@@ -39,10 +39,11 @@
 #include <vesta_core/util.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 
-#include <Eigen/Core>
 #include <ceres/rotation.h>
+#include <Eigen/Core>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Implements a cost function that models a difference between 3D
@@ -68,7 +69,8 @@ namespace vesta_constraints {
  * the matrix A is the square root information matrix (the inverse of the
  * covariance).
  */
-class NormalDeltaOrientation3DCostFunctor {
+class NormalDeltaOrientation3DCostFunctor
+{
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
@@ -79,22 +81,21 @@ public:
    * information matrix in order (x, y, z)
    * @param[in] b The measured change between the two orientation variables
    */
-  NormalDeltaOrientation3DCostFunctor(const vesta_core::Matrix3d &A,
-                                      const vesta_core::Vector4d &b)
-      : A_(A), b_(b) {}
+  NormalDeltaOrientation3DCostFunctor(const vesta_core::Matrix3d& A, const vesta_core::Vector4d& b) : A_(A), b_(b)
+  {
+  }
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
    */
   template <typename T>
-  bool operator()(const T *const orientation1, const T *const orientation2,
-                  T *residuals) const {
+  bool operator()(const T* const orientation1, const T* const orientation2, T* residuals) const
+  {
     using vesta_variables::Orientation3DStamped;
 
-    T orientation1_inverse[4] = {orientation1[0], -orientation1[1],
-                                 -orientation1[2], -orientation1[3]};
+    T orientation1_inverse[4] = { orientation1[0], -orientation1[1], -orientation1[2], -orientation1[3] };
 
-    T observation_inverse[4] = {T(b_(0)), T(-b_(1)), T(-b_(2)), T(-b_(3))};
+    T observation_inverse[4] = { T(b_(0)), T(-b_(1)), T(-b_(2)), T(-b_(3)) };
 
     T difference[4];
     ceres::QuaternionProduct(orientation1_inverse, orientation2, difference);
@@ -104,18 +105,16 @@ public:
 
     // Scale the residuals by the square root information matrix to account for
     // the measurement uncertainty.
-    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>> residuals_map(residuals,
-                                                                  A_.rows());
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, 1>> residuals_map(residuals, A_.rows());
     residuals_map.applyOnTheLeft(A_.template cast<T>());
 
     return true;
   }
 
 private:
-  vesta_core::Matrix3d A_; //!< The residual weighting matrix, most likely the
-                           //!< square root information matrix
-  vesta_core::Vector4d
-      b_; //!< The measured difference between orientation1 and orientation2
+  vesta_core::Matrix3d A_;  //!< The residual weighting matrix, most likely the
+                            //!< square root information matrix
+  vesta_core::Vector4d b_;  //!< The measured difference between orientation1 and orientation2
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

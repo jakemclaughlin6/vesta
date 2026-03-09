@@ -63,7 +63,8 @@
 // https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/residual_block.cc#L159
 // * cost w/  loss:
 // https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/residual_block.cc#L165
-namespace ceres {
+namespace ceres
+{
 
 // Dynamic Covariance Scaling (DCS), equivalent to Switchable Constraints and
 // similar to the Geman-McClure with the tuning constant 'a'.
@@ -148,11 +149,14 @@ namespace ceres {
 // in the equations that correct the residuals and jacobian.
 //
 // At s = 0: rho = [0, 1, 0].
-class DCSLoss : public ceres::LossFunction {
+class DCSLoss : public ceres::LossFunction
+{
 public:
-  explicit DCSLoss(const double a) : a_(a) {}
+  explicit DCSLoss(const double a) : a_(a)
+  {
+  }
 
-  void Evaluate(double, double *rho) const override;
+  void Evaluate(double, double* rho) const override;
 
 private:
   const double a_;
@@ -170,11 +174,14 @@ private:
 // where b = a * a, being 'a' a tuning constant, and r = sqrt(s) the residual.
 //
 // At s = 0: rho = [0, 1, -Inf]
-class FairLoss : public ceres::LossFunction {
+class FairLoss : public ceres::LossFunction
+{
 public:
-  explicit FairLoss(const double a) : a_(a), b_(a * a) {}
+  explicit FairLoss(const double a) : a_(a), b_(a * a)
+  {
+  }
 
-  void Evaluate(double, double *) const override;
+  void Evaluate(double, double*) const override;
 
 private:
   const double a_;
@@ -220,11 +227,14 @@ private:
 //   https://github.com/borglab/gtsam/blob/57da7b31d07a233421d9419b85e6f90bacf0/gtsam/linear/LossFunctions.cpp#L314-L325
 //
 // At s = 0: rho = [0, 1, -2].
-class GemanMcClureLoss : public ceres::LossFunction {
+class GemanMcClureLoss : public ceres::LossFunction
+{
 public:
-  explicit GemanMcClureLoss(const double a) : b_(a * a) {}
+  explicit GemanMcClureLoss(const double a) : b_(a * a)
+  {
+  }
 
-  void Evaluate(double, double *) const override;
+  void Evaluate(double, double*) const override;
 
 private:
   const double b_;
@@ -240,15 +250,18 @@ private:
 // where b = a * a, being 'a' a tuning constant.
 //
 // At s = 0: rho = [0, 1, -1/b]
-class WelschLoss : public ceres::LossFunction {
+class WelschLoss : public ceres::LossFunction
+{
 public:
-  explicit WelschLoss(const double a) : b_(a * a), c_(-1.0 / b_) {}
+  explicit WelschLoss(const double a) : b_(a * a), c_(-1.0 / b_)
+  {
+  }
 
-  void Evaluate(double, double *) const override;
+  void Evaluate(double, double*) const override;
 
 private:
   const double b_;
   const double c_;
 };
 
-} // namespace ceres
+}  // namespace ceres

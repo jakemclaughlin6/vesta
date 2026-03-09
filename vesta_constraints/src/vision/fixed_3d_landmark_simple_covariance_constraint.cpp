@@ -37,60 +37,56 @@
 #include <vesta_constraints/vision/fixed_3d_landmark_simple_covariance_constraint.h>
 #include <vesta_constraints/vision/fixed_3d_landmark_simple_covariance_cost_functor.h>
 
+#include <ceres/autodiff_cost_function.h>
 #include <Eigen/Dense>
 #include <boost/serialization/export.hpp>
-#include <ceres/autodiff_cost_function.h>
 
 #include <string>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
-Fixed3DLandmarkSimpleCovarianceConstraint::
-    Fixed3DLandmarkSimpleCovarianceConstraint(
-        const std::string &source,
-        const vesta_variables::Position3DStamped &position,
-        const vesta_variables::Orientation3DStamped &orientation,
-        const vesta_variables::PinholeCamera &calibration,
-        const vesta_core::MatrixXd &pts3d,
-        const vesta_core::MatrixXd &observations,
-        const vesta_core::Vector7d &mean,
-        const vesta_core::Matrix2d &covariance)
-    : vesta_core::Constraint(
-          source, {position.uuid(), orientation.uuid(), calibration.uuid()}),
-      pts3d_(pts3d), observations_(observations), mean_(mean),
-      sqrt_information_(covariance.inverse().llt().matrixU()) {
+Fixed3DLandmarkSimpleCovarianceConstraint::Fixed3DLandmarkSimpleCovarianceConstraint(
+    const std::string& source, const vesta_variables::Position3DStamped& position,
+    const vesta_variables::Orientation3DStamped& orientation, const vesta_variables::PinholeCamera& calibration,
+    const vesta_core::MatrixXd& pts3d, const vesta_core::MatrixXd& observations, const vesta_core::Vector7d& mean,
+    const vesta_core::Matrix2d& covariance)
+  : vesta_core::Constraint(source, { position.uuid(), orientation.uuid(), calibration.uuid() })
+  , pts3d_(pts3d)
+  , observations_(observations)
+  , mean_(mean)
+  , sqrt_information_(covariance.inverse().llt().matrixU())
+{
   assert(pts3d_.cols() == 3);
   assert(observations_.cols() == 2);
   assert(pts3d_.rows() == observations_.rows());
 }
 
-Fixed3DLandmarkSimpleCovarianceConstraint::
-    Fixed3DLandmarkSimpleCovarianceConstraint(
-        const std::string &source,
-        const vesta_variables::Position3DStamped &position,
-        const vesta_variables::Orientation3DStamped &orientation,
-        const vesta_variables::PinholeCamera &calibration,
-        const double &marker_size, const vesta_core::MatrixXd &observations,
-        const vesta_core::Vector7d &mean,
-        const vesta_core::Matrix2d &covariance)
-    : vesta_core::Constraint(
-          source, {position.uuid(), orientation.uuid(), calibration.uuid()}),
-      pts3d_(4, 3), observations_(observations), mean_(mean),
-      sqrt_information_(covariance.inverse().llt().matrixU()) {
+Fixed3DLandmarkSimpleCovarianceConstraint::Fixed3DLandmarkSimpleCovarianceConstraint(
+    const std::string& source, const vesta_variables::Position3DStamped& position,
+    const vesta_variables::Orientation3DStamped& orientation, const vesta_variables::PinholeCamera& calibration,
+    const double& marker_size, const vesta_core::MatrixXd& observations, const vesta_core::Vector7d& mean,
+    const vesta_core::Matrix2d& covariance)
+  : vesta_core::Constraint(source, { position.uuid(), orientation.uuid(), calibration.uuid() })
+  , pts3d_(4, 3)
+  , observations_(observations)
+  , mean_(mean)
+  , sqrt_information_(covariance.inverse().llt().matrixU())
+{
   // Define 3D Homogeneous 3D Points at origin, assume z-up
-  pts3d_ << -1.0, -1.0, 0.0, // NOLINT
-      -1.0, 1.0, 0.0,        // NOLINT
-      1.0, -1.0, 0.0,        // NOLINT
-      1.0, 1.0, 0.0;         // NOLINT
-  pts3d_ *= marker_size;     // Scalar Multiplication
+  pts3d_ << -1.0, -1.0, 0.0,  // NOLINT
+      -1.0, 1.0, 0.0,         // NOLINT
+      1.0, -1.0, 0.0,         // NOLINT
+      1.0, 1.0, 0.0;          // NOLINT
+  pts3d_ *= marker_size;      // Scalar Multiplication
 
   assert(pts3d_.cols() == 3);
   assert(observations_.cols() == 2);
   assert(pts3d_.rows() == observations_.rows());
 }
 
-void Fixed3DLandmarkSimpleCovarianceConstraint::print(
-    std::ostream &stream) const {
+void Fixed3DLandmarkSimpleCovarianceConstraint::print(std::ostream& stream) const
+{
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
@@ -100,22 +96,20 @@ void Fixed3DLandmarkSimpleCovarianceConstraint::print(
          << "  sqrt_info: " << sqrtInformation() << "\n"
          << "  observations: " << observations() << "\n";
 
-  if (loss()) {
+  if (loss())
+  {
     stream << "  loss: ";
     loss()->print(stream);
   }
 }
 
-ceres::CostFunction *
-Fixed3DLandmarkSimpleCovarianceConstraint::costFunction() const {
-  return new ceres::AutoDiffCostFunction<
-      Fixed3DLandmarkSimpleCovarianceCostFunctor, ceres::DYNAMIC, 3, 4, 4>(
-      new Fixed3DLandmarkSimpleCovarianceCostFunctor(sqrt_information_, mean_,
-                                                     observations_, pts3d_),
+ceres::CostFunction* Fixed3DLandmarkSimpleCovarianceConstraint::costFunction() const
+{
+  return new ceres::AutoDiffCostFunction<Fixed3DLandmarkSimpleCovarianceCostFunctor, ceres::DYNAMIC, 3, 4, 4>(
+      new Fixed3DLandmarkSimpleCovarianceCostFunctor(sqrt_information_, mean_, observations_, pts3d_),
       2 * pts3d_.rows());
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
-BOOST_CLASS_EXPORT_IMPLEMENT(
-    vesta_constraints::Fixed3DLandmarkSimpleCovarianceConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::Fixed3DLandmarkSimpleCovarianceConstraint);

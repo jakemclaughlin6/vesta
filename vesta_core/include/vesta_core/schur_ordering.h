@@ -40,7 +40,8 @@
 
 #include <memory>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief Build a ceres::ParameterBlockOrdering from a graph for Schur
@@ -60,7 +61,6 @@ namespace vesta_core {
  * @return A shared_ptr to the ordering, or nullptr if no variables have
  * schurGroup() == 0
  */
-std::shared_ptr<ceres::ParameterBlockOrdering>
-buildSchurOrdering(const Graph &graph);
+std::shared_ptr<ceres::ParameterBlockOrdering> buildSchurOrdering(const Graph& graph);
 
-} // namespace vesta_core
+}  // namespace vesta_core

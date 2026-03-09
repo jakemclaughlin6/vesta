@@ -36,5 +36,4 @@
 #include <cstdint>
 #include <limits>
 
-const vesta_core::Duration vesta_core::Duration::MAX{
-    std::numeric_limits<int64_t>::max()};
+const vesta_core::Duration vesta_core::Duration::MAX{ std::numeric_limits<int64_t>::max() };

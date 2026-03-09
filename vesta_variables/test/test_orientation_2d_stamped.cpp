@@ -49,22 +49,22 @@
 
 using vesta_variables::Orientation2DStamped;
 
-TEST(Orientation2DStamped, Type) {
+TEST(Orientation2DStamped, Type)
+{
   Orientation2DStamped variable(vesta_core::Timestamp(12345678, 910111213));
   EXPECT_EQ("vesta_variables::Orientation2DStamped", variable.type());
 }
 
-TEST(Orientation2DStamped, UUID) {
+TEST(Orientation2DStamped, UUID)
+{
   // Verify two velocities at the same timestamp produce the same UUID
   {
     Orientation2DStamped variable1(vesta_core::Timestamp(12345678, 910111213));
     Orientation2DStamped variable2(vesta_core::Timestamp(12345678, 910111213));
     EXPECT_EQ(variable1.uuid(), variable2.uuid());
 
-    Orientation2DStamped variable3(vesta_core::Timestamp(12345678, 910111213),
-                                   vesta_core::uuid::generate("c3po"));
-    Orientation2DStamped variable4(vesta_core::Timestamp(12345678, 910111213),
-                                   vesta_core::uuid::generate("c3po"));
+    Orientation2DStamped variable3(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("c3po"));
+    Orientation2DStamped variable4(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("c3po"));
     EXPECT_EQ(variable3.uuid(), variable4.uuid());
   }
 
@@ -80,18 +80,16 @@ TEST(Orientation2DStamped, UUID) {
 
   // Verify two velocities with different hardware IDs produce different UUIDs
   {
-    Orientation2DStamped variable1(vesta_core::Timestamp(12345678, 910111213),
-                                   vesta_core::uuid::generate("r2d2"));
-    Orientation2DStamped variable2(vesta_core::Timestamp(12345678, 910111213),
-                                   vesta_core::uuid::generate("bb8"));
+    Orientation2DStamped variable1(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("r2d2"));
+    Orientation2DStamped variable2(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("bb8"));
     EXPECT_NE(variable1.uuid(), variable2.uuid());
   }
 }
 
-TEST(Orientation2DStamped, Stamped) {
-  vesta_core::Variable::SharedPtr base = Orientation2DStamped::make_shared(
-      vesta_core::Timestamp(12345678, 910111213),
-      vesta_core::uuid::generate("mo"));
+TEST(Orientation2DStamped, Stamped)
+{
+  vesta_core::Variable::SharedPtr base =
+      Orientation2DStamped::make_shared(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("mo"));
   auto derived = std::dynamic_pointer_cast<Orientation2DStamped>(base);
   ASSERT_TRUE(static_cast<bool>(derived));
   EXPECT_EQ(vesta_core::Timestamp(12345678, 910111213), derived->stamp());
@@ -103,34 +101,37 @@ TEST(Orientation2DStamped, Stamped) {
   EXPECT_EQ(vesta_core::uuid::generate("mo"), stamped->deviceId());
 }
 
-struct Orientation2DPlus {
+struct Orientation2DPlus
+{
   template <typename T>
-  bool operator()(const T *x, const T *delta, T *x_plus_delta) const {
+  bool operator()(const T* x, const T* delta, T* x_plus_delta) const
+  {
     x_plus_delta[0] = vesta_core::wrapAngle2D(x[0] + delta[0]);
     return true;
   }
 };
 
-struct Orientation2DMinus {
+struct Orientation2DMinus
+{
   template <typename T>
-  bool operator()(const T *x1, const T *x2, T *delta) const {
+  bool operator()(const T* x1, const T* x2, T* delta) const
+  {
     delta[0] = vesta_core::wrapAngle2D(x2[0] - x1[0]);
     return true;
   }
 };
 
-using Orientation2DManifold =
-    vesta_core::AutoDiffManifold<Orientation2DPlus, Orientation2DMinus, 1, 1>;
+using Orientation2DManifold = vesta_core::AutoDiffManifold<Orientation2DPlus, Orientation2DMinus, 1, 1>;
 
-TEST(Orientation2DStamped, Plus) {
-  auto parameterization =
-      Orientation2DStamped(vesta_core::Timestamp(0, 0)).manifold();
+TEST(Orientation2DStamped, Plus)
+{
+  auto parameterization = Orientation2DStamped(vesta_core::Timestamp(0, 0)).manifold();
 
   // Simple test
   {
-    double x[1] = {1.0};
-    double delta[1] = {0.5};
-    double actual[1] = {0.0};
+    double x[1] = { 1.0 };
+    double delta[1] = { 0.5 };
+    double actual[1] = { 0.0 };
     bool success = parameterization->Plus(x, delta, actual);
 
     EXPECT_TRUE(success);
@@ -139,9 +140,9 @@ TEST(Orientation2DStamped, Plus) {
 
   // Check roll-over
   {
-    double x[1] = {2.0};
-    double delta[1] = {3.0};
-    double actual[1] = {0.0};
+    double x[1] = { 2.0 };
+    double delta[1] = { 3.0 };
+    double actual[1] = { 0.0 };
     bool success = parameterization->Plus(x, delta, actual);
 
     EXPECT_TRUE(success);
@@ -151,19 +152,19 @@ TEST(Orientation2DStamped, Plus) {
   delete parameterization;
 }
 
-TEST(Orientation2DStamped, PlusJacobian) {
-  auto parameterization =
-      Orientation2DStamped(vesta_core::Timestamp(0, 0)).manifold();
+TEST(Orientation2DStamped, PlusJacobian)
+{
+  auto parameterization = Orientation2DStamped(vesta_core::Timestamp(0, 0)).manifold();
   auto reference = Orientation2DManifold();
 
-  auto test_values =
-      std::vector<double>{-2 * M_PI, -1 * M_PI, -1.0, 0.0, 1.0, M_PI, 2 * M_PI};
-  for (auto test_value : test_values) {
-    double x[1] = {test_value};
-    double actual[1] = {0.0};
+  auto test_values = std::vector<double>{ -2 * M_PI, -1 * M_PI, -1.0, 0.0, 1.0, M_PI, 2 * M_PI };
+  for (auto test_value : test_values)
+  {
+    double x[1] = { test_value };
+    double actual[1] = { 0.0 };
     parameterization->PlusJacobian(x, actual);
 
-    double expected[1] = {0.0};
+    double expected[1] = { 0.0 };
     reference.PlusJacobian(x, expected);
 
     EXPECT_NEAR(expected[0], actual[0], 1.0e-5);
@@ -172,15 +173,15 @@ TEST(Orientation2DStamped, PlusJacobian) {
   delete parameterization;
 }
 
-TEST(Orientation2DStamped, Minus) {
-  auto parameterization =
-      Orientation2DStamped(vesta_core::Timestamp(0, 0)).manifold();
+TEST(Orientation2DStamped, Minus)
+{
+  auto parameterization = Orientation2DStamped(vesta_core::Timestamp(0, 0)).manifold();
 
   // Simple test
   {
-    double x1[1] = {1.0};
-    double x2[1] = {1.5};
-    double actual[1] = {0.0};
+    double x1[1] = { 1.0 };
+    double x2[1] = { 1.5 };
+    double actual[1] = { 0.0 };
     bool success = parameterization->Minus(x1, x2, actual);
 
     EXPECT_TRUE(success);
@@ -189,9 +190,9 @@ TEST(Orientation2DStamped, Minus) {
 
   // Check roll-over
   {
-    double x1[1] = {2.0};
-    double x2[1] = {5 - 2 * M_PI};
-    double actual[1] = {0.0};
+    double x1[1] = { 2.0 };
+    double x2[1] = { 5 - 2 * M_PI };
+    double actual[1] = { 0.0 };
     bool success = parameterization->Minus(x1, x2, actual);
 
     EXPECT_TRUE(success);
@@ -199,19 +200,19 @@ TEST(Orientation2DStamped, Minus) {
   }
 }
 
-TEST(Orientation2DStamped, MinusJacobian) {
-  auto parameterization =
-      Orientation2DStamped(vesta_core::Timestamp(0, 0)).manifold();
+TEST(Orientation2DStamped, MinusJacobian)
+{
+  auto parameterization = Orientation2DStamped(vesta_core::Timestamp(0, 0)).manifold();
   auto reference = Orientation2DManifold();
 
-  auto test_values =
-      std::vector<double>{-2 * M_PI, -1 * M_PI, -1.0, 0.0, 1.0, M_PI, 2 * M_PI};
-  for (auto test_value : test_values) {
-    double x[1] = {test_value};
-    double actual[1] = {0.0};
+  auto test_values = std::vector<double>{ -2 * M_PI, -1 * M_PI, -1.0, 0.0, 1.0, M_PI, 2 * M_PI };
+  for (auto test_value : test_values)
+  {
+    double x[1] = { test_value };
+    double actual[1] = { 0.0 };
     parameterization->MinusJacobian(x, actual);
 
-    double expected[1] = {0.0};
+    double expected[1] = { 0.0 };
     reference.MinusJacobian(x, expected);
 
     EXPECT_NEAR(expected[0], actual[0], 1.0e-5);
@@ -220,30 +221,33 @@ TEST(Orientation2DStamped, MinusJacobian) {
   delete parameterization;
 }
 
-struct CostFunctor {
-  CostFunctor() {}
+struct CostFunctor
+{
+  CostFunctor()
+  {
+  }
 
-  template <typename T> bool operator()(const T *const x, T *residual) const {
+  template <typename T>
+  bool operator()(const T* const x, T* residual) const
+  {
     residual[0] = x[0] - T(3.0);
     return true;
   }
 };
 
-TEST(Orientation2DStamped, Optimization) {
+TEST(Orientation2DStamped, Optimization)
+{
   // Create a Orientation2DStamped
-  Orientation2DStamped orientation(vesta_core::Timestamp(12345678, 910111213),
-                                   vesta_core::uuid::generate("hal9000"));
+  Orientation2DStamped orientation(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("hal9000"));
   orientation.setYaw(1.5);
 
   // Create a simple a constraint
-  ceres::CostFunction *cost_function =
-      new ceres::AutoDiffCostFunction<CostFunctor, 1, 1>(new CostFunctor());
+  ceres::CostFunction* cost_function = new ceres::AutoDiffCostFunction<CostFunctor, 1, 1>(new CostFunctor());
 
   // Build the problem.
   ceres::Problem problem;
-  problem.AddParameterBlock(orientation.data(), orientation.size(),
-                            orientation.manifold());
-  std::vector<double *> parameter_blocks;
+  problem.AddParameterBlock(orientation.data(), orientation.size(), orientation.manifold());
+  std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(orientation.data());
   problem.AddResidualBlock(cost_function, nullptr, parameter_blocks);
 
@@ -256,10 +260,10 @@ TEST(Orientation2DStamped, Optimization) {
   EXPECT_NEAR(3.0, orientation.getYaw(), 1.0e-5);
 }
 
-TEST(Orientation2DStamped, Serialization) {
+TEST(Orientation2DStamped, Serialization)
+{
   // Create a Orientation2DStamped
-  Orientation2DStamped expected(vesta_core::Timestamp(12345678, 910111213),
-                                vesta_core::uuid::generate("hal9000"));
+  Orientation2DStamped expected(vesta_core::Timestamp(12345678, 910111213), vesta_core::uuid::generate("hal9000"));
   expected.setYaw(1.5);
 
   // Serialize the variable into an archive
@@ -282,7 +286,8 @@ TEST(Orientation2DStamped, Serialization) {
   EXPECT_EQ(expected.getYaw(), actual.getYaw());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

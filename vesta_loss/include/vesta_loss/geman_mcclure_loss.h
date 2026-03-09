@@ -43,7 +43,8 @@
 #include <ostream>
 #include <string>
 
-namespace vesta_loss {
+namespace vesta_loss
+{
 
 /**
  * @brief The GemanMcClureLoss loss function.
@@ -58,7 +59,8 @@ namespace vesta_loss {
  * See the Ceres documentation for more details.
  * http://ceres-solver.org/nnls_modeling.html#lossfunction
  */
-class GemanMcClureLoss : public vesta_core::Loss {
+class GemanMcClureLoss : public vesta_core::Loss
+{
 public:
   VESTA_LOSS_DEFINITIONS(GemanMcClureLoss);
 
@@ -83,7 +85,9 @@ public:
    * @param[in] name A unique name to initialize this plugin instance, such as
    * from the parameter server.
    */
-  void initialize(const std::string & /*name*/) override {}
+  void initialize(const std::string& /*name*/) override
+  {
+  }
 
   /**
    * @brief Print a human-readable description of the loss function to the
@@ -91,7 +95,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Return a raw pointer to a ceres::LossFunction that implements the
@@ -106,24 +110,30 @@ public:
    *
    * @return A base pointer to an instance of a derived ceres::LossFunction.
    */
-  ceres::LossFunction *lossFunction() const override;
+  ceres::LossFunction* lossFunction() const override;
 
   /**
    * @brief Parameter 'a' accessor.
    *
    * @return Parameter 'a'.
    */
-  double a() const { return a_; }
+  double a() const
+  {
+    return a_;
+  }
 
   /**
    * @brief Parameter 'a' mutator.
    *
    * @param[in] a Parameter 'a'.
    */
-  void a(const double a) { a_ = a; }
+  void a(const double a)
+  {
+    a_ = a;
+  }
 
 private:
-  double a_{1.0}; //!< GemanMcClureLoss parameter 'a'
+  double a_{ 1.0 };  //!< GemanMcClureLoss parameter 'a'
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
@@ -138,12 +148,13 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Loss>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Loss>(*this);
     archive & a_;
   }
 };
 
-} // namespace vesta_loss
+}  // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_KEY(vesta_loss::GemanMcClureLoss);

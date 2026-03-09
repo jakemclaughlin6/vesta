@@ -38,8 +38,8 @@
 #include <vesta_core/serialization.h>
 #include <vesta_core/type_name.h>
 
-#include <boost/serialization/access.hpp>
 #include <ceres/loss_function.h>
+#include <boost/serialization/access.hpp>
 
 #include <iostream>
 #include <ostream>
@@ -58,9 +58,10 @@
  * }
  * @endcode
  */
-#define VESTA_LOSS_CLONE_DEFINITION(...)                                       \
-  vesta_core::Loss::UniquePtr clone() const override {                         \
-    return __VA_ARGS__::make_unique(*this);                                    \
+#define VESTA_LOSS_CLONE_DEFINITION(...)                                                                               \
+  vesta_core::Loss::UniquePtr clone() const override                                                                   \
+  {                                                                                                                    \
+    return __VA_ARGS__::make_unique(*this);                                                                            \
   }
 
 /**
@@ -77,18 +78,22 @@
  * }
  * @endcode
  */
-#define VESTA_LOSS_SERIALIZE_DEFINITION(...)                                   \
-  void serialize(vesta_core::BinaryOutputArchive &archive) const override {    \
-    archive << *this;                                                          \
-  } /* NOLINT */                                                               \
-  void serialize(vesta_core::TextOutputArchive &archive) const override {      \
-    archive << *this;                                                          \
-  } /* NOLINT */                                                               \
-  void deserialize(vesta_core::BinaryInputArchive &archive) override {         \
-    archive >> *this;                                                          \
-  } /* NOLINT */                                                               \
-  void deserialize(vesta_core::TextInputArchive &archive) override {           \
-    archive >> *this;                                                          \
+#define VESTA_LOSS_SERIALIZE_DEFINITION(...)                                                                           \
+  void serialize(vesta_core::BinaryOutputArchive& archive) const override                                              \
+  {                                                                                                                    \
+    archive << *this;                                                                                                  \
+  } /* NOLINT */                                                                                                       \
+  void serialize(vesta_core::TextOutputArchive& archive) const override                                                \
+  {                                                                                                                    \
+    archive << *this;                                                                                                  \
+  } /* NOLINT */                                                                                                       \
+  void deserialize(vesta_core::BinaryInputArchive& archive) override                                                   \
+  {                                                                                                                    \
+    archive >> *this;                                                                                                  \
+  } /* NOLINT */                                                                                                       \
+  void deserialize(vesta_core::TextInputArchive& archive) override                                                     \
+  {                                                                                                                    \
+    archive >> *this;                                                                                                  \
   }
 
 /**
@@ -108,13 +113,18 @@
  * }
  * @endcode
  */
-#define VESTA_LOSS_TYPE_DEFINITION(...)                                        \
-  struct detail {                                                              \
-    static std::string type() {                                                \
-      return vesta_core::typeName<__VA_ARGS__>();                              \
-    } /* NOLINT */                                                             \
-  }; /* NOLINT */                                                              \
-  std::string type() const override { return detail::type(); }
+#define VESTA_LOSS_TYPE_DEFINITION(...)                                                                                \
+  struct detail                                                                                                        \
+  {                                                                                                                    \
+    static std::string type()                                                                                          \
+    {                                                                                                                  \
+      return vesta_core::typeName<__VA_ARGS__>();                                                                      \
+    } /* NOLINT */                                                                                                     \
+  }; /* NOLINT */                                                                                                      \
+  std::string type() const override                                                                                    \
+  {                                                                                                                    \
+    return detail::type();                                                                                             \
+  }
 
 /**
  * @brief Convenience function that creates the required pointer aliases,
@@ -130,13 +140,14 @@
  * }
  * @endcode
  */
-#define VESTA_LOSS_DEFINITIONS(...)                                            \
-  VESTA_SMART_PTR_DEFINITIONS(__VA_ARGS__)                                     \
-  VESTA_LOSS_TYPE_DEFINITION(__VA_ARGS__)                                      \
-  VESTA_LOSS_CLONE_DEFINITION(__VA_ARGS__)                                     \
+#define VESTA_LOSS_DEFINITIONS(...)                                                                                    \
+  VESTA_SMART_PTR_DEFINITIONS(__VA_ARGS__)                                                                             \
+  VESTA_LOSS_TYPE_DEFINITION(__VA_ARGS__)                                                                              \
+  VESTA_LOSS_CLONE_DEFINITION(__VA_ARGS__)                                                                             \
   VESTA_LOSS_SERIALIZE_DEFINITION(__VA_ARGS__)
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief The Loss function interface definition.
@@ -162,14 +173,14 @@ namespace vesta_core {
  * Using robust loss functions can significantly improve the results and
  * stability of the solution in the presence of outlier measurements.
  */
-class Loss {
+class Loss
+{
 public:
   VESTA_SMART_PTR_ALIASES_ONLY(Loss);
 
-  static constexpr ceres::Ownership Ownership =
-      ceres::Ownership::TAKE_OWNERSHIP; //!< The ownership of the
-                                        //!< ceres::LossFunction* returned by
-                                        //!< lossFunction()
+  static constexpr ceres::Ownership Ownership = ceres::Ownership::TAKE_OWNERSHIP;  //!< The ownership of the
+                                                                                   //!< ceres::LossFunction* returned by
+                                                                                   //!< lossFunction()
 
   /**
    * @brief Default constructor
@@ -190,7 +201,7 @@ public:
    * @param[in] name A unique name to initialize this plugin instance, such as
    * from the parameter server.
    */
-  virtual void initialize(const std::string &name) = 0;
+  virtual void initialize(const std::string& name) = 0;
 
   /**
    * @brief Returns a unique name for this loss function type.
@@ -206,7 +217,7 @@ public:
    *
    * @param  stream The stream to write to. Defaults to stdout.
    */
-  virtual void print(std::ostream &stream = std::cout) const = 0;
+  virtual void print(std::ostream& stream = std::cout) const = 0;
 
   /**
    * @brief Return a raw pointer to a ceres::LossFunction that implements the
@@ -221,7 +232,7 @@ public:
    *
    * @return A base pointer to an instance of a derived ceres::LossFunction.
    */
-  virtual ceres::LossFunction *lossFunction() const = 0;
+  virtual ceres::LossFunction* lossFunction() const = 0;
 
   /**
    * @brief Perform a deep copy of the Loss and return a unique pointer to the
@@ -246,8 +257,7 @@ public:
    *
    * @param[out] archive - The archive to serialize this loss function into
    */
-  virtual void
-  serialize(vesta_core::BinaryOutputArchive & /* archive */) const = 0;
+  virtual void serialize(vesta_core::BinaryOutputArchive& /* archive */) const = 0;
 
   /**
    * @brief Serialize this Loss into the provided text archive
@@ -259,8 +269,7 @@ public:
    *
    * @param[out] archive - The archive to serialize this loss function into
    */
-  virtual void
-  serialize(vesta_core::TextOutputArchive & /* archive */) const = 0;
+  virtual void serialize(vesta_core::TextOutputArchive& /* archive */) const = 0;
 
   /**
    * @brief Deserialize data from the provided binary archive into this Loss
@@ -272,7 +281,7 @@ public:
    *
    * @param[in] archive - The archive holding serialized Loss data
    */
-  virtual void deserialize(vesta_core::BinaryInputArchive & /* archive */) = 0;
+  virtual void deserialize(vesta_core::BinaryInputArchive& /* archive */) = 0;
 
   /**
    * @brief Deserialize data from the provided text archive into this Loss
@@ -284,7 +293,7 @@ public:
    *
    * @param[in] archive - The archive holding serialized Loss data
    */
-  virtual void deserialize(vesta_core::TextInputArchive & /* archive */) = 0;
+  virtual void deserialize(vesta_core::TextInputArchive& /* archive */) = 0;
 
 private:
   // Allow Boost Serialization access to private methods
@@ -300,12 +309,14 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive & /* archive */, const unsigned int /* version */) {}
+  void serialize(Archive& /* archive */, const unsigned int /* version */)
+  {
+  }
 };
 
 /**
  * Stream operator implementation used for all derived Loss classes.
  */
-std::ostream &operator<<(std::ostream &stream, const Loss &loss);
+std::ostream& operator<<(std::ostream& stream, const Loss& loss);
 
-} // namespace vesta_core
+}  // namespace vesta_core

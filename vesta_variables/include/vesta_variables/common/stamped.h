@@ -41,7 +41,8 @@
 
 #include <boost/serialization/access.hpp>
 
-namespace vesta_variables {
+namespace vesta_variables
+{
 
 /**
  * @brief A class that provides a timestamp and device id
@@ -52,7 +53,8 @@ namespace vesta_variables {
  * fixed quantities, such as the world position of landmarks, or possibly
  * calibration values that are assumed constant.
  */
-class Stamped {
+class Stamped
+{
 public:
   VESTA_SMART_PTR_ALIASES_ONLY(Stamped);
 
@@ -64,9 +66,10 @@ public:
   /**
    * @brief Constructor
    */
-  explicit Stamped(const vesta_core::Timestamp &stamp,
-                   const vesta_core::UUID &device_id = vesta_core::uuid::NIL)
-      : device_id_(device_id), stamp_(stamp) {}
+  explicit Stamped(const vesta_core::Timestamp& stamp, const vesta_core::UUID& device_id = vesta_core::uuid::NIL)
+    : device_id_(device_id), stamp_(stamp)
+  {
+  }
 
   /**
    * @brief Destructor
@@ -76,18 +79,22 @@ public:
   /**
    * @brief Read-only access to the associated timestamp.
    */
-  const vesta_core::Timestamp &stamp() const { return stamp_; }
+  const vesta_core::Timestamp& stamp() const
+  {
+    return stamp_;
+  }
 
   /**
    * @brief Read-only access to the associated device ID.
    */
-  const vesta_core::UUID &deviceId() const { return device_id_; }
+  const vesta_core::UUID& deviceId() const
+  {
+    return device_id_;
+  }
 
 private:
-  vesta_core::UUID
-      device_id_; //!< The UUID associated with this specific device or hardware
-  vesta_core::Timestamp
-      stamp_; //!< The timestamp associated with this variable instance
+  vesta_core::UUID device_id_;   //!< The UUID associated with this specific device or hardware
+  vesta_core::Timestamp stamp_;  //!< The timestamp associated with this variable instance
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
@@ -102,10 +109,11 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
     archive & device_id_;
     archive & stamp_;
   }
 };
 
-} // namespace vesta_variables
+}  // namespace vesta_variables

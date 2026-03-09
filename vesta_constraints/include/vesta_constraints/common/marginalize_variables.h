@@ -44,8 +44,8 @@
 #include <vesta_core/transaction.h>
 #include <vesta_core/variable.h>
 
-#include <boost/iterator/transform_iterator.hpp>
 #include <ceres/cost_function.h>
+#include <boost/iterator/transform_iterator.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -54,7 +54,8 @@
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Compute an efficient elimination order for the marginalized variables
@@ -74,9 +75,8 @@ namespace vesta_constraints {
  * constraints that involve at least one marginalized variable
  * @return The mapping from variable UUID to the computed elimination order
  */
-UuidOrdering computeEliminationOrder(
-    const std::vector<vesta_core::UUID> &marginalized_variables,
-    const vesta_core::Graph &graph);
+UuidOrdering computeEliminationOrder(const std::vector<vesta_core::UUID>& marginalized_variables,
+                                     const vesta_core::Graph& graph);
 
 /**
  * @brief Generate a transaction that, when applied to the graph, will
@@ -101,10 +101,9 @@ UuidOrdering computeEliminationOrder(
  * @return A transaction object containing the computed marginal constraints to
  * be added, as well as the set of variables and constraints to be removed.
  */
-vesta_core::Transaction marginalizeVariables(
-    const std::string &source,
-    const std::vector<vesta_core::UUID> &marginalized_variables,
-    const vesta_core::Graph &graph);
+vesta_core::Transaction marginalizeVariables(const std::string& source,
+                                             const std::vector<vesta_core::UUID>& marginalized_variables,
+                                             const vesta_core::Graph& graph);
 
 /**
  * @brief Generate a transaction that, when applied to the graph, will
@@ -132,20 +131,21 @@ vesta_core::Transaction marginalizeVariables(
  * @return A transaction object containing the computed marginal constraints to
  * be added, as well as the set of variables and constraints to be removed.
  */
-vesta_core::Transaction marginalizeVariables(
-    const std::string &source,
-    const std::vector<vesta_core::UUID> &marginalized_variables,
-    const vesta_core::Graph &graph,
-    const vesta_constraints::UuidOrdering &elimination_order);
+vesta_core::Transaction marginalizeVariables(const std::string& source,
+                                             const std::vector<vesta_core::UUID>& marginalized_variables,
+                                             const vesta_core::Graph& graph,
+                                             const vesta_constraints::UuidOrdering& elimination_order);
 
-namespace detail {
+namespace detail
+{
 
 /**
  * @brief Structure holding linearized Jacobian blocks
  *
  * The LinearTerm uses sequential variable indices instead of UUIDs
  */
-struct LinearTerm {
+struct LinearTerm
+{
   std::vector<unsigned int> variables;
   std::vector<vesta_core::MatrixXd> A;
   vesta_core::VectorXd b;
@@ -166,9 +166,8 @@ struct LinearTerm {
  * @return A LinearTerm consisting of Jacobian blocks associated with each
  * involved variable in elimination order
  */
-LinearTerm linearize(const vesta_core::Constraint &constraint,
-                     const vesta_core::Graph &graph,
-                     const UuidOrdering &elimination_order);
+LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core::Graph& graph,
+                     const UuidOrdering& elimination_order);
 
 /**
  * @brief Marginalize out the lowest-ordered variable from the provided set of
@@ -182,7 +181,7 @@ LinearTerm linearize(const vesta_core::Constraint &constraint,
  * @return A LinearTerm object containing the information on the remaining
  * variables
  */
-LinearTerm marginalizeNext(const std::vector<LinearTerm> &linear_terms);
+LinearTerm marginalizeNext(const std::vector<LinearTerm>& linear_terms);
 
 /**
  * @brief Convert the provided linear term into a MarginalConstraint
@@ -196,9 +195,9 @@ LinearTerm marginalizeNext(const std::vector<LinearTerm> &linear_terms);
  * variable index
  * @return An equivalent MarginalConstraint object
  */
-MarginalConstraint::SharedPtr createMarginalConstraint(
-    const std::string &source, const LinearTerm &linear_term,
-    const vesta_core::Graph &graph, const UuidOrdering &elimination_order);
-} // namespace detail
+MarginalConstraint::SharedPtr createMarginalConstraint(const std::string& source, const LinearTerm& linear_term,
+                                                       const vesta_core::Graph& graph,
+                                                       const UuidOrdering& elimination_order);
+}  // namespace detail
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

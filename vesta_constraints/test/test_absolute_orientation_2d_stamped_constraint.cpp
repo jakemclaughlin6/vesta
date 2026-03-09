@@ -38,11 +38,11 @@
 #include <vesta_core/uuid.h>
 #include <vesta_variables/2d/orientation_2d_stamped.h>
 
-#include <Eigen/Geometry>
 #include <ceres/covariance.h>
 #include <ceres/problem.h>
 #include <ceres/solver.h>
 #include <gtest/gtest.h>
+#include <Eigen/Geometry>
 
 #include <utility>
 #include <vector>
@@ -50,28 +50,26 @@
 using vesta_constraints::AbsoluteOrientation2DStampedConstraint;
 using vesta_variables::Orientation2DStamped;
 
-TEST(AbsoluteOrientation2DStampedConstraint, Constructor) {
+TEST(AbsoluteOrientation2DStampedConstraint, Constructor)
+{
   // Construct a constraint just to make sure it compiles.
-  Orientation2DStamped orientation_variable(
-      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Orientation2DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
   vesta_core::Vector1d mean;
   mean << 1.0;
   vesta_core::Matrix1d cov;
   cov << 1.0;
-  EXPECT_NO_THROW(AbsoluteOrientation2DStampedConstraint constraint(
-      "test", orientation_variable, mean, cov));
+  EXPECT_NO_THROW(AbsoluteOrientation2DStampedConstraint constraint("test", orientation_variable, mean, cov));
 }
 
-TEST(AbsoluteOrientation2DStampedConstraint, Covariance) {
+TEST(AbsoluteOrientation2DStampedConstraint, Covariance)
+{
   // Verify the covariance <--> sqrt information conversions are correct
-  Orientation2DStamped orientation_variable(vesta_core::Timestamp(1234, 5678),
-                                            vesta_core::uuid::generate("mo"));
+  Orientation2DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("mo"));
   vesta_core::Vector1d mean;
   mean << 1.0;
   vesta_core::Matrix1d cov;
   cov << 1.0;
-  AbsoluteOrientation2DStampedConstraint constraint(
-      "test", orientation_variable, mean, cov);
+  AbsoluteOrientation2DStampedConstraint constraint("test", orientation_variable, mean, cov);
 
   // Define the expected matrices (used Octave to compute sqrt_info:
   // 'chol(inv(A))')
@@ -84,11 +82,12 @@ TEST(AbsoluteOrientation2DStampedConstraint, Covariance) {
   EXPECT_MATRIX_NEAR(expected_sqrt_info, constraint.sqrtInformation(), 1.0e-9);
 }
 
-TEST(AbsoluteOrientation2DStampedConstraint, Optimization) {
+TEST(AbsoluteOrientation2DStampedConstraint, Optimization)
+{
   // Optimize a single pose and single constraint, verify the expected value and
   // covariance are generated. Create the variables
-  auto orientation_variable = Orientation2DStamped::make_shared(
-      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+  auto orientation_variable =
+      Orientation2DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   orientation_variable->setYaw(1.0);
 
   // Create an absolute orientation constraint
@@ -97,21 +96,18 @@ TEST(AbsoluteOrientation2DStampedConstraint, Optimization) {
 
   vesta_core::Matrix1d cov;
   cov << 1.0;
-  auto constraint = AbsoluteOrientation2DStampedConstraint::make_shared(
-      "test", *orientation_variable, mean, cov);
+  auto constraint = AbsoluteOrientation2DStampedConstraint::make_shared("test", *orientation_variable, mean, cov);
 
   // Build the problem
   ceres::Problem::Options problem_options;
   problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
-  problem.AddParameterBlock(orientation_variable->data(),
-                            orientation_variable->size(),
+  problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
                             orientation_variable->manifold());
 
-  std::vector<double *> parameter_blocks;
+  std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(orientation_variable->data());
-  problem.AddResidualBlock(constraint->costFunction(),
-                           constraint->lossFunction(), parameter_blocks);
+  problem.AddResidualBlock(constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
 
   // Run the solver
   ceres::Solver::Options options;
@@ -123,16 +119,13 @@ TEST(AbsoluteOrientation2DStampedConstraint, Optimization) {
   EXPECT_NEAR(1.0, orientation_variable->getYaw(), 1.0e-3);
 
   // Compute the covariance
-  std::vector<std::pair<const double *, const double *>> covariance_blocks;
-  covariance_blocks.emplace_back(orientation_variable->data(),
-                                 orientation_variable->data());
+  std::vector<std::pair<const double*, const double*>> covariance_blocks;
+  covariance_blocks.emplace_back(orientation_variable->data(), orientation_variable->data());
   ceres::Covariance::Options cov_options;
   ceres::Covariance covariance(cov_options);
   covariance.Compute(covariance_blocks, &problem);
-  vesta_core::Matrix1d actual_covariance(orientation_variable->tangentSize(),
-                                         orientation_variable->tangentSize());
-  covariance.GetCovarianceBlockInTangentSpace(orientation_variable->data(),
-                                              orientation_variable->data(),
+  vesta_core::Matrix1d actual_covariance(orientation_variable->tangentSize(), orientation_variable->tangentSize());
+  covariance.GetCovarianceBlockInTangentSpace(orientation_variable->data(), orientation_variable->data(),
                                               actual_covariance.data());
 
   // Define the expected covariance
@@ -141,13 +134,14 @@ TEST(AbsoluteOrientation2DStampedConstraint, Optimization) {
   EXPECT_MATRIX_NEAR(expected_covariance, actual_covariance, 1.0e-3);
 }
 
-TEST(AbsoluteOrientation2DStampedConstraint, OptimizationZero) {
+TEST(AbsoluteOrientation2DStampedConstraint, OptimizationZero)
+{
   // Optimize a single orientation at zero and single constraint, verify the
   // expected value and covariance are generated.
 
   // Create the variables
-  auto orientation_variable = Orientation2DStamped::make_shared(
-      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+  auto orientation_variable =
+      Orientation2DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   orientation_variable->setYaw(0.0);
 
   // Create an absolute orientation constraint
@@ -156,21 +150,18 @@ TEST(AbsoluteOrientation2DStampedConstraint, OptimizationZero) {
 
   vesta_core::Matrix1d cov;
   cov << 1.0;
-  auto constraint = AbsoluteOrientation2DStampedConstraint::make_shared(
-      "test", *orientation_variable, mean, cov);
+  auto constraint = AbsoluteOrientation2DStampedConstraint::make_shared("test", *orientation_variable, mean, cov);
 
   // Build the problem
   ceres::Problem::Options problem_options;
   problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
-  problem.AddParameterBlock(orientation_variable->data(),
-                            orientation_variable->size(),
+  problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
                             orientation_variable->manifold());
 
-  std::vector<double *> parameter_blocks;
+  std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(orientation_variable->data());
-  problem.AddResidualBlock(constraint->costFunction(),
-                           constraint->lossFunction(), parameter_blocks);
+  problem.AddResidualBlock(constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
 
   // Run the solver
   ceres::Solver::Options options;
@@ -182,16 +173,13 @@ TEST(AbsoluteOrientation2DStampedConstraint, OptimizationZero) {
   EXPECT_NEAR(0.0, orientation_variable->getYaw(), 1.0e-3);
 
   // Compute the covariance
-  std::vector<std::pair<const double *, const double *>> covariance_blocks;
-  covariance_blocks.emplace_back(orientation_variable->data(),
-                                 orientation_variable->data());
+  std::vector<std::pair<const double*, const double*>> covariance_blocks;
+  covariance_blocks.emplace_back(orientation_variable->data(), orientation_variable->data());
   ceres::Covariance::Options cov_options;
   ceres::Covariance covariance(cov_options);
   covariance.Compute(covariance_blocks, &problem);
-  vesta_core::Matrix1d actual_covariance(orientation_variable->tangentSize(),
-                                         orientation_variable->tangentSize());
-  covariance.GetCovarianceBlockInTangentSpace(orientation_variable->data(),
-                                              orientation_variable->data(),
+  vesta_core::Matrix1d actual_covariance(orientation_variable->tangentSize(), orientation_variable->tangentSize());
+  covariance.GetCovarianceBlockInTangentSpace(orientation_variable->data(), orientation_variable->data(),
                                               actual_covariance.data());
 
   // Define the expected covariance
@@ -200,13 +188,14 @@ TEST(AbsoluteOrientation2DStampedConstraint, OptimizationZero) {
   EXPECT_MATRIX_NEAR(expected_covariance, actual_covariance, 1.0e-3);
 }
 
-TEST(AbsoluteOrientation2DStampedConstraint, OptimizationPositivePi) {
+TEST(AbsoluteOrientation2DStampedConstraint, OptimizationPositivePi)
+{
   // Optimize a single orientation at +PI and single constraint, verify the
   // expected value and covariance are generated.
 
   // Create the variables
-  auto orientation_variable = Orientation2DStamped::make_shared(
-      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+  auto orientation_variable =
+      Orientation2DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   orientation_variable->setYaw(M_PI);
 
   // Create an absolute orientation constraint
@@ -215,21 +204,18 @@ TEST(AbsoluteOrientation2DStampedConstraint, OptimizationPositivePi) {
 
   vesta_core::Matrix1d cov;
   cov << 1.0;
-  auto constraint = AbsoluteOrientation2DStampedConstraint::make_shared(
-      "test", *orientation_variable, mean, cov);
+  auto constraint = AbsoluteOrientation2DStampedConstraint::make_shared("test", *orientation_variable, mean, cov);
 
   // Build the problem
   ceres::Problem::Options problem_options;
   problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
-  problem.AddParameterBlock(orientation_variable->data(),
-                            orientation_variable->size(),
+  problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
                             orientation_variable->manifold());
 
-  std::vector<double *> parameter_blocks;
+  std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(orientation_variable->data());
-  problem.AddResidualBlock(constraint->costFunction(),
-                           constraint->lossFunction(), parameter_blocks);
+  problem.AddResidualBlock(constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
 
   // Run the solver
   ceres::Solver::Options options;
@@ -242,16 +228,13 @@ TEST(AbsoluteOrientation2DStampedConstraint, OptimizationPositivePi) {
   EXPECT_NEAR(-M_PI, orientation_variable->getYaw(), 1.0e-3);
 
   // Compute the covariance
-  std::vector<std::pair<const double *, const double *>> covariance_blocks;
-  covariance_blocks.emplace_back(orientation_variable->data(),
-                                 orientation_variable->data());
+  std::vector<std::pair<const double*, const double*>> covariance_blocks;
+  covariance_blocks.emplace_back(orientation_variable->data(), orientation_variable->data());
   ceres::Covariance::Options cov_options;
   ceres::Covariance covariance(cov_options);
   covariance.Compute(covariance_blocks, &problem);
-  vesta_core::Matrix1d actual_covariance(orientation_variable->tangentSize(),
-                                         orientation_variable->tangentSize());
-  covariance.GetCovarianceBlockInTangentSpace(orientation_variable->data(),
-                                              orientation_variable->data(),
+  vesta_core::Matrix1d actual_covariance(orientation_variable->tangentSize(), orientation_variable->tangentSize());
+  covariance.GetCovarianceBlockInTangentSpace(orientation_variable->data(), orientation_variable->data(),
                                               actual_covariance.data());
 
   // Define the expected covariance
@@ -260,13 +243,14 @@ TEST(AbsoluteOrientation2DStampedConstraint, OptimizationPositivePi) {
   EXPECT_MATRIX_NEAR(expected_covariance, actual_covariance, 1.0e-3);
 }
 
-TEST(AbsoluteOrientation2DStampedConstraint, OptimizationNegativePi) {
+TEST(AbsoluteOrientation2DStampedConstraint, OptimizationNegativePi)
+{
   // Optimize a single orientation at -PI and single constraint, verify the
   // expected value and covariance are generated.
 
   // Create the variables
-  auto orientation_variable = Orientation2DStamped::make_shared(
-      vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
+  auto orientation_variable =
+      Orientation2DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("spra"));
   orientation_variable->setYaw(-M_PI);
 
   // Create an absolute orientation constraint
@@ -275,21 +259,18 @@ TEST(AbsoluteOrientation2DStampedConstraint, OptimizationNegativePi) {
 
   vesta_core::Matrix1d cov;
   cov << 1.0;
-  auto constraint = AbsoluteOrientation2DStampedConstraint::make_shared(
-      "test", *orientation_variable, mean, cov);
+  auto constraint = AbsoluteOrientation2DStampedConstraint::make_shared("test", *orientation_variable, mean, cov);
 
   // Build the problem
   ceres::Problem::Options problem_options;
   problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem(problem_options);
-  problem.AddParameterBlock(orientation_variable->data(),
-                            orientation_variable->size(),
+  problem.AddParameterBlock(orientation_variable->data(), orientation_variable->size(),
                             orientation_variable->manifold());
 
-  std::vector<double *> parameter_blocks;
+  std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(orientation_variable->data());
-  problem.AddResidualBlock(constraint->costFunction(),
-                           constraint->lossFunction(), parameter_blocks);
+  problem.AddResidualBlock(constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
 
   // Run the solver
   ceres::Solver::Options options;
@@ -301,16 +282,13 @@ TEST(AbsoluteOrientation2DStampedConstraint, OptimizationNegativePi) {
   EXPECT_NEAR(-M_PI, orientation_variable->getYaw(), 1.0e-3);
 
   // Compute the covariance
-  std::vector<std::pair<const double *, const double *>> covariance_blocks;
-  covariance_blocks.emplace_back(orientation_variable->data(),
-                                 orientation_variable->data());
+  std::vector<std::pair<const double*, const double*>> covariance_blocks;
+  covariance_blocks.emplace_back(orientation_variable->data(), orientation_variable->data());
   ceres::Covariance::Options cov_options;
   ceres::Covariance covariance(cov_options);
   covariance.Compute(covariance_blocks, &problem);
-  vesta_core::Matrix1d actual_covariance(orientation_variable->tangentSize(),
-                                         orientation_variable->tangentSize());
-  covariance.GetCovarianceBlockInTangentSpace(orientation_variable->data(),
-                                              orientation_variable->data(),
+  vesta_core::Matrix1d actual_covariance(orientation_variable->tangentSize(), orientation_variable->tangentSize());
+  covariance.GetCovarianceBlockInTangentSpace(orientation_variable->data(), orientation_variable->data(),
                                               actual_covariance.data());
 
   // Define the expected covariance
@@ -319,16 +297,15 @@ TEST(AbsoluteOrientation2DStampedConstraint, OptimizationNegativePi) {
   EXPECT_MATRIX_NEAR(expected_covariance, actual_covariance, 1.0e-3);
 }
 
-TEST(AbsoluteOrientation2DStampedConstraint, Serialization) {
+TEST(AbsoluteOrientation2DStampedConstraint, Serialization)
+{
   // Construct a constraint
-  Orientation2DStamped orientation_variable(
-      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Orientation2DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
   vesta_core::Vector1d mean;
   mean << 1.0;
   vesta_core::Matrix1d cov;
   cov << 1.0;
-  AbsoluteOrientation2DStampedConstraint expected("test", orientation_variable,
-                                                  mean, cov);
+  AbsoluteOrientation2DStampedConstraint expected("test", orientation_variable, mean, cov);
 
   // Serialize the constraint into an archive
   std::stringstream stream;
@@ -351,7 +328,8 @@ TEST(AbsoluteOrientation2DStampedConstraint, Serialization) {
   EXPECT_MATRIX_EQ(expected.sqrtInformation(), actual.sqrtInformation());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

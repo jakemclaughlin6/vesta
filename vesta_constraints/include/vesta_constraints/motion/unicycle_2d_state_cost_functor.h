@@ -40,7 +40,8 @@
 #include <vesta_core/fuse_macros.h>
 #include <vesta_core/util.h>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Create a cost function for a 2D state vector
@@ -81,7 +82,8 @@ namespace vesta_constraints {
  * the matrix A is the square root information matrix (the inverse of the
  * covariance).
  */
-class Unicycle2DStateCostFunctor {
+class Unicycle2DStateCostFunctor
+{
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
@@ -94,7 +96,7 @@ public:
    * information matrix in order (x, y, yaw, x_vel, y_vel, yaw_vel, x_acc,
    * y_acc)
    */
-  Unicycle2DStateCostFunctor(const double dt, const vesta_core::Matrix8d &A);
+  Unicycle2DStateCostFunctor(const double dt, const vesta_core::Matrix8d& A);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
@@ -117,37 +119,33 @@ public:
    * @param[out] residual - The computed residual (error)
    */
   template <typename T>
-  bool operator()(const T *const position1, const T *const yaw1,
-                  const T *const vel_linear1, const T *const vel_yaw1,
-                  const T *const acc_linear1, const T *const position2,
-                  const T *const yaw2, const T *const vel_linear2,
-                  const T *const vel_yaw2, const T *const acc_linear2,
-                  T *residual) const;
+  bool operator()(const T* const position1, const T* const yaw1, const T* const vel_linear1, const T* const vel_yaw1,
+                  const T* const acc_linear1, const T* const position2, const T* const yaw2, const T* const vel_linear2,
+                  const T* const vel_yaw2, const T* const acc_linear2, T* residual) const;
 
 private:
   double dt_;
-  vesta_core::Matrix8d A_; //!< The residual weighting matrix, most likely the
-                           //!< square root information matrix
+  vesta_core::Matrix8d A_;  //!< The residual weighting matrix, most likely the
+                            //!< square root information matrix
 };
 
-Unicycle2DStateCostFunctor::Unicycle2DStateCostFunctor(
-    const double dt, const vesta_core::Matrix8d &A)
-    : dt_(dt), A_(A) {}
+Unicycle2DStateCostFunctor::Unicycle2DStateCostFunctor(const double dt, const vesta_core::Matrix8d& A) : dt_(dt), A_(A)
+{
+}
 
 template <typename T>
-bool Unicycle2DStateCostFunctor::operator()(
-    const T *const position1, const T *const yaw1, const T *const vel_linear1,
-    const T *const vel_yaw1, const T *const acc_linear1,
-    const T *const position2, const T *const yaw2, const T *const vel_linear2,
-    const T *const vel_yaw2, const T *const acc_linear2, T *residual) const {
+bool Unicycle2DStateCostFunctor::operator()(const T* const position1, const T* const yaw1, const T* const vel_linear1,
+                                            const T* const vel_yaw1, const T* const acc_linear1,
+                                            const T* const position2, const T* const yaw2, const T* const vel_linear2,
+                                            const T* const vel_yaw2, const T* const acc_linear2, T* residual) const
+{
   T position_pred[2];
   T yaw_pred[1];
   T vel_linear_pred[2];
   T vel_yaw_pred[1];
   T acc_linear_pred[2];
-  predict(position1, yaw1, vel_linear1, vel_yaw1, acc_linear1, T(dt_),
-          position_pred, yaw_pred, vel_linear_pred, vel_yaw_pred,
-          acc_linear_pred);
+  predict(position1, yaw1, vel_linear1, vel_yaw1, acc_linear1, T(dt_), position_pred, yaw_pred, vel_linear_pred,
+          vel_yaw_pred, acc_linear_pred);
 
   Eigen::Map<Eigen::Matrix<T, 8, 1>> residuals_map(residual);
   residuals_map(0) = position2[0] - position_pred[0];
@@ -168,4 +166,4 @@ bool Unicycle2DStateCostFunctor::operator()(
   return true;
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

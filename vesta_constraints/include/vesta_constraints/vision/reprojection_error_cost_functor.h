@@ -40,10 +40,11 @@
 #include <vesta_core/eigen.h>
 #include <vesta_core/fuse_macros.h>
 
-#include <Eigen/Core>
 #include <ceres/rotation.h>
+#include <Eigen/Core>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Reprojection error cost function using world-frame pose convention.
@@ -67,7 +68,8 @@ namespace vesta_constraints {
  *
  * where A is the square root information matrix.
  */
-class ReprojectionErrorCostFunctor {
+class ReprojectionErrorCostFunctor
+{
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
@@ -79,32 +81,29 @@ public:
    * @param[in] b The 2D pose measurement or prior in order (u, v)
    *
    **/
-  ReprojectionErrorCostFunctor(const vesta_core::Matrix2d &A,
-                               const vesta_core::Vector2d &b);
+  ReprojectionErrorCostFunctor(const vesta_core::Matrix2d& A, const vesta_core::Vector2d& b);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
    */
   template <typename T>
-  bool operator()(const T *const position, const T *const orientation,
-                  const T *const calibration, const T *const point,
-                  T *residual) const;
+  bool operator()(const T* const position, const T* const orientation, const T* const calibration, const T* const point,
+                  T* residual) const;
 
 private:
   vesta_core::Matrix2d A_;
   vesta_core::Vector2d b_;
 };
 
-ReprojectionErrorCostFunctor::ReprojectionErrorCostFunctor(
-    const vesta_core::Matrix2d &A, const vesta_core::Vector2d &b)
-    : A_(A), b_(b) {}
+ReprojectionErrorCostFunctor::ReprojectionErrorCostFunctor(const vesta_core::Matrix2d& A, const vesta_core::Vector2d& b)
+  : A_(A), b_(b)
+{
+}
 
 template <typename T>
-bool ReprojectionErrorCostFunctor::operator()(const T *const position,
-                                              const T *const orientation,
-                                              const T *const calibration,
-                                              const T *const point,
-                                              T *residual) const {
+bool ReprojectionErrorCostFunctor::operator()(const T* const position, const T* const orientation,
+                                              const T* const calibration, const T* const point, T* residual) const
+{
   // World-frame convention: p_cam = R_wc^{-1} * (X_world - p_world)
   // Compute difference in world frame
   T diff[3];
@@ -140,4 +139,4 @@ bool ReprojectionErrorCostFunctor::operator()(const T *const position,
   return true;
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

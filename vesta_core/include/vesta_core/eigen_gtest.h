@@ -34,8 +34,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <Eigen/Core>
 #include <gtest/gtest.h>
+#include <Eigen/Core>
 
 /**
  * @file eigen_gtest.h
@@ -44,7 +44,8 @@
  * ASSERT_MATRIX_NEAR()/EXPECT_MATRIX_NEAR() gtest macros
  */
 
-namespace testing {
+namespace testing
+{
 
 /**
  * @brief Internal helper function for implementing {EXPECT|ASSERT}_MATRIX_EQ.
@@ -58,10 +59,11 @@ namespace testing {
  * @return AssertionSuccess or AssertionFailure
  */
 template <typename Derived1, typename Derived2>
-AssertionResult AssertMatrixEqualHelper(const char *e1, const char *e2,
-                                        const Eigen::MatrixBase<Derived1> &v1,
-                                        const Eigen::MatrixBase<Derived2> &v2) {
-  if (v1 == v2) {
+AssertionResult AssertMatrixEqualHelper(const char* e1, const char* e2, const Eigen::MatrixBase<Derived1>& v1,
+                                        const Eigen::MatrixBase<Derived2>& v2)
+{
+  if (v1 == v2)
+  {
     return AssertionSuccess();
   }
 
@@ -87,11 +89,11 @@ AssertionResult AssertMatrixEqualHelper(const char *e1, const char *e2,
  * @return AssertionSuccess or AssertionFailure
  */
 template <typename Derived1, typename Derived2>
-AssertionResult AssertMatrixNearHelper(const char *e1, const char *e2,
-                                       const Eigen::MatrixBase<Derived1> &v1,
-                                       const Eigen::MatrixBase<Derived2> &v2,
-                                       double tol) {
-  if ((v1 - v2).cwiseAbs().maxCoeff() < tol) {
+AssertionResult AssertMatrixNearHelper(const char* e1, const char* e2, const Eigen::MatrixBase<Derived1>& v1,
+                                       const Eigen::MatrixBase<Derived2>& v2, double tol)
+{
+  if ((v1 - v2).cwiseAbs().maxCoeff() < tol)
+  {
     return AssertionSuccess();
   }
 
@@ -106,15 +108,13 @@ AssertionResult AssertMatrixNearHelper(const char *e1, const char *e2,
 
 // Internal macro for implementing {EXPECT|ASSERT}_MATRIX_EQ.
 // Don't use this in your code.
-#define GTEST_MATRIX_EQUAL_(v1, v2, on_failure)                                \
-  GTEST_ASSERT_(::testing::AssertMatrixEqualHelper(#v1, #v2, v1, v2),          \
-                on_failure)
+#define GTEST_MATRIX_EQUAL_(v1, v2, on_failure)                                                                        \
+  GTEST_ASSERT_(::testing::AssertMatrixEqualHelper(#v1, #v2, v1, v2), on_failure)
 
 // Internal macro for implementing {EXPECT|ASSERT}_MATRIX_NEAR.
 // Don't use this in your code.
-#define GTEST_MATRIX_NEAR_(v1, v2, tol, on_failure)                            \
-  GTEST_ASSERT_(::testing::AssertMatrixNearHelper(#v1, #v2, v1, v2, tol),      \
-                on_failure)
+#define GTEST_MATRIX_NEAR_(v1, v2, tol, on_failure)                                                                    \
+  GTEST_ASSERT_(::testing::AssertMatrixNearHelper(#v1, #v2, v1, v2, tol), on_failure)
 
 // Define gtest macros for use with Eigen
 
@@ -126,8 +126,7 @@ AssertionResult AssertMatrixNearHelper(const char *e1, const char *e2,
  * @param[in] v1 The expected matrix
  * @param[in] v2 The actual matrix
  */
-#define EXPECT_MATRIX_EQ(v1, v2)                                               \
-  GTEST_MATRIX_EQUAL_(v1, v2, GTEST_NONFATAL_FAILURE_)
+#define EXPECT_MATRIX_EQ(v1, v2) GTEST_MATRIX_EQUAL_(v1, v2, GTEST_NONFATAL_FAILURE_)
 
 /**
  * @brief Fatal check for exact equality of two Eigen matrix-like objects.
@@ -137,8 +136,7 @@ AssertionResult AssertMatrixNearHelper(const char *e1, const char *e2,
  * @param[in] v1 The expected matrix
  * @param[in] v2 The actual matrix
  */
-#define ASSERT_MATRIX_EQ(v1, v2)                                               \
-  GTEST_MATRIX_EQUAL_(v1, v2, GTEST_FATAL_FAILURE_)
+#define ASSERT_MATRIX_EQ(v1, v2) GTEST_MATRIX_EQUAL_(v1, v2, GTEST_FATAL_FAILURE_)
 
 /**
  * @brief Non-fatal check for approximate equality of two Eigen matrix-like
@@ -151,8 +149,7 @@ AssertionResult AssertMatrixNearHelper(const char *e1, const char *e2,
  * @param[in] v2  The actual matrix
  * @param[in] tol The allowed tolerance between any entries in v1 and v2
  */
-#define EXPECT_MATRIX_NEAR(v1, v2, tol)                                        \
-  GTEST_MATRIX_NEAR_(v1, v2, tol, GTEST_NONFATAL_FAILURE_)
+#define EXPECT_MATRIX_NEAR(v1, v2, tol) GTEST_MATRIX_NEAR_(v1, v2, tol, GTEST_NONFATAL_FAILURE_)
 
 /**
  * @brief Fatal check for approximate equality of two Eigen matrix-like objects.
@@ -164,7 +161,6 @@ AssertionResult AssertMatrixNearHelper(const char *e1, const char *e2,
  * @param[in] v2  The actual matrix
  * @param[in] tol The allowed tolerance between any entries in v1 and v2
  */
-#define ASSERT_MATRIX_NEAR(v1, v2, tol)                                        \
-  GTEST_MATRIX_NEAR_(v1, v2, tol, GTEST_FATAL_FAILURE_)
+#define ASSERT_MATRIX_NEAR(v1, v2, tol) GTEST_MATRIX_NEAR_(v1, v2, tol, GTEST_FATAL_FAILURE_)
 
-} // namespace testing
+}  // namespace testing

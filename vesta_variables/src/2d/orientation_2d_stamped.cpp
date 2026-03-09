@@ -43,15 +43,16 @@
 
 #include <ostream>
 
-namespace vesta_variables {
+namespace vesta_variables
+{
 
-Orientation2DStamped::Orientation2DStamped(const vesta_core::Timestamp &stamp,
-                                           const vesta_core::UUID &device_id)
-    : FixedSizeVariable(
-          vesta_core::uuid::generate(detail::type(), stamp, device_id)),
-      Stamped(stamp, device_id) {}
+Orientation2DStamped::Orientation2DStamped(const vesta_core::Timestamp& stamp, const vesta_core::UUID& device_id)
+  : FixedSizeVariable(vesta_core::uuid::generate(detail::type(), stamp, device_id)), Stamped(stamp, device_id)
+{
+}
 
-void Orientation2DStamped::print(std::ostream &stream) const {
+void Orientation2DStamped::print(std::ostream& stream) const
+{
   stream << type() << ":\n"
          << "  uuid: " << uuid() << "\n"
          << "  stamp: " << stamp() << "\n"
@@ -61,11 +62,12 @@ void Orientation2DStamped::print(std::ostream &stream) const {
          << "  - yaw: " << getYaw() << "\n";
 }
 
-vesta_core::Manifold *Orientation2DStamped::manifold() const {
+vesta_core::Manifold* Orientation2DStamped::manifold() const
+{
   return new Orientation2DManifold();
 }
 
-} // namespace vesta_variables
+}  // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::Orientation2DManifold);
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::Orientation2DStamped);

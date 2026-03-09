@@ -42,15 +42,17 @@
 
 #include <ostream>
 
-namespace vesta_variables {
+namespace vesta_variables
+{
 
-AccelerationLinear2DStamped::AccelerationLinear2DStamped(
-    const vesta_core::Timestamp &stamp, const vesta_core::UUID &device_id)
-    : FixedSizeVariable(
-          vesta_core::uuid::generate(detail::type(), stamp, device_id)),
-      Stamped(stamp, device_id) {}
+AccelerationLinear2DStamped::AccelerationLinear2DStamped(const vesta_core::Timestamp& stamp,
+                                                         const vesta_core::UUID& device_id)
+  : FixedSizeVariable(vesta_core::uuid::generate(detail::type(), stamp, device_id)), Stamped(stamp, device_id)
+{
+}
 
-void AccelerationLinear2DStamped::print(std::ostream &stream) const {
+void AccelerationLinear2DStamped::print(std::ostream& stream) const
+{
   stream << type() << ":\n"
          << "  uuid: " << uuid() << "\n"
          << "  stamp: " << stamp() << "\n"
@@ -61,6 +63,6 @@ void AccelerationLinear2DStamped::print(std::ostream &stream) const {
          << "  - y: " << y() << "\n";
 }
 
-} // namespace vesta_variables
+}  // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_variables::AccelerationLinear2DStamped);

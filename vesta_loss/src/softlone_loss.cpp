@@ -37,19 +37,24 @@
 
 #include <ostream>
 
-namespace vesta_loss {
+namespace vesta_loss
+{
 
-SoftLOneLoss::SoftLOneLoss(const double a) : a_(a) {}
+SoftLOneLoss::SoftLOneLoss(const double a) : a_(a)
+{
+}
 
-void SoftLOneLoss::print(std::ostream &stream) const {
+void SoftLOneLoss::print(std::ostream& stream) const
+{
   stream << type() << "\n"
          << "  a: " << a_ << "\n";
 }
 
-ceres::LossFunction *SoftLOneLoss::lossFunction() const {
+ceres::LossFunction* SoftLOneLoss::lossFunction() const
+{
   return new ceres::SoftLOneLoss(a_);
 }
 
-} // namespace vesta_loss
+}  // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::SoftLOneLoss);

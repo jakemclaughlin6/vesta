@@ -34,23 +34,25 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <cstdlib>
 #include <cxxabi.h>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <typeinfo>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief Returns the demangled name of the given type
  */
-template <typename T> std::string typeName() {
+template <typename T>
+std::string typeName()
+{
   int status = 0;
-  std::unique_ptr<char, void (*)(void *)> result(
-      abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, &status),
-      std::free);
+  std::unique_ptr<char, void (*)(void*)> result(abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, &status),
+                                                std::free);
   return (status == 0) ? result.get() : typeid(T).name();
 }
 
-} // namespace vesta_core
+}  // namespace vesta_core

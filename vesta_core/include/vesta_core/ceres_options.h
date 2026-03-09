@@ -50,9 +50,10 @@
  * For a given Ceres Solver Option <T>, the function ToString calls
  * ceres::<T>ToString
  */
-#define CERES_OPTION_TO_STRING_DEFINITION(Option)                              \
-  static inline const char *ToString(ceres::Option value) {                    \
-    return ceres::Option##ToString(value);                                     \
+#define CERES_OPTION_TO_STRING_DEFINITION(Option)                                                                      \
+  static inline const char* ToString(ceres::Option value)                                                              \
+  {                                                                                                                    \
+    return ceres::Option##ToString(value);                                                                             \
   }
 
 /**
@@ -61,10 +62,10 @@
  * For a given Ceres Solver Option <T>, the function FromString calls
  * ceres::StringTo<T>
  */
-#define CERES_OPTION_FROM_STRING_DEFINITION(Option)                            \
-  static inline bool FromString(std::string string_value,                      \
-                                ceres::Option *value) {                        \
-    return ceres::StringTo##Option(string_value, value);                       \
+#define CERES_OPTION_FROM_STRING_DEFINITION(Option)                                                                    \
+  static inline bool FromString(std::string string_value, ceres::Option* value)                                        \
+  {                                                                                                                    \
+    return ceres::StringTo##Option(string_value, value);                                                               \
   }
 
 /**
@@ -73,8 +74,8 @@
  * See CERES_OPTION_TO_STRING_DEFINITION and
  * CERES_OPTION_FROM_STRING_DEFINITION.
  */
-#define CERES_OPTION_STRING_DEFINITIONS(Option)                                \
-  CERES_OPTION_TO_STRING_DEFINITION(Option)                                    \
+#define CERES_OPTION_STRING_DEFINITIONS(Option)                                                                        \
+  CERES_OPTION_TO_STRING_DEFINITION(Option)                                                                            \
   CERES_OPTION_FROM_STRING_DEFINITION(Option)
 
 #if !CERES_VERSION_AT_LEAST(2, 0, 0)
@@ -84,50 +85,59 @@
  */
 #include <algorithm>
 
-namespace ceres {
+namespace ceres
+{
 
-#define CASESTR(x)                                                             \
-  case x:                                                                      \
+#define CASESTR(x)                                                                                                     \
+  case x:                                                                                                              \
     return #x
-#define STRENUM(x)                                                             \
-  if (value == #x) {                                                           \
-    *type = x;                                                                 \
-    return true;                                                               \
+#define STRENUM(x)                                                                                                     \
+  if (value == #x)                                                                                                     \
+  {                                                                                                                    \
+    *type = x;                                                                                                         \
+    return true;                                                                                                       \
   }
 
-static void UpperCase(std::string *input) {
+static void UpperCase(std::string* input)
+{
   // The NOLINT below it's because std::transform requires <algorithm>, which is
   // included inside the #if above, but roslint still complains
   std::transform(input->begin(), input->end(), input->begin(),
-                 ::toupper); // NOLINT(build/include_what_you_use)
+                 ::toupper);  // NOLINT(build/include_what_you_use)
 }
 
-inline const char *LoggingTypeToString(LoggingType type) {
-  switch (type) {
+inline const char* LoggingTypeToString(LoggingType type)
+{
+  switch (type)
+  {
     CASESTR(SILENT);
     CASESTR(PER_MINIMIZER_ITERATION);
-  default:
-    return "UNKNOWN";
+    default:
+      return "UNKNOWN";
   }
 }
 
-inline bool StringToLoggingType(std::string value, LoggingType *type) {
+inline bool StringToLoggingType(std::string value, LoggingType* type)
+{
   UpperCase(&value);
   STRENUM(SILENT);
   STRENUM(PER_MINIMIZER_ITERATION);
   return false;
 }
 
-inline const char *DumpFormatTypeToString(DumpFormatType type) {
-  switch (type) {
+inline const char* DumpFormatTypeToString(DumpFormatType type)
+{
+  switch (type)
+  {
     CASESTR(CONSOLE);
     CASESTR(TEXTFILE);
-  default:
-    return "UNKNOWN";
+    default:
+      return "UNKNOWN";
   }
 }
 
-inline bool StringToDumpFormatType(std::string value, DumpFormatType *type) {
+inline bool StringToDumpFormatType(std::string value, DumpFormatType* type)
+{
   UpperCase(&value);
   STRENUM(CONSOLE);
   STRENUM(TEXTFILE);
@@ -137,27 +147,31 @@ inline bool StringToDumpFormatType(std::string value, DumpFormatType *type) {
 #undef CASESTR
 #undef STRENUM
 
-} // namespace ceres
+}  // namespace ceres
 #else
 /**
  * Patch Ceres version 2.0.0 that uses lower case for the LoggingType and
  * DumpFormatType StringTo function. See
  * https://github.com/ceres-solver/ceres-solver/blob/master/include/ceres/types.h
  */
-namespace ceres {
+namespace ceres
+{
 
-inline bool StringToLoggingType(std::string value, LoggingType *type) {
+inline bool StringToLoggingType(std::string value, LoggingType* type)
+{
   return StringtoLoggingType(value, type);
 }
 
-inline bool StringToDumpFormatType(std::string value, DumpFormatType *type) {
+inline bool StringToDumpFormatType(std::string value, DumpFormatType* type)
+{
   return StringtoDumpFormatType(value, type);
 }
 
-} // namespace ceres
+}  // namespace ceres
 #endif
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * String definitions for all Ceres options.
@@ -178,4 +192,4 @@ CERES_OPTION_STRING_DEFINITIONS(SparseLinearAlgebraLibraryType)
 CERES_OPTION_STRING_DEFINITIONS(TrustRegionStrategyType)
 CERES_OPTION_STRING_DEFINITIONS(VisibilityClusteringType)
 
-} // namespace vesta_core
+}  // namespace vesta_core

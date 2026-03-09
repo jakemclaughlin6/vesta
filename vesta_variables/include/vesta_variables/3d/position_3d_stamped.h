@@ -47,7 +47,8 @@
 
 #include <ostream>
 
-namespace vesta_variables {
+namespace vesta_variables
+{
 
 /**
  * @brief Variable representing a 3D position (x, y, z) at a specific time and
@@ -58,14 +59,20 @@ namespace vesta_variables {
  * timestamp and device ID cannot be modified. The value of the position can be
  * modified.
  */
-class Position3DStamped : public FixedSizeVariable<3>, public Stamped {
+class Position3DStamped : public FixedSizeVariable<3>, public Stamped
+{
 public:
   VESTA_VARIABLE_DEFINITIONS(Position3DStamped);
 
   /**
    * @brief Can be used to directly index variables in the data array
    */
-  enum : size_t { X = 0, Y = 1, Z = 2 };
+  enum : size_t
+  {
+    X = 0,
+    Y = 1,
+    Z = 2
+  };
 
   /**
    * @brief Default constructor
@@ -79,39 +86,56 @@ public:
    * @param[in] device_id An optional device id, for use when variables
    * originate from multiple robots or devices
    */
-  explicit Position3DStamped(
-      const vesta_core::Timestamp &stamp,
-      const vesta_core::UUID &device_id = vesta_core::uuid::NIL);
+  explicit Position3DStamped(const vesta_core::Timestamp& stamp,
+                             const vesta_core::UUID& device_id = vesta_core::uuid::NIL);
 
   /**
    * @brief Read-write access to the X-axis position.
    */
-  double &x() { return data_[X]; }
+  double& x()
+  {
+    return data_[X];
+  }
 
   /**
    * @brief Read-only access to the X-axis position.
    */
-  const double &x() const { return data_[X]; }
+  const double& x() const
+  {
+    return data_[X];
+  }
 
   /**
    * @brief Read-write access to the Y-axis position.
    */
-  double &y() { return data_[Y]; }
+  double& y()
+  {
+    return data_[Y];
+  }
 
   /**
    * @brief Read-only access to the Y-axis position.
    */
-  const double &y() const { return data_[Y]; }
+  const double& y() const
+  {
+    return data_[Y];
+  }
 
   /**
    * @brief Read-write access to the Z-axis position.
    */
-  double &z() { return data_[Z]; }
+  double& z()
+  {
+    return data_[Z];
+  }
 
   /**
    * @brief Read-only access to the Z-axis position.
    */
-  const double &z() const { return data_[Z]; }
+  const double& z() const
+  {
+    return data_[Z];
+  }
 
   /**
    * @brief Print a human-readable description of the variable to the provided
@@ -119,7 +143,7 @@ public:
    *
    * @param  stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
 private:
   // Allow Boost Serialization access to private methods
@@ -135,12 +159,13 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
-    archive &boost::serialization::base_object<Stamped>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<FixedSizeVariable<SIZE>>(*this);
+    archive& boost::serialization::base_object<Stamped>(*this);
   }
 };
 
-} // namespace vesta_variables
+}  // namespace vesta_variables
 
 BOOST_CLASS_EXPORT_KEY(vesta_variables::Position3DStamped);

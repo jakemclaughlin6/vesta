@@ -38,26 +38,29 @@
 #include <memory>
 #include <ostream>
 
-namespace vesta_loss {
+namespace vesta_loss
+{
 
-ScaledLoss::ScaledLoss(const double a,
-                       const std::shared_ptr<vesta_core::Loss> &loss)
-    : a_(a), loss_(loss) {}
+ScaledLoss::ScaledLoss(const double a, const std::shared_ptr<vesta_core::Loss>& loss) : a_(a), loss_(loss)
+{
+}
 
-void ScaledLoss::print(std::ostream &stream) const {
+void ScaledLoss::print(std::ostream& stream) const
+{
   stream << type() << "\n"
          << "  a: " << a_ << "\n";
 
-  if (loss_) {
+  if (loss_)
+  {
     stream << "  loss: " << loss_ << "\n";
   }
 }
 
-ceres::LossFunction *ScaledLoss::lossFunction() const {
-  return new ceres::ScaledLoss(loss_ ? loss_->lossFunction() : nullptr, a_,
-                               Ownership);
+ceres::LossFunction* ScaledLoss::lossFunction() const
+{
+  return new ceres::ScaledLoss(loss_ ? loss_->lossFunction() : nullptr, a_, Ownership);
 }
 
-} // namespace vesta_loss
+}  // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::ScaledLoss);

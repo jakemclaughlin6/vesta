@@ -45,7 +45,8 @@
 #include <string>
 #include <vector>
 
-namespace vesta_optimizers {
+namespace vesta_optimizers
+{
 
 /**
  * @brief A fixed-lag smoother implementation that marginalizes out variables
@@ -76,7 +77,8 @@ namespace vesta_optimizers {
  *   auto summary = smoother.optimize();
  * @endcode
  */
-class FixedLagSmoother : public Optimizer {
+class FixedLagSmoother : public Optimizer
+{
 public:
   using ParameterType = FixedLagSmootherParams;
 
@@ -86,8 +88,7 @@ public:
    * @param[in] params Configuration settings
    * @param[in] graph  The graph object (takes ownership)
    */
-  FixedLagSmoother(const FixedLagSmootherParams &params,
-                   vesta_core::Graph::UniquePtr graph);
+  FixedLagSmoother(const FixedLagSmootherParams& params, vesta_core::Graph::UniquePtr graph);
 
   /**
    * @brief Destructor
@@ -102,8 +103,7 @@ public:
    * @param[in] sensor_name The name of the sensor that produced the Transaction
    * @param[in] transaction The populated Transaction object
    */
-  void addTransaction(const std::string &sensor_name,
-                      vesta_core::Transaction::SharedPtr transaction) override;
+  void addTransaction(const std::string& sensor_name, vesta_core::Transaction::SharedPtr transaction) override;
 
   /**
    * @brief Process pending transactions, marginalize old variables, and run
@@ -132,22 +132,28 @@ public:
   /**
    * @brief Read-only access to the current graph
    */
-  const vesta_core::Graph &graph() const override;
+  const vesta_core::Graph& graph() const override;
 
 private:
   /**
    * Structure containing the information required to process a transaction
    * after it was received.
    */
-  struct TransactionQueueElement {
+  struct TransactionQueueElement
+  {
     std::string sensor_name;
     vesta_core::Transaction::SharedPtr transaction;
 
-    const vesta_core::Timestamp &stamp() const { return transaction->stamp(); }
-    const vesta_core::Timestamp &minStamp() const {
+    const vesta_core::Timestamp& stamp() const
+    {
+      return transaction->stamp();
+    }
+    const vesta_core::Timestamp& minStamp() const
+    {
       return transaction->minStamp();
     }
-    const vesta_core::Timestamp &maxStamp() const {
+    const vesta_core::Timestamp& maxStamp() const
+    {
       return transaction->maxStamp();
     }
   };
@@ -166,8 +172,7 @@ private:
    * @param[in] new_transaction All new, non-marginal-related transactions that
    * will be applied to the graph
    */
-  void
-  preprocessMarginalization(const vesta_core::Transaction &new_transaction);
+  void preprocessMarginalization(const vesta_core::Transaction& new_transaction);
 
   /**
    * @brief Compute the oldest timestamp that is part of the configured lag
@@ -183,8 +188,7 @@ private:
    * graph
    * @return A container with the set of variables to marginalize out
    */
-  std::vector<vesta_core::UUID>
-  computeVariablesToMarginalize(const vesta_core::Timestamp &lag_expiration);
+  std::vector<vesta_core::UUID> computeVariablesToMarginalize(const vesta_core::Timestamp& lag_expiration);
 
   /**
    * @brief Perform any required post-marginalization bookkeeping
@@ -192,8 +196,7 @@ private:
    * @param[in] marginal_transaction The actual changes to the graph caused by
    * marginalizing out the requested variables
    */
-  void postprocessMarginalization(
-      const vesta_core::Transaction &marginal_transaction);
+  void postprocessMarginalization(const vesta_core::Transaction& marginal_transaction);
 
   /**
    * @brief Process pending transactions into a combined transaction
@@ -206,24 +209,19 @@ private:
    * @param[in]  lag_expiration The oldest timestamp that should remain in the
    * graph
    */
-  void processQueue(vesta_core::Transaction &transaction,
-                    const vesta_core::Timestamp &lag_expiration);
+  void processQueue(vesta_core::Transaction& transaction, const vesta_core::Timestamp& lag_expiration);
 
-  ParameterType params_; //!< Configuration settings for this fixed-lag smoother
-  vesta_core::Graph::UniquePtr
-      graph_; //!< The graph object that holds all variables and constraints
-  TransactionQueue
-      pending_transactions_; //!< Pending transactions not yet applied
-  vesta_core::Timestamp lag_expiration_; //!< The oldest stamp inside the
-                                         //!< fixed-lag smoother window
-  vesta_core::Transaction
-      marginal_transaction_; //!< Marginals to add during the next optimization
-                             //!< cycle
-  VariableStampIndex
-      timestamp_tracking_; //!< Tracks timestamps associated with each variable
-  vesta_core::Timestamp start_time_; //!< The timestamp of the first transaction
-  bool started_; //!< Flag indicating the optimizer has received at least one
-                 //!< transaction
+  ParameterType params_;                          //!< Configuration settings for this fixed-lag smoother
+  vesta_core::Graph::UniquePtr graph_;            //!< The graph object that holds all variables and constraints
+  TransactionQueue pending_transactions_;         //!< Pending transactions not yet applied
+  vesta_core::Timestamp lag_expiration_;          //!< The oldest stamp inside the
+                                                  //!< fixed-lag smoother window
+  vesta_core::Transaction marginal_transaction_;  //!< Marginals to add during the next optimization
+                                                  //!< cycle
+  VariableStampIndex timestamp_tracking_;         //!< Tracks timestamps associated with each variable
+  vesta_core::Timestamp start_time_;              //!< The timestamp of the first transaction
+  bool started_;                                  //!< Flag indicating the optimizer has received at least one
+                                                  //!< transaction
 };
 
-} // namespace vesta_optimizers
+}  // namespace vesta_optimizers

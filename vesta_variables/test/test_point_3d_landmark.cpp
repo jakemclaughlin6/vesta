@@ -46,17 +46,20 @@
 
 using vesta_variables::Point3DLandmark;
 
-TEST(Point3DLandmark, Type) {
+TEST(Point3DLandmark, Type)
+{
   Point3DLandmark variable(0);
   EXPECT_EQ("vesta_variables::Point3DLandmark", variable.type());
 }
 
-TEST(Point3DLandmark, SchurGroup) {
+TEST(Point3DLandmark, SchurGroup)
+{
   Point3DLandmark variable(0);
   EXPECT_EQ(0, variable.schurGroup());
 }
 
-TEST(Point3DLandmark, UUID) {
+TEST(Point3DLandmark, UUID)
+{
   // Verify two positions with the same landmark ids produce the same uuids
   {
     Point3DLandmark variable1(0);
@@ -73,10 +76,15 @@ TEST(Point3DLandmark, UUID) {
   }
 }
 
-struct CostFunctor {
-  CostFunctor() {}
+struct CostFunctor
+{
+  CostFunctor()
+  {
+  }
 
-  template <typename T> bool operator()(const T *const x, T *residual) const {
+  template <typename T>
+  bool operator()(const T* const x, T* residual) const
+  {
     residual[0] = x[0] - T(3.0);
     residual[1] = x[1] + T(8.0);
     residual[2] = x[2] - T(3.1);
@@ -84,7 +92,8 @@ struct CostFunctor {
   }
 };
 
-TEST(Point3DLandmark, Optimization) {
+TEST(Point3DLandmark, Optimization)
+{
   // Create a Point3DLandmark
   Point3DLandmark position(0);
   position.x() = 1.5;
@@ -92,13 +101,12 @@ TEST(Point3DLandmark, Optimization) {
   position.z() = 0.8;
 
   // Create a simple a constraint
-  ceres::CostFunction *cost_function =
-      new ceres::AutoDiffCostFunction<CostFunctor, 3, 3>(new CostFunctor());
+  ceres::CostFunction* cost_function = new ceres::AutoDiffCostFunction<CostFunctor, 3, 3>(new CostFunctor());
 
   // Build the problem.
   ceres::Problem problem;
   problem.AddParameterBlock(position.data(), position.size());
-  std::vector<double *> parameter_blocks;
+  std::vector<double*> parameter_blocks;
   parameter_blocks.push_back(position.data());
   problem.AddResidualBlock(cost_function, nullptr, parameter_blocks);
 
@@ -113,7 +121,8 @@ TEST(Point3DLandmark, Optimization) {
   EXPECT_NEAR(3.1, position.z(), 1.0e-5);
 }
 
-TEST(Point3DLandmark, Serialization) {
+TEST(Point3DLandmark, Serialization)
+{
   // Create a Point3DLandmark
   Point3DLandmark expected(0);
   expected.x() = 1.5;
@@ -142,7 +151,8 @@ TEST(Point3DLandmark, Serialization) {
   EXPECT_EQ(expected.z(), actual.z());
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

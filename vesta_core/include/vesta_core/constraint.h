@@ -40,10 +40,10 @@
 #include <vesta_core/type_name.h>
 #include <vesta_core/uuid.h>
 
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/vector.hpp>
 #include <ceres/cost_function.h>
 #include <ceres/loss_function.h>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <initializer_list>
 #include <iostream>
@@ -66,9 +66,10 @@
  * }
  * @endcode
  */
-#define VESTA_CONSTRAINT_CLONE_DEFINITION(...)                                 \
-  vesta_core::Constraint::UniquePtr clone() const override {                   \
-    return __VA_ARGS__::make_unique(*this);                                    \
+#define VESTA_CONSTRAINT_CLONE_DEFINITION(...)                                                                         \
+  vesta_core::Constraint::UniquePtr clone() const override                                                             \
+  {                                                                                                                    \
+    return __VA_ARGS__::make_unique(*this);                                                                            \
   }
 
 /**
@@ -85,18 +86,22 @@
  * }
  * @endcode
  */
-#define VESTA_CONSTRAINT_SERIALIZE_DEFINITION(...)                             \
-  void serialize(vesta_core::BinaryOutputArchive &archive) const override {    \
-    archive << *this;                                                          \
-  } /* NOLINT */                                                               \
-  void serialize(vesta_core::TextOutputArchive &archive) const override {      \
-    archive << *this;                                                          \
-  } /* NOLINT */                                                               \
-  void deserialize(vesta_core::BinaryInputArchive &archive) override {         \
-    archive >> *this;                                                          \
-  } /* NOLINT */                                                               \
-  void deserialize(vesta_core::TextInputArchive &archive) override {           \
-    archive >> *this;                                                          \
+#define VESTA_CONSTRAINT_SERIALIZE_DEFINITION(...)                                                                     \
+  void serialize(vesta_core::BinaryOutputArchive& archive) const override                                              \
+  {                                                                                                                    \
+    archive << *this;                                                                                                  \
+  } /* NOLINT */                                                                                                       \
+  void serialize(vesta_core::TextOutputArchive& archive) const override                                                \
+  {                                                                                                                    \
+    archive << *this;                                                                                                  \
+  } /* NOLINT */                                                                                                       \
+  void deserialize(vesta_core::BinaryInputArchive& archive) override                                                   \
+  {                                                                                                                    \
+    archive >> *this;                                                                                                  \
+  } /* NOLINT */                                                                                                       \
+  void deserialize(vesta_core::TextInputArchive& archive) override                                                     \
+  {                                                                                                                    \
+    archive >> *this;                                                                                                  \
   }
 
 /**
@@ -116,13 +121,18 @@
  * }
  * @endcode
  */
-#define VESTA_CONSTRAINT_TYPE_DEFINITION(...)                                  \
-  struct detail {                                                              \
-    static std::string type() {                                                \
-      return vesta_core::typeName<__VA_ARGS__>();                              \
-    } /* NOLINT */                                                             \
-  }; /* NOLINT */                                                              \
-  std::string type() const override { return detail::type(); }
+#define VESTA_CONSTRAINT_TYPE_DEFINITION(...)                                                                          \
+  struct detail                                                                                                        \
+  {                                                                                                                    \
+    static std::string type()                                                                                          \
+    {                                                                                                                  \
+      return vesta_core::typeName<__VA_ARGS__>();                                                                      \
+    } /* NOLINT */                                                                                                     \
+  }; /* NOLINT */                                                                                                      \
+  std::string type() const override                                                                                    \
+  {                                                                                                                    \
+    return detail::type();                                                                                             \
+  }
 
 /**
  * @brief Convenience function that creates the required pointer aliases,
@@ -138,10 +148,10 @@
  * }
  * @endcode
  */
-#define VESTA_CONSTRAINT_DEFINITIONS(...)                                      \
-  VESTA_SMART_PTR_DEFINITIONS(__VA_ARGS__)                                     \
-  VESTA_CONSTRAINT_TYPE_DEFINITION(__VA_ARGS__)                                \
-  VESTA_CONSTRAINT_CLONE_DEFINITION(__VA_ARGS__)                               \
+#define VESTA_CONSTRAINT_DEFINITIONS(...)                                                                              \
+  VESTA_SMART_PTR_DEFINITIONS(__VA_ARGS__)                                                                             \
+  VESTA_CONSTRAINT_TYPE_DEFINITION(__VA_ARGS__)                                                                        \
+  VESTA_CONSTRAINT_CLONE_DEFINITION(__VA_ARGS__)                                                                       \
   VESTA_CONSTRAINT_SERIALIZE_DEFINITION(__VA_ARGS__)
 
 /**
@@ -159,13 +169,14 @@
  * }
  * @endcode
  */
-#define VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(...)                           \
-  VESTA_SMART_PTR_DEFINITIONS_WITH_EIGEN(__VA_ARGS__)                          \
-  VESTA_CONSTRAINT_TYPE_DEFINITION(__VA_ARGS__)                                \
-  VESTA_CONSTRAINT_CLONE_DEFINITION(__VA_ARGS__)                               \
+#define VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(...)                                                                   \
+  VESTA_SMART_PTR_DEFINITIONS_WITH_EIGEN(__VA_ARGS__)                                                                  \
+  VESTA_CONSTRAINT_TYPE_DEFINITION(__VA_ARGS__)                                                                        \
+  VESTA_CONSTRAINT_CLONE_DEFINITION(__VA_ARGS__)                                                                       \
   VESTA_CONSTRAINT_SERIALIZE_DEFINITION(__VA_ARGS__)
 
-namespace vesta_core {
+namespace vesta_core
+{
 
 /**
  * @brief The Constraint interface definition.
@@ -188,7 +199,8 @@ namespace vesta_core {
  * documentation for details
  * (http://ceres-solver.org/nnls_modeling.html#lossfunction).
  */
-class Constraint {
+class Constraint
+{
 public:
   VESTA_SMART_PTR_ALIASES_ONLY(Constraint);
 
@@ -208,8 +220,7 @@ public:
    *
    * @param[in] variable_uuid_list The list of involved variable UUIDs
    */
-  Constraint(const std::string &source,
-             std::initializer_list<UUID> variable_uuid_list);
+  Constraint(const std::string& source, std::initializer_list<UUID> variable_uuid_list);
 
   /**
    * @brief Constructor
@@ -218,8 +229,7 @@ public:
    * iterators.
    */
   template <typename VariableUuidIterator>
-  Constraint(const std::string &source, VariableUuidIterator first,
-             VariableUuidIterator last);
+  Constraint(const std::string& source, VariableUuidIterator first, VariableUuidIterator last);
 
   /**
    * @brief Destructor
@@ -239,13 +249,19 @@ public:
    *
    * Each constraint will generate a unique, random UUID during construction.
    */
-  const UUID &uuid() const { return uuid_; }
+  const UUID& uuid() const
+  {
+    return uuid_;
+  }
 
   /**
    * @brief Returns the name of the sensor or motion model that generated this
    * constraint
    */
-  const std::string &source() const { return source_; }
+  const std::string& source() const
+  {
+    return source_;
+  }
 
   /**
    * @brief Print a human-readable description of the constraint to the provided
@@ -253,7 +269,7 @@ public:
    *
    * @param  stream The stream to write to. Defaults to stdout.
    */
-  virtual void print(std::ostream &stream = std::cout) const = 0;
+  virtual void print(std::ostream& stream = std::cout) const = 0;
 
   /**
    * @brief Create a new Ceres cost function and return a raw pointer to it.
@@ -267,7 +283,7 @@ public:
    *
    * @return A base pointer to an instance of a derived ceres::CostFunction.
    */
-  virtual ceres::CostFunction *costFunction() const = 0;
+  virtual ceres::CostFunction* costFunction() const = 0;
 
   /**
    * @brief Read-only access to the loss.
@@ -277,21 +293,28 @@ public:
    *
    * @return A base shared pointer to an instance of a derived Loss.
    */
-  Loss::SharedPtr loss() const { return loss_; }
+  Loss::SharedPtr loss() const
+  {
+    return loss_;
+  }
 
   /**
    * @brief Set the constraint loss function
    *
    * @param[in] loss - The loss function
    */
-  void loss(Loss::SharedPtr loss) { loss_ = std::move(loss); }
+  void loss(Loss::SharedPtr loss)
+  {
+    loss_ = std::move(loss);
+  }
 
   /**
    * @brief Read-only access to the Ceres loss function.
    *
    * @return A base pointer to an instance of a derived ceres::LossFunction.
    */
-  ceres::LossFunction *lossFunction() const {
+  ceres::LossFunction* lossFunction() const
+  {
     return loss_ ? loss_->lossFunction() : nullptr;
   }
 
@@ -312,7 +335,10 @@ public:
    * @brief Read-only access to the ordered list of variable UUIDs involved in
    * this constraint
    */
-  const std::vector<UUID> &variables() const { return variables_; }
+  const std::vector<UUID>& variables() const
+  {
+    return variables_;
+  }
 
   /**
    * @brief Serialize this Constraint into the provided binary archive
@@ -324,8 +350,7 @@ public:
    *
    * @param[out] archive - The archive to serialize this constraint into
    */
-  virtual void
-  serialize(vesta_core::BinaryOutputArchive & /* archive */) const = 0;
+  virtual void serialize(vesta_core::BinaryOutputArchive& /* archive */) const = 0;
 
   /**
    * @brief Serialize this Constraint into the provided text archive
@@ -337,8 +362,7 @@ public:
    *
    * @param[out] archive - The archive to serialize this constraint into
    */
-  virtual void
-  serialize(vesta_core::TextOutputArchive & /* archive */) const = 0;
+  virtual void serialize(vesta_core::TextOutputArchive& /* archive */) const = 0;
 
   /**
    * @brief Deserialize data from the provided binary archive into this
@@ -351,7 +375,7 @@ public:
    *
    * @param[in] archive - The archive holding serialized Constraint data
    */
-  virtual void deserialize(vesta_core::BinaryInputArchive & /* archive */) = 0;
+  virtual void deserialize(vesta_core::BinaryInputArchive& /* archive */) = 0;
 
   /**
    * @brief Deserialize data from the provided text archive into this Constraint
@@ -363,15 +387,15 @@ public:
    *
    * @param[in] archive - The archive holding serialized Constraint data
    */
-  virtual void deserialize(vesta_core::TextInputArchive & /* archive */) = 0;
+  virtual void deserialize(vesta_core::TextInputArchive& /* archive */) = 0;
 
 private:
-  std::string source_; //!< The name of the sensor or motion model that
-                       //!< generated this constraint
-  UUID uuid_;          //!< The unique ID associated with this constraint
-  std::vector<UUID> variables_; //!< The ordered set of variables involved with
-                                //!< this constraint
-  std::shared_ptr<Loss> loss_{nullptr}; //!< The loss function
+  std::string source_;                     //!< The name of the sensor or motion model that
+                                           //!< generated this constraint
+  UUID uuid_;                              //!< The unique ID associated with this constraint
+  std::vector<UUID> variables_;            //!< The ordered set of variables involved with
+                                           //!< this constraint
+  std::shared_ptr<Loss> loss_{ nullptr };  //!< The loss function
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
@@ -391,7 +415,8 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
     archive & source_;
     archive & uuid_;
     archive & variables_;
@@ -402,11 +427,12 @@ private:
 /**
  * Stream operator implementation used for all derived Constraint classes.
  */
-std::ostream &operator<<(std::ostream &stream, const Constraint &constraint);
+std::ostream& operator<<(std::ostream& stream, const Constraint& constraint);
 
 template <typename VariableUuidIterator>
-Constraint::Constraint(const std::string &source, VariableUuidIterator first,
-                       VariableUuidIterator last)
-    : source_(source), uuid_(uuid::generate()), variables_(first, last) {}
+Constraint::Constraint(const std::string& source, VariableUuidIterator first, VariableUuidIterator last)
+  : source_(source), uuid_(uuid::generate()), variables_(first, last)
+{
+}
 
-} // namespace vesta_core
+}  // namespace vesta_core

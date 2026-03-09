@@ -47,16 +47,17 @@
 #include <vesta_variables/2d/velocity_linear_2d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 
+#include <ceres/cost_function.h>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
-#include <ceres/cost_function.h>
 
 #include <ostream>
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief A constraint that represents prior information about a variable or a
@@ -70,7 +71,8 @@ namespace vesta_constraints {
  * and the measurement uncertainty/covariance.
  */
 template <class Variable>
-class AbsoluteConstraint : public vesta_core::Constraint {
+class AbsoluteConstraint : public vesta_core::Constraint
+{
 public:
   VESTA_CONSTRAINT_DEFINITIONS(AbsoluteConstraint<Variable>);
 
@@ -90,9 +92,8 @@ public:
    * @param[in] covariance The measurement/prior uncertainty of all variable
    * dimensions
    */
-  AbsoluteConstraint(const std::string &source, const Variable &variable,
-                     const vesta_core::VectorXd &mean,
-                     const vesta_core::MatrixXd &covariance);
+  AbsoluteConstraint(const std::string& source, const Variable& variable, const vesta_core::VectorXd& mean,
+                     const vesta_core::MatrixXd& covariance);
 
   /**
    * @brief Create a constraint using a measurement/prior of only a partial set
@@ -108,10 +109,8 @@ public:
    * @param[in] indices            The set of indices corresponding to the
    * measured dimensions
    */
-  AbsoluteConstraint(const std::string &source, const Variable &variable,
-                     const vesta_core::VectorXd &partial_mean,
-                     const vesta_core::MatrixXd &partial_covariance,
-                     const std::vector<size_t> &indices);
+  AbsoluteConstraint(const std::string& source, const Variable& variable, const vesta_core::VectorXd& partial_mean,
+                     const vesta_core::MatrixXd& partial_covariance, const std::vector<size_t>& indices);
 
   /**
    * @brief Destructor
@@ -126,7 +125,10 @@ public:
    * order defined by the \p indices parameter. All unmeasured variable
    * dimensions are set to zero.
    */
-  const vesta_core::VectorXd &mean() const { return mean_; }
+  const vesta_core::VectorXd& mean() const
+  {
+    return mean_;
+  }
 
   /**
    * @brief Read-only access to the square root information matrix.
@@ -136,7 +138,8 @@ public:
    * size measured_dimensions X variable_dimensions. If only a partial set of
    * dimensions are measured, then this matrix will not be square.
    */
-  const vesta_core::MatrixXd &sqrtInformation() const {
+  const vesta_core::MatrixXd& sqrtInformation() const
+  {
     return sqrt_information_;
   }
 
@@ -157,7 +160,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
@@ -170,13 +173,11 @@ public:
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction *costFunction() const override;
+  ceres::CostFunction* costFunction() const override;
 
 protected:
-  vesta_core::VectorXd
-      mean_; //!< The measured/prior mean vector for this variable
-  vesta_core::MatrixXd
-      sqrt_information_; //!< The square root information matrix
+  vesta_core::VectorXd mean_;              //!< The measured/prior mean vector for this variable
+  vesta_core::MatrixXd sqrt_information_;  //!< The square root information matrix
 
 private:
   // Allow Boost Serialization access to private methods
@@ -192,8 +193,9 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & mean_;
     archive & sqrt_information_;
   }
@@ -202,32 +204,21 @@ private:
 // Define unique names for the different variations of the absolute constraint
 using AbsoluteAccelerationAngular2DStampedConstraint =
     AbsoluteConstraint<vesta_variables::AccelerationAngular2DStamped>;
-using AbsoluteAccelerationLinear2DStampedConstraint =
-    AbsoluteConstraint<vesta_variables::AccelerationLinear2DStamped>;
-using AbsoluteOrientation2DStampedConstraint =
-    AbsoluteConstraint<vesta_variables::Orientation2DStamped>;
-using AbsolutePosition2DStampedConstraint =
-    AbsoluteConstraint<vesta_variables::Position2DStamped>;
-using AbsolutePosition3DStampedConstraint =
-    AbsoluteConstraint<vesta_variables::Position3DStamped>;
-using AbsoluteVelocityAngular2DStampedConstraint =
-    AbsoluteConstraint<vesta_variables::VelocityAngular2DStamped>;
-using AbsoluteVelocityLinear2DStampedConstraint =
-    AbsoluteConstraint<vesta_variables::VelocityLinear2DStamped>;
-} // namespace vesta_constraints
+using AbsoluteAccelerationLinear2DStampedConstraint = AbsoluteConstraint<vesta_variables::AccelerationLinear2DStamped>;
+using AbsoluteOrientation2DStampedConstraint = AbsoluteConstraint<vesta_variables::Orientation2DStamped>;
+using AbsolutePosition2DStampedConstraint = AbsoluteConstraint<vesta_variables::Position2DStamped>;
+using AbsolutePosition3DStampedConstraint = AbsoluteConstraint<vesta_variables::Position3DStamped>;
+using AbsoluteVelocityAngular2DStampedConstraint = AbsoluteConstraint<vesta_variables::VelocityAngular2DStamped>;
+using AbsoluteVelocityLinear2DStampedConstraint = AbsoluteConstraint<vesta_variables::VelocityLinear2DStamped>;
+}  // namespace vesta_constraints
 
 // Include the template implementation
 #include <vesta_constraints/common/absolute_constraint_impl.h>
 
-BOOST_CLASS_EXPORT_KEY(
-    vesta_constraints::AbsoluteAccelerationAngular2DStampedConstraint);
-BOOST_CLASS_EXPORT_KEY(
-    vesta_constraints::AbsoluteAccelerationLinear2DStampedConstraint);
-BOOST_CLASS_EXPORT_KEY(
-    vesta_constraints::AbsoluteOrientation2DStampedConstraint);
+BOOST_CLASS_EXPORT_KEY(vesta_constraints::AbsoluteAccelerationAngular2DStampedConstraint);
+BOOST_CLASS_EXPORT_KEY(vesta_constraints::AbsoluteAccelerationLinear2DStampedConstraint);
+BOOST_CLASS_EXPORT_KEY(vesta_constraints::AbsoluteOrientation2DStampedConstraint);
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::AbsolutePosition2DStampedConstraint);
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::AbsolutePosition3DStampedConstraint);
-BOOST_CLASS_EXPORT_KEY(
-    vesta_constraints::AbsoluteVelocityAngular2DStampedConstraint);
-BOOST_CLASS_EXPORT_KEY(
-    vesta_constraints::AbsoluteVelocityLinear2DStampedConstraint);
+BOOST_CLASS_EXPORT_KEY(vesta_constraints::AbsoluteVelocityAngular2DStampedConstraint);
+BOOST_CLASS_EXPORT_KEY(vesta_constraints::AbsoluteVelocityLinear2DStampedConstraint);

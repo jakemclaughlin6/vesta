@@ -52,19 +52,22 @@
 #include <memory>
 #include <vector>
 
-class QwtLossPlotTest : public testing::Test {
+class QwtLossPlotTest : public testing::Test
+{
 public:
-  QwtLossPlotTest() {
+  QwtLossPlotTest()
+  {
     // Generate samples:
-    const double step{0.01};
-    const size_t half_samples{1000};
+    const double step{ 0.01 };
+    const size_t half_samples{ 1000 };
     const double x_min = -(half_samples * step);
 
-    const size_t samples{2 * half_samples + 1};
+    const size_t samples{ 2 * half_samples + 1 };
 
     residuals.reserve(samples);
 
-    for (size_t i = 0; i < samples; ++i) {
+    for (size_t i = 0; i < samples; ++i)
+    {
       residuals.push_back(x_min + i * step);
     }
   }
@@ -72,21 +75,18 @@ public:
   std::vector<double> residuals;
 };
 
-TEST_F(QwtLossPlotTest, PlotLossQt) {
+TEST_F(QwtLossPlotTest, PlotLossQt)
+{
   // Create losses
   std::vector<std::shared_ptr<vesta_core::Loss>> losses{
-      {// NOLINT(whitespace/braces)
-       std::make_shared<vesta_loss::ArctanLoss>(),
-       std::make_shared<vesta_loss::CauchyLoss>(),
-       std::make_shared<vesta_loss::DCSLoss>(),
-       std::make_shared<vesta_loss::FairLoss>(),
-       std::make_shared<vesta_loss::GemanMcClureLoss>(),
-       std::make_shared<vesta_loss::HuberLoss>(),
-       std::make_shared<vesta_loss::SoftLOneLoss>(),
-       std::make_shared<vesta_loss::TolerantLoss>(),
-       std::make_shared<vesta_loss::TrivialLoss>(),
-       std::make_shared<vesta_loss::TukeyLoss>(),
-       std::make_shared<vesta_loss::WelschLoss>()}};
+    { // NOLINT(whitespace/braces)
+      std::make_shared<vesta_loss::ArctanLoss>(), std::make_shared<vesta_loss::CauchyLoss>(),
+      std::make_shared<vesta_loss::DCSLoss>(), std::make_shared<vesta_loss::FairLoss>(),
+      std::make_shared<vesta_loss::GemanMcClureLoss>(), std::make_shared<vesta_loss::HuberLoss>(),
+      std::make_shared<vesta_loss::SoftLOneLoss>(), std::make_shared<vesta_loss::TolerantLoss>(),
+      std::make_shared<vesta_loss::TrivialLoss>(), std::make_shared<vesta_loss::TukeyLoss>(),
+      std::make_shared<vesta_loss::WelschLoss>() }
+  };
 
   // Create a Qt application:
   int argc = 0;
@@ -100,14 +100,15 @@ TEST_F(QwtLossPlotTest, PlotLossQt) {
   vesta_loss::HSVColormap colormap(losses.size());
   vesta_loss::QwtLossPlot rho_loss_plot(residuals, colormap);
 
-  auto &plot = rho_loss_plot.plot();
+  auto& plot = rho_loss_plot.plot();
   plot.setTitle("rho function");
   plot.setAxisTitle(QwtPlot::xBottom, "r");
   plot.setAxisTitle(QwtPlot::yLeft, "rho(r)");
   plot.setAxisScale(QwtPlot::yLeft, 0.0, 15.0);
 
   // Create a curve for each loss rho function:
-  for (const auto &loss : losses) {
+  for (const auto& loss : losses)
+  {
     rho_loss_plot.plotRho(loss);
   }
 
@@ -116,7 +117,7 @@ TEST_F(QwtLossPlotTest, PlotLossQt) {
   // Create a loss plot for the influence function:
   vesta_loss::QwtLossPlot influence_loss_plot(residuals, colormap);
 
-  auto &influence_plot = influence_loss_plot.plot();
+  auto& influence_plot = influence_loss_plot.plot();
   influence_plot.setTitle("influence");
 
   influence_plot.setAxisTitle(QwtPlot::xBottom, "r");
@@ -124,7 +125,8 @@ TEST_F(QwtLossPlotTest, PlotLossQt) {
   influence_plot.setAxisScale(QwtPlot::yLeft, -3.0, 3.0);
 
   // Create a curve for each loss rho function:
-  for (const auto &loss : losses) {
+  for (const auto& loss : losses)
+  {
     influence_loss_plot.plotInfluence(loss);
   }
 
@@ -133,7 +135,7 @@ TEST_F(QwtLossPlotTest, PlotLossQt) {
   // Create a loss plot for the weight function:
   vesta_loss::QwtLossPlot weight_loss_plot(residuals, colormap);
 
-  auto &weight_plot = weight_loss_plot.plot();
+  auto& weight_plot = weight_loss_plot.plot();
   weight_plot.setTitle("weight");
 
   weight_plot.setAxisTitle(QwtPlot::xBottom, "r");
@@ -141,7 +143,8 @@ TEST_F(QwtLossPlotTest, PlotLossQt) {
   weight_plot.setAxisScale(QwtPlot::yLeft, 0.0, 1.5);
 
   // Create a curve for each loss rho function:
-  for (const auto &loss : losses) {
+  for (const auto& loss : losses)
+  {
     weight_loss_plot.plotWeight(loss);
   }
 
@@ -150,7 +153,7 @@ TEST_F(QwtLossPlotTest, PlotLossQt) {
   // Create a loss plot for the second derivative function:
   vesta_loss::QwtLossPlot second_derivative_loss_plot(residuals, colormap);
 
-  auto &second_derivative_plot = second_derivative_loss_plot.plot();
+  auto& second_derivative_plot = second_derivative_loss_plot.plot();
   second_derivative_plot.setTitle("2nd derivative");
 
   second_derivative_plot.setAxisTitle(QwtPlot::xBottom, "r");
@@ -158,7 +161,8 @@ TEST_F(QwtLossPlotTest, PlotLossQt) {
   second_derivative_plot.setAxisScale(QwtPlot::yLeft, -0.15, 0.15);
 
   // Create a curve for each loss rho function:
-  for (const auto &loss : losses) {
+  for (const auto& loss : losses)
+  {
     second_derivative_loss_plot.plotSecondDerivative(loss);
   }
 
@@ -190,7 +194,8 @@ TEST_F(QwtLossPlotTest, PlotLossQt) {
 #endif
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }

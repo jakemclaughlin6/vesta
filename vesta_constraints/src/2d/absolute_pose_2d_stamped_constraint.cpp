@@ -35,26 +35,22 @@
 
 #include <vesta_constraints/2d/normal_prior_pose_2d.h>
 
+#include <ceres/autodiff_cost_function.h>
 #include <Eigen/Dense>
 #include <boost/serialization/export.hpp>
-#include <ceres/autodiff_cost_function.h>
 
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 AbsolutePose2DStampedConstraint::AbsolutePose2DStampedConstraint(
-    const std::string &source,
-    const vesta_variables::Position2DStamped &position,
-    const vesta_variables::Orientation2DStamped &orientation,
-    const vesta_core::VectorXd &partial_mean,
-    const vesta_core::MatrixXd &partial_covariance,
-    const std::vector<size_t> &linear_indices,
-    const std::vector<size_t> &angular_indices)
-    : vesta_core::Constraint(
-          source,
-          {position.uuid(), orientation.uuid()}) // NOLINT(whitespace/braces)
+    const std::string& source, const vesta_variables::Position2DStamped& position,
+    const vesta_variables::Orientation2DStamped& orientation, const vesta_core::VectorXd& partial_mean,
+    const vesta_core::MatrixXd& partial_covariance, const std::vector<size_t>& linear_indices,
+    const std::vector<size_t>& angular_indices)
+  : vesta_core::Constraint(source, { position.uuid(), orientation.uuid() })  // NOLINT(whitespace/braces)
 {
   size_t total_variable_size = position.size() + orientation.size();
   size_t total_indices = linear_indices.size() + angular_indices.size();
@@ -64,8 +60,7 @@ AbsolutePose2DStampedConstraint::AbsolutePose2DStampedConstraint(
   assert(partial_covariance.cols() == static_cast<int>(total_indices));
 
   // Compute the sqrt information of the provided cov matrix
-  vesta_core::MatrixXd partial_sqrt_information =
-      partial_covariance.inverse().llt().matrixU();
+  vesta_core::MatrixXd partial_sqrt_information = partial_covariance.inverse().llt().matrixU();
 
   // Assemble a mean vector and sqrt information matrix from the provided
   // values, but in proper Variable order What are we doing here? The constraint
@@ -76,22 +71,23 @@ AbsolutePose2DStampedConstraint::AbsolutePose2DStampedConstraint(
   // cost for one measured dimensions, and the columns are in the order defined
   // by the variable.
   mean_ = vesta_core::VectorXd::Zero(total_variable_size);
-  sqrt_information_ =
-      vesta_core::MatrixXd::Zero(total_indices, total_variable_size);
-  for (size_t i = 0; i < linear_indices.size(); ++i) {
+  sqrt_information_ = vesta_core::MatrixXd::Zero(total_indices, total_variable_size);
+  for (size_t i = 0; i < linear_indices.size(); ++i)
+  {
     mean_(linear_indices[i]) = partial_mean(i);
     sqrt_information_.col(linear_indices[i]) = partial_sqrt_information.col(i);
   }
 
-  for (size_t i = linear_indices.size(); i < total_indices; ++i) {
-    size_t final_index =
-        position.size() + angular_indices[i - linear_indices.size()];
+  for (size_t i = linear_indices.size(); i < total_indices; ++i)
+  {
+    size_t final_index = position.size() + angular_indices[i - linear_indices.size()];
     mean_(final_index) = partial_mean(i);
     sqrt_information_.col(final_index) = partial_sqrt_information.col(i);
   }
 }
 
-vesta_core::Matrix3d AbsolutePose2DStampedConstraint::covariance() const {
+vesta_core::Matrix3d AbsolutePose2DStampedConstraint::covariance() const
+{
   // We want to compute:
   // cov = (sqrt_info' * sqrt_info)^-1
   // With some linear algebra, we can swap the transpose and the inverse.
@@ -100,13 +96,13 @@ vesta_core::Matrix3d AbsolutePose2DStampedConstraint::covariance() const {
   // instead. Eigen doesn't have a pseudoinverse function (for probably very
   // legitimate reasons). So we set the right hand side to identity, then solve
   // using one of Eigen's many decompositions.
-  auto I = vesta_core::MatrixXd::Identity(sqrt_information_.rows(),
-                                          sqrt_information_.cols());
+  auto I = vesta_core::MatrixXd::Identity(sqrt_information_.rows(), sqrt_information_.cols());
   vesta_core::MatrixXd pinv = sqrt_information_.colPivHouseholderQr().solve(I);
   return pinv * pinv.transpose();
 }
 
-void AbsolutePose2DStampedConstraint::print(std::ostream &stream) const {
+void AbsolutePose2DStampedConstraint::print(std::ostream& stream) const
+{
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
@@ -115,17 +111,18 @@ void AbsolutePose2DStampedConstraint::print(std::ostream &stream) const {
          << "  mean: " << mean().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 
-  if (loss()) {
+  if (loss())
+  {
     stream << "  loss: ";
     loss()->print(stream);
   }
 }
 
-ceres::CostFunction *AbsolutePose2DStampedConstraint::costFunction() const {
+ceres::CostFunction* AbsolutePose2DStampedConstraint::costFunction() const
+{
   return new NormalPriorPose2D(sqrt_information_, mean_);
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
-BOOST_CLASS_EXPORT_IMPLEMENT(
-    vesta_constraints::AbsolutePose2DStampedConstraint);
+BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::AbsolutePose2DStampedConstraint);

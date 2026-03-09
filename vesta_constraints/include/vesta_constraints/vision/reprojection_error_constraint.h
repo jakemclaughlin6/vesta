@@ -56,7 +56,8 @@
 #include <string>
 #include <vector>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief A constraint that represents an observation of a 3D point using a
@@ -68,7 +69,8 @@ namespace vesta_constraints {
  * landmark.
  *
  */
-class ReprojectionErrorConstraint : public vesta_core::Constraint {
+class ReprojectionErrorConstraint : public vesta_core::Constraint
+{
 public:
   VESTA_CONSTRAINT_DEFINITIONS_WITH_EIGEN(ReprojectionErrorConstraint);
 
@@ -95,13 +97,11 @@ public:
    * @param[in] covariance    The prior observation covariance (2x2 matrix: u,
    * v)
    */
-  ReprojectionErrorConstraint(
-      const std::string &source,
-      const vesta_variables::Position3DStamped &position,
-      const vesta_variables::Orientation3DStamped &orientation,
-      const vesta_variables::PinholeCamera &calibraton,
-      const vesta_variables::Point3DLandmark &point,
-      const vesta_core::Vector2d &mean, const vesta_core::Matrix2d &covariance);
+  ReprojectionErrorConstraint(const std::string& source, const vesta_variables::Position3DStamped& position,
+                              const vesta_variables::Orientation3DStamped& orientation,
+                              const vesta_variables::PinholeCamera& calibraton,
+                              const vesta_variables::Point3DLandmark& point, const vesta_core::Vector2d& mean,
+                              const vesta_core::Matrix2d& covariance);
 
   /**
    * @brief Destructor
@@ -113,7 +113,8 @@ public:
    *
    * Order is (u, v)
    */
-  const vesta_core::Matrix2d &sqrtInformation() const {
+  const vesta_core::Matrix2d& sqrtInformation() const
+  {
     return sqrt_information_;
   }
 
@@ -122,14 +123,18 @@ public:
    *
    * Order is (u, v)
    */
-  const vesta_core::Vector2d &mean() const { return mean_; }
+  const vesta_core::Vector2d& mean() const
+  {
+    return mean_;
+  }
 
   /**
    * @brief Compute the measurement covariance matrix.
    *
    * Order is (u, v)
    */
-  vesta_core::Matrix2d covariance() const {
+  vesta_core::Matrix2d covariance() const
+  {
     return (sqrt_information_.transpose() * sqrt_information_).inverse();
   }
 
@@ -139,7 +144,7 @@ public:
    *
    * @param[out] stream The stream to write to. Defaults to stdout.
    */
-  void print(std::ostream &stream = std::cout) const override;
+  void print(std::ostream& stream = std::cout) const override;
 
   /**
    * @brief Construct an instance of this constraint's cost function
@@ -152,12 +157,11 @@ public:
    *
    * @return A base pointer to an instance of a derived CostFunction.
    */
-  ceres::CostFunction *costFunction() const override;
+  ceres::CostFunction* costFunction() const override;
 
 protected:
-  vesta_core::Vector2d mean_; //!< The 2D observations (in pixel space)
-  vesta_core::Matrix2d
-      sqrt_information_; //!< The square root information matrix
+  vesta_core::Vector2d mean_;              //!< The 2D observations (in pixel space)
+  vesta_core::Matrix2d sqrt_information_;  //!< The square root information matrix
 
 private:
   // Allow Boost Serialization access to private methods
@@ -173,13 +177,14 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Constraint>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & mean_;
     archive & sqrt_information_;
   }
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints
 
 BOOST_CLASS_EXPORT_KEY(vesta_constraints::ReprojectionErrorConstraint);

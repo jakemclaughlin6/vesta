@@ -38,7 +38,8 @@
 
 #include <ceres/cost_function.h>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Implements a cost function that models a difference between variables
@@ -60,7 +61,8 @@ namespace vesta_constraints {
  * deficient. This could arise, for example, if you are only measuring a subset
  * of the variable dimensions.
  */
-class NormalDelta : public ceres::CostFunction {
+class NormalDelta : public ceres::CostFunction
+{
 public:
   /**
    * @brief Construct a cost function instance
@@ -75,7 +77,7 @@ public:
    * must have the same dimensions and the per-element subtraction operator must
    * be valid.
    */
-  NormalDelta(const vesta_core::MatrixXd &A, const vesta_core::VectorXd &b);
+  NormalDelta(const vesta_core::MatrixXd& A, const vesta_core::VectorXd& b);
 
   /**
    * @brief Destructor
@@ -86,14 +88,12 @@ public:
    * @brief Compute the cost values/residuals, and optionally the Jacobians,
    * using the provided variable/parameter values
    */
-  virtual bool Evaluate(double const *const *parameters, double *residuals,
-                        double **jacobians) const;
+  virtual bool Evaluate(double const* const* parameters, double* residuals, double** jacobians) const;
 
 private:
-  vesta_core::MatrixXd A_; //!< The residual weighting matrix, most likely the
-                           //!< square root information matrix
-  vesta_core::VectorXd
-      b_; //!< The measured difference between variable x0 and variable x1
+  vesta_core::MatrixXd A_;  //!< The residual weighting matrix, most likely the
+                            //!< square root information matrix
+  vesta_core::VectorXd b_;  //!< The measured difference between variable x0 and variable x1
 };
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

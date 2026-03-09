@@ -38,10 +38,11 @@
 #include <vesta_core/fuse_macros.h>
 #include <vesta_core/util.h>
 
-#include <Eigen/Core>
 #include <ceres/rotation.h>
+#include <Eigen/Core>
 
-namespace vesta_constraints {
+namespace vesta_constraints
+{
 
 /**
  * @brief Stereo reprojection error cost function using world-frame pose
@@ -63,7 +64,8 @@ namespace vesta_constraints {
  * This convention is compatible with IMU preintegration constraints which
  * also use world-frame position and orientation variables.
  */
-class StereoReprojectionErrorCostFunctor {
+class StereoReprojectionErrorCostFunctor
+{
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
 
@@ -76,8 +78,7 @@ public:
    * @param[in] b The 4D observation vector in order (u_left, v_left, u_right,
    * v_right)
    */
-  StereoReprojectionErrorCostFunctor(const vesta_core::Matrix4d &A,
-                                     const vesta_core::Vector4d &b);
+  StereoReprojectionErrorCostFunctor(const vesta_core::Matrix4d& A, const vesta_core::Vector4d& b);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
@@ -90,25 +91,24 @@ public:
    * @param[out] residual    The computed residuals (4D vector)
    */
   template <typename T>
-  bool operator()(const T *const position, const T *const orientation,
-                  const T *const calibration, const T *const point,
-                  T *residual) const;
+  bool operator()(const T* const position, const T* const orientation, const T* const calibration, const T* const point,
+                  T* residual) const;
 
 private:
   vesta_core::Matrix4d A_;
   vesta_core::Vector4d b_;
 };
 
-inline StereoReprojectionErrorCostFunctor::StereoReprojectionErrorCostFunctor(
-    const vesta_core::Matrix4d &A, const vesta_core::Vector4d &b)
-    : A_(A), b_(b) {}
+inline StereoReprojectionErrorCostFunctor::StereoReprojectionErrorCostFunctor(const vesta_core::Matrix4d& A,
+                                                                              const vesta_core::Vector4d& b)
+  : A_(A), b_(b)
+{
+}
 
 template <typename T>
-bool StereoReprojectionErrorCostFunctor::operator()(const T *const position,
-                                                    const T *const orientation,
-                                                    const T *const calibration,
-                                                    const T *const point,
-                                                    T *residual) const {
+bool StereoReprojectionErrorCostFunctor::operator()(const T* const position, const T* const orientation,
+                                                    const T* const calibration, const T* const point, T* residual) const
+{
   // World-frame convention: p_cam = R_wc^{-1} * (X_world - p_world)
   T diff[3];
   diff[0] = point[0] - position[0];
@@ -126,11 +126,11 @@ bool StereoReprojectionErrorCostFunctor::operator()(const T *const position,
   ceres::QuaternionRotatePoint(q_inv, diff, p);
 
   // Extract calibration parameters
-  const T &fx = calibration[0];
-  const T &fy = calibration[1];
-  const T &cx = calibration[2];
-  const T &cy = calibration[3];
-  const T &baseline = calibration[4];
+  const T& fx = calibration[0];
+  const T& fy = calibration[1];
+  const T& cx = calibration[2];
+  const T& cy = calibration[3];
+  const T& baseline = calibration[4];
 
   // Project to left camera: u_l = fx * p[0] / p[2] + cx, v_l = fy * p[1] / p[2]
   // + cy
@@ -156,4 +156,4 @@ bool StereoReprojectionErrorCostFunctor::operator()(const T *const position,
   return true;
 }
 
-} // namespace vesta_constraints
+}  // namespace vesta_constraints

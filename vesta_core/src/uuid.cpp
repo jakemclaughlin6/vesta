@@ -44,11 +44,14 @@
 #include <random>
 #include <string>
 
-namespace vesta_core {
+namespace vesta_core
+{
 
-namespace uuid {
+namespace uuid
+{
 
-UUID generate() {
+UUID generate()
+{
   static boost::uuids::random_generator generator;
   static std::mutex generator_mutex;
 
@@ -61,38 +64,32 @@ UUID generate() {
   return uuid;
 }
 
-UUID generate(const std::string &namespace_string,
-              const vesta_core::Timestamp &stamp) {
+UUID generate(const std::string& namespace_string, const vesta_core::Timestamp& stamp)
+{
   constexpr size_t buffer_size = sizeof(stamp.nanoseconds);
   std::array<unsigned char, buffer_size> buffer;
   auto iter = buffer.begin();
-  iter = std::copy(reinterpret_cast<const unsigned char *>(&stamp.nanoseconds),
-                   reinterpret_cast<const unsigned char *>(&stamp.nanoseconds) +
-                       sizeof(stamp.nanoseconds),
-                   iter);
+  iter = std::copy(reinterpret_cast<const unsigned char*>(&stamp.nanoseconds),
+                   reinterpret_cast<const unsigned char*>(&stamp.nanoseconds) + sizeof(stamp.nanoseconds), iter);
   return generate(namespace_string, buffer.data(), buffer.size());
 }
 
-UUID generate(const std::string &namespace_string,
-              const vesta_core::Timestamp &stamp, const UUID &id) {
-  constexpr size_t buffer_size =
-      sizeof(stamp.nanoseconds) + UUID::static_size();
+UUID generate(const std::string& namespace_string, const vesta_core::Timestamp& stamp, const UUID& id)
+{
+  constexpr size_t buffer_size = sizeof(stamp.nanoseconds) + UUID::static_size();
   std::array<unsigned char, buffer_size> buffer;
   auto iter = buffer.begin();
-  iter = std::copy(reinterpret_cast<const unsigned char *>(&stamp.nanoseconds),
-                   reinterpret_cast<const unsigned char *>(&stamp.nanoseconds) +
-                       sizeof(stamp.nanoseconds),
-                   iter);
+  iter = std::copy(reinterpret_cast<const unsigned char*>(&stamp.nanoseconds),
+                   reinterpret_cast<const unsigned char*>(&stamp.nanoseconds) + sizeof(stamp.nanoseconds), iter);
   iter = std::copy(id.begin(), id.end(), iter);
   return generate(namespace_string, buffer.data(), buffer.size());
 }
 
-UUID generate(const std::string &namespace_string, const uint64_t &user_id) {
-  return generate(namespace_string,
-                  reinterpret_cast<const unsigned char *>(&user_id),
-                  sizeof(user_id));
+UUID generate(const std::string& namespace_string, const uint64_t& user_id)
+{
+  return generate(namespace_string, reinterpret_cast<const unsigned char*>(&user_id), sizeof(user_id));
 }
 
-} // namespace uuid
+}  // namespace uuid
 
-} // namespace vesta_core
+}  // namespace vesta_core

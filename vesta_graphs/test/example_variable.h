@@ -50,17 +50,30 @@
 /**
  * @brief Dummy variable implementation for testing
  */
-class ExampleVariable : public vesta_core::Variable {
+class ExampleVariable : public vesta_core::Variable
+{
 public:
   VESTA_VARIABLE_DEFINITIONS(ExampleVariable);
 
-  explicit ExampleVariable(size_t N = 1)
-      : vesta_core::Variable(vesta_core::uuid::generate()), data_(N, 0.0) {}
+  explicit ExampleVariable(size_t N = 1) : vesta_core::Variable(vesta_core::uuid::generate()), data_(N, 0.0)
+  {
+  }
 
-  size_t size() const override { return data_.size(); }
-  const double *data() const override { return data_.data(); };
-  double *data() override { return data_.data(); };
-  void print(std::ostream & /*stream = std::cout*/) const override {}
+  size_t size() const override
+  {
+    return data_.size();
+  }
+  const double* data() const override
+  {
+    return data_.data();
+  };
+  double* data() override
+  {
+    return data_.data();
+  };
+  void print(std::ostream& /*stream = std::cout*/) const override
+  {
+  }
 
 private:
   std::vector<double> data_;
@@ -78,8 +91,9 @@ private:
    * Generally unused.
    */
   template <class Archive>
-  void serialize(Archive &archive, const unsigned int /* version */) {
-    archive &boost::serialization::base_object<vesta_core::Variable>(*this);
+  void serialize(Archive& archive, const unsigned int /* version */)
+  {
+    archive& boost::serialization::base_object<vesta_core::Variable>(*this);
     archive & data_;
   }
 };

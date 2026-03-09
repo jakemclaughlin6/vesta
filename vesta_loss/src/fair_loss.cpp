@@ -38,19 +38,24 @@
 
 #include <ostream>
 
-namespace vesta_loss {
+namespace vesta_loss
+{
 
-FairLoss::FairLoss(const double a) : a_(a) {}
+FairLoss::FairLoss(const double a) : a_(a)
+{
+}
 
-void FairLoss::print(std::ostream &stream) const {
+void FairLoss::print(std::ostream& stream) const
+{
   stream << type() << "\n"
          << "  a: " << a_ << "\n";
 }
 
-ceres::LossFunction *FairLoss::lossFunction() const {
+ceres::LossFunction* FairLoss::lossFunction() const
+{
   return new ceres::FairLoss(a_);
 }
 
-} // namespace vesta_loss
+}  // namespace vesta_loss
 
 BOOST_CLASS_EXPORT_IMPLEMENT(vesta_loss::FairLoss);
