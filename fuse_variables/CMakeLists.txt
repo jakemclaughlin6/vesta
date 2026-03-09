@@ -22,6 +22,7 @@ add_library(fuse_variables
   src/vision/point_2d_landmark.cpp
   src/vision/point_3d_fixed_landmark.cpp
   src/vision/point_3d_landmark.cpp
+  src/vision/stereo_camera.cpp
   # Common
   src/common/stamped.cpp
 )
@@ -68,6 +69,7 @@ if(BUILD_TESTING)
   fuse_variables_add_test(test_point_3d_landmark)
   fuse_variables_add_test(test_position_2d_stamped)
   fuse_variables_add_test(test_position_3d_stamped)
+  fuse_variables_add_test(test_stereo_camera)
   fuse_variables_add_test(test_velocity_angular_2d_stamped)
   fuse_variables_add_test(test_velocity_angular_3d_stamped)
   fuse_variables_add_test(test_velocity_linear_2d_stamped)

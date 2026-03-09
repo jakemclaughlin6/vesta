@@ -55,6 +55,8 @@ HashGraph::HashGraph(const HashGraphParams& params) :
 {
   // Set Ceres loss function ownership according to the fuse_core::Loss specification
   problem_options_.loss_function_ownership = fuse_core::Loss::Ownership;
+  // Enable fast removal for incremental problem management
+  problem_options_.enable_fast_removal = true;
 }
 
 HashGraph::HashGraph(const HashGraph& other) :
@@ -78,6 +80,9 @@ HashGraph::HashGraph(const HashGraph& other) :
                  {
                    return {uuid__variable.first, uuid__variable.second->clone()};
                  });  // NOLINT(whitespace/braces)
+  // The persistent problem refers to the other graph's variable memory; reset it
+  problem_.reset();
+  problem_dirty_ = true;
 }
 
 HashGraph& HashGraph::operator=(const HashGraph& other)
@@ -90,6 +95,10 @@ HashGraph& HashGraph::operator=(const HashGraph& other)
   std::swap(problem_options_, tmp.problem_options_);
   std::swap(variables_, tmp.variables_);
   std::swap(variables_on_hold_, tmp.variables_on_hold_);
+  // The persistent problem refers to stale memory after swap; reset it
+  problem_.reset();
+  residual_block_ids_.clear();
+  problem_dirty_ = true;
   return *this;
 }
 
@@ -99,6 +108,9 @@ void HashGraph::clear()
   constraints_by_variable_uuid_.clear();
   variables_.clear();
   variables_on_hold_.clear();
+  problem_.reset();
+  residual_block_ids_.clear();
+  problem_dirty_ = true;
 }
 
 fuse_core::Graph::UniquePtr HashGraph::clone() const
@@ -131,11 +143,25 @@ bool HashGraph::addConstraint(fuse_core::Constraint::SharedPtr constraint)
     }
   }
   // Add the constraint to the list of known constraints
-  constraints_.emplace(constraint->uuid(), constraint);
+  const auto constraint_uuid = constraint->uuid();
+  constraints_.emplace(constraint_uuid, constraint);
   // Also add it to the variable-constraint cross reference
   for (const auto& variable_uuid : constraint->variables())
   {
-    constraints_by_variable_uuid_[variable_uuid].push_back(constraint->uuid());
+    constraints_by_variable_uuid_[variable_uuid].push_back(constraint_uuid);
+  }
+  // Incrementally add the constraint to the persistent problem if it exists and is clean
+  if (problem_ && !problem_dirty_)
+  {
+    std::vector<double*> parameter_blocks;
+    parameter_blocks.reserve(constraint->variables().size());
+    for (const auto& vuuid : constraint->variables())
+    {
+      parameter_blocks.push_back(variables_.at(vuuid)->data());
+    }
+    auto rid = problem_->AddResidualBlock(
+      constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
+    residual_block_ids_[constraint_uuid] = rid;
   }
   return true;
 }
@@ -147,6 +173,16 @@ bool HashGraph::removeConstraint(const fuse_core::UUID& constraint_uuid)
   if (constraints_iter == constraints_.end())
   {
     return false;
+  }
+  // Incrementally remove the constraint from the persistent problem if it exists and is clean
+  if (problem_ && !problem_dirty_)
+  {
+    auto rid_iter = residual_block_ids_.find(constraint_uuid);
+    if (rid_iter != residual_block_ids_.end())
+    {
+      problem_->RemoveResidualBlock(rid_iter->second);
+      residual_block_ids_.erase(rid_iter);
+    }
   }
   // Remove the constraint from the cross-reference data structure
   for (const auto& variable_uuid : constraints_iter->second->variables())
@@ -229,6 +265,29 @@ bool HashGraph::addVariable(fuse_core::Variable::SharedPtr variable)
   {
     variables_on_hold_.insert(variable->uuid());
   }
+  // Incrementally add the variable to the persistent problem if it exists and is clean
+  if (problem_ && !problem_dirty_)
+  {
+    fuse_core::Variable& var = *variable;
+    problem_->AddParameterBlock(var.data(), var.size(), var.manifold());
+    for (size_t i = 0; i < var.size(); ++i)
+    {
+      auto lb = var.lowerBound(i);
+      if (lb > std::numeric_limits<double>::lowest())
+      {
+        problem_->SetParameterLowerBound(var.data(), i, lb);
+      }
+      auto ub = var.upperBound(i);
+      if (ub < std::numeric_limits<double>::max())
+      {
+        problem_->SetParameterUpperBound(var.data(), i, ub);
+      }
+    }
+    if (variables_on_hold_.count(variable->uuid()))
+    {
+      problem_->SetParameterBlockConstant(var.data());
+    }
+  }
   return true;
 }
 
@@ -247,6 +306,11 @@ bool HashGraph::removeVariable(const fuse_core::UUID& variable_uuid)
     throw std::logic_error("Attempting to remove a variable (" + fuse_core::uuid::to_string(variable_uuid)
       + ") that is used by existing constraints (" + fuse_core::uuid::to_string(cross_reference_iter->second.front())
       + " plus " + std::to_string(cross_reference_iter->second.size() - 1) + " others).");
+  }
+  // Incrementally remove the variable from the persistent problem if it exists and is clean
+  if (problem_ && !problem_dirty_)
+  {
+    problem_->RemoveParameterBlock(variables_iter->second->data());
   }
   // Remove the variable from all containers
   variables_.erase(variables_iter);  // Does not throw
@@ -291,6 +355,22 @@ void HashGraph::holdVariable(const fuse_core::UUID& variable_uuid, bool hold_con
   else
   {
     variables_on_hold_.erase(variable_uuid);
+  }
+  // Incrementally update the persistent problem if it exists and is clean
+  if (problem_ && !problem_dirty_)
+  {
+    auto var_iter = variables_.find(variable_uuid);
+    if (var_iter != variables_.end())
+    {
+      if (hold_constant)
+      {
+        problem_->SetParameterBlockConstant(var_iter->second->data());
+      }
+      else
+      {
+        problem_->SetParameterBlockVariable(var_iter->second->data());
+      }
+    }
   }
 }
 
@@ -414,12 +494,11 @@ void HashGraph::getCovariance(
 
 ceres::Solver::Summary HashGraph::optimize(const ceres::Solver::Options& options)
 {
-  // Construct the ceres::Problem object from scratch
-  ceres::Problem problem(problem_options_);
-  createProblem(problem);
+  // Ensure the persistent problem is up-to-date
+  ensureProblem();
   // Run the solver. This will update the variables in place.
   ceres::Solver::Summary summary;
-  ceres::Solve(options, &problem, &summary);
+  ceres::Solve(options, problem_.get(), &summary);
   // Return the optimization summary
   return summary;
 }
@@ -429,17 +508,16 @@ ceres::Solver::Summary HashGraph::optimizeFor(
   const ceres::Solver::Options& options)
 {
   auto start = fuse_core::Timestamp::now();
-  // Construct the ceres::Problem object from scratch
-  ceres::Problem problem(problem_options_);
-  createProblem(problem);
-  auto created_problem = fuse_core::Timestamp::now();
+  // Ensure the persistent problem is up-to-date
+  ensureProblem();
+  auto ensured_problem = fuse_core::Timestamp::now();
   // Modify the options to enforce the maximum time
-  auto remaining = max_optimization_time - (created_problem - start);
+  auto remaining = max_optimization_time - (ensured_problem - start);
   auto time_constrained_options = options;
   time_constrained_options.max_solver_time_in_seconds = std::max(0.0, remaining.toSec());
   // Run the solver. This will update the variables in place.
   ceres::Solver::Summary summary;
-  ceres::Solve(time_constrained_options, &problem, &summary);
+  ceres::Solve(time_constrained_options, problem_.get(), &summary);
   // Return the optimization summary
   return summary;
 }
@@ -468,6 +546,54 @@ void HashGraph::print(std::ostream& stream) const
 
     stream << "   - " << *variable.second << "\n"
            << "     on_hold: " << std::boolalpha << is_on_hold << "\n";
+  }
+}
+
+void HashGraph::ensureProblem()
+{
+  if (!problem_ || problem_dirty_)
+  {
+    problem_ = std::make_unique<ceres::Problem>(problem_options_);
+    residual_block_ids_.clear();
+    // Add all variables
+    for (auto& [uuid, var_ptr] : variables_)
+    {
+      fuse_core::Variable& variable = *var_ptr;
+      problem_->AddParameterBlock(variable.data(), variable.size(), variable.manifold());
+      for (size_t i = 0; i < variable.size(); ++i)
+      {
+        auto lb = variable.lowerBound(i);
+        if (lb > std::numeric_limits<double>::lowest())
+        {
+          problem_->SetParameterLowerBound(variable.data(), i, lb);
+        }
+        auto ub = variable.upperBound(i);
+        if (ub < std::numeric_limits<double>::max())
+        {
+          problem_->SetParameterUpperBound(variable.data(), i, ub);
+        }
+      }
+      if (variables_on_hold_.count(uuid))
+      {
+        problem_->SetParameterBlockConstant(variable.data());
+      }
+    }
+    // Add all constraints and track ResidualBlockIds
+    std::vector<double*> parameter_blocks;
+    for (auto& [uuid, c_ptr] : constraints_)
+    {
+      fuse_core::Constraint& constraint = *c_ptr;
+      parameter_blocks.clear();
+      parameter_blocks.reserve(constraint.variables().size());
+      for (const auto& vuuid : constraint.variables())
+      {
+        parameter_blocks.push_back(variables_.at(vuuid)->data());
+      }
+      auto rid = problem_->AddResidualBlock(
+        constraint.costFunction(), constraint.lossFunction(), parameter_blocks);
+      residual_block_ids_[uuid] = rid;
+    }
+    problem_dirty_ = false;
   }
 }
 

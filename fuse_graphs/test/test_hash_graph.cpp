@@ -1019,6 +1019,185 @@ TEST_F(HashGraphTestFixture, GetConstraintCosts)
   EXPECT_NEAR(costs[1].residuals[0], 1.0, 1.0e-5);
 }
 
+TEST_F(HashGraphTestFixture, IncrementalOptimize)
+{
+  // Test that the incremental problem management produces the same results as from-scratch optimization.
+  // Add variables + constraints, optimize, add more, optimize again.
+
+  fuse_graphs::HashGraph graph;
+
+  // Add initial variables and constraints
+  auto variable1 = ExampleVariable::make_shared();
+  variable1->data()[0] = 1.0;
+  graph.addVariable(variable1);
+
+  auto constraint1 = ExampleConstraint::make_shared("test", variable1->uuid());
+  constraint1->data = 5.0;
+  graph.addConstraint(constraint1);
+
+  // First optimization — this builds the problem from scratch
+  EXPECT_NO_THROW(graph.optimize());
+  EXPECT_NEAR(5.0, variable1->data()[0], 1.0e-7);
+
+  // Add a second variable and constraint incrementally (problem_ exists now)
+  auto variable2 = ExampleVariable::make_shared();
+  variable2->data()[0] = 0.0;
+  graph.addVariable(variable2);
+
+  auto constraint2 = ExampleConstraint::make_shared("test", variable2->uuid());
+  constraint2->data = -3.0;
+  graph.addConstraint(constraint2);
+
+  // Second optimization — should use the incremental problem
+  EXPECT_NO_THROW(graph.optimize());
+  EXPECT_NEAR(5.0, variable1->data()[0], 1.0e-7);
+  EXPECT_NEAR(-3.0, variable2->data()[0], 1.0e-7);
+
+  // Verify against a from-scratch graph with all the same data
+  fuse_graphs::HashGraph reference;
+  auto ref_v1 = std::shared_ptr<ExampleVariable>(
+    static_cast<ExampleVariable*>(variable1->clone().release()));
+  ref_v1->data()[0] = 1.0;  // Reset to initial value
+  auto ref_v2 = std::shared_ptr<ExampleVariable>(
+    static_cast<ExampleVariable*>(variable2->clone().release()));
+  reference.addVariable(ref_v1);
+  reference.addVariable(ref_v2);
+
+  auto ref_c1 = ExampleConstraint::make_shared("test", ref_v1->uuid());
+  ref_c1->data = 5.0;
+  auto ref_c2 = ExampleConstraint::make_shared("test", ref_v2->uuid());
+  ref_c2->data = -3.0;
+  reference.addConstraint(ref_c1);
+  reference.addConstraint(ref_c2);
+  reference.optimize();
+
+  EXPECT_NEAR(reference.getVariable(ref_v1->uuid()).data()[0], variable1->data()[0], 1.0e-7);
+  EXPECT_NEAR(reference.getVariable(ref_v2->uuid()).data()[0], variable2->data()[0], 1.0e-7);
+}
+
+TEST_F(HashGraphTestFixture, IncrementalRemove)
+{
+  // Test that removing a constraint incrementally and re-optimizing produces correct results.
+
+  fuse_graphs::HashGraph graph;
+
+  auto variable1 = ExampleVariable::make_shared();
+  variable1->data()[0] = 0.0;
+  graph.addVariable(variable1);
+
+  auto variable2 = ExampleVariable::make_shared();
+  variable2->data()[0] = 0.0;
+  graph.addVariable(variable2);
+
+  auto constraint1 = ExampleConstraint::make_shared("test", variable1->uuid());
+  constraint1->data = 5.0;
+  graph.addConstraint(constraint1);
+
+  auto constraint2 = ExampleConstraint::make_shared("test", variable2->uuid());
+  constraint2->data = -3.0;
+  graph.addConstraint(constraint2);
+
+  // First optimization
+  graph.optimize();
+  EXPECT_NEAR(5.0, variable1->data()[0], 1.0e-7);
+  EXPECT_NEAR(-3.0, variable2->data()[0], 1.0e-7);
+
+  // Remove constraint1 incrementally
+  EXPECT_TRUE(graph.removeConstraint(constraint1->uuid()));
+
+  // Add a new constraint on variable1 with a different target
+  auto constraint3 = ExampleConstraint::make_shared("test", variable1->uuid());
+  constraint3->data = 10.0;
+  graph.addConstraint(constraint3);
+
+  // Re-optimize
+  graph.optimize();
+  EXPECT_NEAR(10.0, variable1->data()[0], 1.0e-7);
+  EXPECT_NEAR(-3.0, variable2->data()[0], 1.0e-7);
+}
+
+TEST_F(HashGraphTestFixture, HoldVariableBetweenOptimizations)
+{
+  // Test that holding a variable constant between optimizations works correctly with incremental management.
+
+  fuse_graphs::HashGraph graph;
+
+  auto variable1 = ExampleVariable::make_shared();
+  variable1->data()[0] = 1.0;
+  graph.addVariable(variable1);
+
+  auto variable2 = ExampleVariable::make_shared();
+  variable2->data()[0] = 2.5;
+  graph.addVariable(variable2);
+
+  auto constraint1 = ExampleConstraint::make_shared("test", variable1->uuid());
+  constraint1->data = 5.0;
+  graph.addConstraint(constraint1);
+
+  auto constraint2 = ExampleConstraint::make_shared("test", variable2->uuid());
+  constraint2->data = -3.0;
+  graph.addConstraint(constraint2);
+
+  // First optimization — both variables should reach their targets
+  graph.optimize();
+  EXPECT_NEAR(5.0, variable1->data()[0], 1.0e-7);
+  EXPECT_NEAR(-3.0, variable2->data()[0], 1.0e-7);
+
+  // Now hold variable1 constant and change its target via a new constraint
+  graph.holdVariable(variable1->uuid());
+  graph.removeConstraint(constraint1->uuid());
+
+  auto constraint3 = ExampleConstraint::make_shared("test", variable1->uuid());
+  constraint3->data = 100.0;
+  graph.addConstraint(constraint3);
+
+  // Re-optimize — variable1 should remain at 5.0 since it's held constant
+  graph.optimize();
+  EXPECT_NEAR(5.0, variable1->data()[0], 1.0e-7);
+  EXPECT_NEAR(-3.0, variable2->data()[0], 1.0e-7);
+
+  // Unhold variable1 and re-optimize — variable1 should now move to 100.0
+  graph.holdVariable(variable1->uuid(), false);
+  graph.optimize();
+  EXPECT_NEAR(100.0, variable1->data()[0], 1.0e-5);
+  EXPECT_NEAR(-3.0, variable2->data()[0], 1.0e-7);
+}
+
+TEST_F(HashGraphTestFixture, ClearAndReoptimize)
+{
+  // Test that clearing the graph and re-adding data produces correct results.
+
+  fuse_graphs::HashGraph graph;
+
+  auto variable1 = ExampleVariable::make_shared();
+  variable1->data()[0] = 0.0;
+  graph.addVariable(variable1);
+
+  auto constraint1 = ExampleConstraint::make_shared("test", variable1->uuid());
+  constraint1->data = 5.0;
+  graph.addConstraint(constraint1);
+
+  // First optimization
+  graph.optimize();
+  EXPECT_NEAR(5.0, variable1->data()[0], 1.0e-7);
+
+  // Clear the graph
+  graph.clear();
+
+  // Re-add fresh variables and constraints
+  auto variable2 = ExampleVariable::make_shared();
+  variable2->data()[0] = 0.0;
+  graph.addVariable(variable2);
+
+  auto constraint2 = ExampleConstraint::make_shared("test", variable2->uuid());
+  constraint2->data = -7.0;
+  graph.addConstraint(constraint2);
+
+  // Optimize again — this should build problem from scratch since we cleared
+  graph.optimize();
+  EXPECT_NEAR(-7.0, variable2->data()[0], 1.0e-7);
+}
+
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);

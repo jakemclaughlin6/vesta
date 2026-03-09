@@ -43,6 +43,7 @@
 #include <fuse_core/variable.h>
 #include <fuse_graphs/hash_graph_params.h>
 
+#include <boost/archive/detail/basic_iarchive.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
@@ -53,6 +54,8 @@
 #include <ceres/problem.h>
 #include <ceres/solver.h>
 
+#include <memory>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -376,6 +379,20 @@ protected:
   Variables variables_;  //!< The set of all variables
   VariableSet variables_on_hold_;  //!< The set of variables that should be held constant
 
+  //!< Persistent ceres::Problem for incremental optimization (mutable for lazy init in const-like contexts)
+  mutable std::unique_ptr<ceres::Problem> problem_;
+  //!< Map from constraint UUID to ceres ResidualBlockId for incremental removal
+  std::unordered_map<fuse_core::UUID, ceres::ResidualBlockId, fuse_core::uuid::hash> residual_block_ids_;
+  bool problem_dirty_ = true;  //!< If true, problem_ must be rebuilt from scratch on next optimize
+
+  /**
+   * @brief Ensure the persistent ceres::Problem is up-to-date
+   *
+   * If the problem is null or dirty, it will be rebuilt from scratch using the current variables and constraints.
+   * This also populates residual_block_ids_ for incremental constraint removal.
+   */
+  void ensureProblem();
+
   /**
    * @brief Populate a ceres::Problem object using the current set of variables and constraints
    *
@@ -405,6 +422,13 @@ private:
     archive & problem_options_;
     archive & variables_;
     archive & variables_on_hold_;
+    // Transient members rebuilt lazily — reset on deserialization
+    if constexpr (std::is_base_of_v<boost::archive::detail::basic_iarchive, Archive>)
+    {
+      problem_.reset();
+      residual_block_ids_.clear();
+      problem_dirty_ = true;
+    }
   }
 };
 

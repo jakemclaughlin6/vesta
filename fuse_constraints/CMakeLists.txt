@@ -27,6 +27,7 @@ add_library(fuse_constraints
   src/vision/fixed_3d_landmark_simple_covariance_constraint.cpp
   src/vision/reprojection_error_constraint.cpp
   src/vision/reprojection_error_snavelly_constraint.cpp
+  src/vision/stereo_reprojection_error_constraint.cpp
 )
 target_include_directories(fuse_constraints PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -74,6 +75,7 @@ if(BUILD_TESTING)
   fuse_constraints_add_test(test_fixed_3d_landmark_constraint)
   fuse_constraints_add_test(test_reprojection_error_constraint)
   fuse_constraints_add_test(test_reprojection_error_snavelly_constraint)
+  fuse_constraints_add_test(test_stereo_reprojection_error_constraint)
   fuse_constraints_add_test(test_marginal_constraint)
   fuse_constraints_add_test(test_marginalize_variables)
   fuse_constraints_add_test(test_normal_delta_pose_2d)
