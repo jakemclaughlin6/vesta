@@ -35,8 +35,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <fuse_core/serialization.h>
-#include <fuse_variables/pinhole_camera_fixed.h>
-#include <fuse_variables/stamped.h>
+#include <fuse_variables/vision/pinhole_camera_fixed.h>
+#include <fuse_variables/common/stamped.h>
 #include <fuse_core/timestamp.h>
 
 #include <ceres/autodiff_cost_function.h>

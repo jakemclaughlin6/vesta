@@ -31,12 +31,12 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#include <fuse_constraints/marginal_constraint.h>
+#include <fuse_constraints/common/marginal_constraint.h>
 #include <fuse_core/eigen.h>
 #include <fuse_core/eigen_gtest.h>
 #include <fuse_core/serialization.h>
-#include <fuse_variables/orientation_3d_stamped.h>
-#include <fuse_variables/position_2d_stamped.h>
+#include <fuse_variables/3d/orientation_3d_stamped.h>
+#include <fuse_variables/2d/position_2d_stamped.h>
 #include <fuse_core/timestamp.h>
 
 #include <gtest/gtest.h>

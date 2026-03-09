@@ -1,28 +1,33 @@
 ## fuse_constraints library
 add_library(fuse_constraints
-  src/absolute_constraint.cpp
-  src/absolute_orientation_3d_stamped_constraint.cpp
-  src/absolute_orientation_3d_stamped_euler_constraint.cpp
-  src/absolute_pose_2d_stamped_constraint.cpp
-  src/absolute_pose_3d_stamped_constraint.cpp
-  src/fixed_3d_landmark_constraint.cpp
-  src/fixed_3d_landmark_simple_covariance_constraint.cpp
-  src/reprojection_error_constraint.cpp
-  src/reprojection_error_snavelly_constraint.cpp
-  src/marginal_constraint.cpp
-  src/marginal_cost_function.cpp
-  src/marginalize_variables.cpp
-  src/normal_delta.cpp
-  src/normal_delta_orientation_2d.cpp
-  src/normal_delta_pose_2d.cpp
-  src/normal_prior_orientation_2d.cpp
-  src/normal_prior_pose_2d.cpp
-  src/relative_constraint.cpp
-  src/relative_orientation_3d_stamped_constraint.cpp
-  src/relative_pose_2d_stamped_constraint.cpp
-  src/relative_pose_3d_stamped_constraint.cpp
-  src/uuid_ordering.cpp
-  src/variable_constraints.cpp
+  # Common
+  src/common/absolute_constraint.cpp
+  src/common/marginal_constraint.cpp
+  src/common/marginal_cost_function.cpp
+  src/common/marginalize_variables.cpp
+  src/common/normal_delta.cpp
+  src/common/relative_constraint.cpp
+  src/common/uuid_ordering.cpp
+  src/common/variable_constraints.cpp
+  # 2D
+  src/2d/absolute_pose_2d_stamped_constraint.cpp
+  src/2d/normal_delta_orientation_2d.cpp
+  src/2d/normal_delta_pose_2d.cpp
+  src/2d/normal_prior_orientation_2d.cpp
+  src/2d/normal_prior_pose_2d.cpp
+  src/2d/relative_pose_2d_stamped_constraint.cpp
+  # 3D
+  src/3d/absolute_orientation_3d_stamped_constraint.cpp
+  src/3d/absolute_orientation_3d_stamped_euler_constraint.cpp
+  src/3d/absolute_pose_3d_stamped_constraint.cpp
+  src/3d/relative_orientation_3d_stamped_constraint.cpp
+  src/3d/relative_pose_3d_stamped_constraint.cpp
+  # Vision
+  src/vision/fixed_3d_landmark_constraint.cpp
+  src/vision/fixed_3d_landmark_simple_covariance_constraint.cpp
+  src/vision/reprojection_error_constraint.cpp
+  src/vision/reprojection_error_snavelly_constraint.cpp
+  src/vision/stereo_reprojection_error_constraint.cpp
 )
 target_include_directories(fuse_constraints PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -70,6 +75,7 @@ if(BUILD_TESTING)
   fuse_constraints_add_test(test_fixed_3d_landmark_constraint)
   fuse_constraints_add_test(test_reprojection_error_constraint)
   fuse_constraints_add_test(test_reprojection_error_snavelly_constraint)
+  fuse_constraints_add_test(test_stereo_reprojection_error_constraint)
   fuse_constraints_add_test(test_marginal_constraint)
   fuse_constraints_add_test(test_marginalize_variables)
   fuse_constraints_add_test(test_normal_delta_pose_2d)

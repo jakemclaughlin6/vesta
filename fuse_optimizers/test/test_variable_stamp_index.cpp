@@ -37,7 +37,7 @@
 #include <fuse_core/uuid.h>
 #include <fuse_core/variable.h>
 #include <fuse_optimizers/variable_stamp_index.h>
-#include <fuse_variables/stamped.h>
+#include <fuse_variables/common/stamped.h>
 #include <fuse_core/timestamp.h>
 
 #include <boost/serialization/access.hpp>

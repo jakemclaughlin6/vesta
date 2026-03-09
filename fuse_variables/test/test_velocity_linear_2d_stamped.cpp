@@ -32,8 +32,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <fuse_core/serialization.h>
-#include <fuse_variables/velocity_linear_2d_stamped.h>
-#include <fuse_variables/stamped.h>
+#include <fuse_variables/2d/velocity_linear_2d_stamped.h>
+#include <fuse_variables/common/stamped.h>
 #include <fuse_core/timestamp.h>
 
 #include <ceres/autodiff_cost_function.h>

@@ -352,6 +352,22 @@ public:
   }
 
   /**
+   * @brief Returns the Schur elimination group for this variable.
+   *
+   * Used to build a ceres::ParameterBlockOrdering for Schur complement-based linear solvers
+   * (DENSE_SCHUR, SPARSE_SCHUR, ITERATIVE_SCHUR). Variables in group 0 are eliminated first
+   * (e.g. 3D landmarks in bundle adjustment), while variables in group 1 are kept in the
+   * reduced camera system (e.g. camera poses and intrinsics).
+   *
+   * @return 0 for variables to eliminate first (landmarks), 1 for variables to keep,
+   *         or -1 (default) for unclassified variables which are placed in group 1.
+   */
+  virtual int schurGroup() const
+  {
+    return -1;
+  }
+
+  /**
    * @brief Serialize this Variable into the provided binary archive
    *
    * This can/should be implemented as follows in all derived classes:

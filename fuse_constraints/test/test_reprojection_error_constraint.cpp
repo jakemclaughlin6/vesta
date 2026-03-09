@@ -34,16 +34,16 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#include <fuse_constraints/reprojection_error_constraint.h>
+#include <fuse_constraints/vision/reprojection_error_constraint.h>
 #include <fuse_core/eigen.h>
 #include <fuse_core/eigen_gtest.h>
 #include <fuse_core/serialization.h>
 #include <fuse_core/uuid.h>
-#include <fuse_variables/orientation_3d_stamped.h>
-#include <fuse_variables/point_3d_landmark.h>
-#include <fuse_variables/point_3d_fixed_landmark.h>
-#include <fuse_variables/position_3d_stamped.h>
-#include <fuse_variables/pinhole_camera_fixed.h>
+#include <fuse_variables/3d/orientation_3d_stamped.h>
+#include <fuse_variables/vision/point_3d_landmark.h>
+#include <fuse_variables/vision/point_3d_fixed_landmark.h>
+#include <fuse_variables/3d/position_3d_stamped.h>
+#include <fuse_variables/vision/pinhole_camera_fixed.h>
 
 #include <ceres/covariance.h>
 #include <ceres/problem.h>

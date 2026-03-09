@@ -32,8 +32,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <fuse_core/serialization.h>
-#include <fuse_variables/point_3d_landmark.h>
-#include <fuse_variables/stamped.h>
+#include <fuse_variables/vision/point_3d_landmark.h>
+#include <fuse_variables/common/stamped.h>
 #include <fuse_core/timestamp.h>
 
 #include <ceres/autodiff_cost_function.h>
@@ -51,6 +51,12 @@ TEST(Point3DLandmark, Type)
 {
   Point3DLandmark variable(0);
   EXPECT_EQ("fuse_variables::Point3DLandmark", variable.type());
+}
+
+TEST(Point3DLandmark, SchurGroup)
+{
+  Point3DLandmark variable(0);
+  EXPECT_EQ(0, variable.schurGroup());
 }
 
 TEST(Point3DLandmark, UUID)

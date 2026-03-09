@@ -31,8 +31,8 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#include <fuse_constraints/normal_prior_pose_2d.h>
-#include <fuse_constraints/normal_prior_pose_2d_cost_functor.h>
+#include <fuse_constraints/2d/normal_prior_pose_2d.h>
+#include <fuse_constraints/2d/normal_prior_pose_2d_cost_functor.h>
 
 #include <test/cost_function_gtest.h>
 

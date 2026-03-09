@@ -36,7 +36,7 @@
 #include <fuse_core/timestamp.h>
 #include <fuse_core/transaction.h>
 #include <fuse_core/uuid.h>
-#include <fuse_variables/stamped.h>
+#include <fuse_variables/common/stamped.h>
 
 #include <algorithm>
 #include <stdexcept>

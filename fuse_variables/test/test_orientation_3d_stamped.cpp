@@ -34,8 +34,8 @@
 #include <fuse_core/serialization.h>
 #include <fuse_core/autodiff_manifold.h>
 #include <fuse_core/eigen.h>
-#include <fuse_variables/orientation_3d_stamped.h>
-#include <fuse_variables/stamped.h>
+#include <fuse_variables/3d/orientation_3d_stamped.h>
+#include <fuse_variables/common/stamped.h>
 #include <fuse_core/timestamp.h>
 
 #include <ceres/autodiff_cost_function.h>

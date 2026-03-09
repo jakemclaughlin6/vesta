@@ -31,10 +31,10 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#include <fuse_constraints/absolute_orientation_3d_stamped_constraint.h>
-#include <fuse_constraints/marginalize_variables.h>
-#include <fuse_constraints/relative_orientation_3d_stamped_constraint.h>
-#include <fuse_constraints/uuid_ordering.h>
+#include <fuse_constraints/3d/absolute_orientation_3d_stamped_constraint.h>
+#include <fuse_constraints/common/marginalize_variables.h>
+#include <fuse_constraints/3d/relative_orientation_3d_stamped_constraint.h>
+#include <fuse_constraints/common/uuid_ordering.h>
 #include <fuse_core/constraint.h>
 #include <fuse_core/eigen.h>
 #include <fuse_core/eigen_gtest.h>
@@ -43,7 +43,7 @@
 #include <fuse_core/uuid.h>
 #include <fuse_core/variable.h>
 #include <fuse_graphs/hash_graph.h>
-#include <fuse_variables/orientation_3d_stamped.h>
+#include <fuse_variables/3d/orientation_3d_stamped.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
