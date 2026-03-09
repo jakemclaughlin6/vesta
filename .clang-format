@@ -1,4 +1,4 @@
-# cpr-autonomy-clang-format: 0.2
+# clang-format: 0.2
 ---
 AccessModifierOffset: -2
 AlignEscapedNewlinesLeft: false
@@ -10,7 +10,7 @@ AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: true
-BasedOnStyle:  Google
+BasedOnStyle: Google
 BinPackParameters: true
 BraceWrapping:
   AfterCaseLabel: true
@@ -30,7 +30,7 @@ BreakBeforeBinaryOperators: false
 BreakBeforeBraces: Custom
 BreakBeforeTernaryOperators: false
 BreakConstructorInitializersBeforeComma: true
-ColumnLimit:    120
+ColumnLimit: 120
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 2
 ContinuationIndentWidth: 4
@@ -42,7 +42,7 @@ FixNamespaceComments: true
 IncludeBlocks: Preserve
 IndentCaseLabels: true
 IndentFunctionDeclarationAfterType: false
-IndentWidth:     2
+IndentWidth: 2
 InsertNewlineAtEOF: true
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
@@ -58,10 +58,10 @@ SpaceAfterControlStatementKeyword: true
 SpaceBeforeAssignmentOperators: true
 SpaceInEmptyParentheses: false
 SpacesBeforeTrailingComments: 2
-SpacesInAngles:  false
+SpacesInAngles: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
-Standard:        Auto
-TabWidth:        2
-UseTab:          Never
+Standard: Auto
+TabWidth: 2
+UseTab: Never
 ...
