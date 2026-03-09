@@ -72,7 +72,6 @@ Constraints for visual SLAM, including monocular and stereo reprojection error a
 | Header | Class | Description |
 |--------|-------|-------------|
 | `reprojection_error_constraint.h` | `ReprojectionErrorConstraint` | Observation of a 3D point through a pinhole camera model (fx, fy, cx, cy). Constrains camera pose, calibration, and 3D landmark position. |
-| `reprojection_error_snavelly_constraint.h` | `ReprojectionErrorSnavellyConstraint` | Observation of a 3D point through a Snavelly camera model (f, r1, r2) with radial distortion. Constrains camera pose, calibration, and 3D landmark position. |
 | `stereo_reprojection_error_constraint.h` | `StereoReprojectionErrorConstraint` | Stereo observation of a 3D point. Uses a stereo camera model (fx, fy, cx, cy, baseline) with a 4D observation (u_left, v_left, u_right, v_right). |
 | `fixed_3d_landmark_constraint.h` | `Fixed3DLandmarkConstraint` | Observation of a known 3D fiducial marker (e.g., ARTag). Constrains camera pose and calibration using reprojection of fixed 3D marker points. |
 | `fixed_3d_landmark_simple_covariance_constraint.h` | `Fixed3DLandmarkSimpleCovarianceConstraint` | Variant of `Fixed3DLandmarkConstraint` with a simplified covariance model for fiducial marker observations. |
@@ -82,7 +81,6 @@ Constraints for visual SLAM, including monocular and stereo reprojection error a
 | Header | Class | Description |
 |--------|-------|-------------|
 | `reprojection_error_cost_functor.h` | `ReprojectionErrorCostFunctor` | Auto-diff functor for pinhole reprojection error minimization. |
-| `reprojection_error_snavelly_cost_functor.h` | `ReprojectionErrorSnavellyCostFunctor` | Auto-diff functor for Snavelly camera model reprojection error. |
 | `stereo_reprojection_error_cost_functor.h` | `StereoReprojectionErrorCostFunctor` | Auto-diff functor for stereo reprojection error. Computes left and right image projections. |
 | `fixed_3d_landmark_cost_functor.h` | `Fixed3DLandmarkCostFunctor` | Auto-diff functor for fixed 3D landmark reprojection error. |
 | `fixed_3d_landmark_simple_covariance_cost_functor.h` | `Fixed3DLandmarkSimpleCovarianceCostFunctor` | Auto-diff functor for fixed 3D landmark reprojection error with simplified covariance. |

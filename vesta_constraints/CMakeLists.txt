@@ -26,7 +26,6 @@ add_library(vesta_constraints
   src/vision/fixed_3d_landmark_constraint.cpp
   src/vision/fixed_3d_landmark_simple_covariance_constraint.cpp
   src/vision/reprojection_error_constraint.cpp
-  src/vision/reprojection_error_snavelly_constraint.cpp
   src/vision/stereo_reprojection_error_constraint.cpp
   # Inertial
   src/inertial/absolute_imu_state_3d_stamped_constraint.cpp
@@ -79,7 +78,6 @@ if(BUILD_TESTING)
   vesta_constraints_add_test(test_absolute_pose_3d_stamped_constraint)
   vesta_constraints_add_test(test_fixed_3d_landmark_constraint)
   vesta_constraints_add_test(test_reprojection_error_constraint)
-  vesta_constraints_add_test(test_reprojection_error_snavelly_constraint)
   vesta_constraints_add_test(test_stereo_reprojection_error_constraint)
   vesta_constraints_add_test(test_marginal_constraint)
   vesta_constraints_add_test(test_marginalize_variables)

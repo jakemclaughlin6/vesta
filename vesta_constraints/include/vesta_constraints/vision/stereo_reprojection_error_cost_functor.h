@@ -44,27 +44,24 @@
 namespace vesta_constraints {
 
 /**
- * @brief Create a cost function for stereo reprojection error.
+ * @brief Stereo reprojection error cost function using world-frame pose
+ * convention.
  *
- * This cost function computes the reprojection error for a stereo camera model.
- * The stereo camera observes a 3D point and produces 4 measurements:
- * (u_left, v_left, u_right, v_right) corresponding to the pixel coordinates
- * in the left and right camera images.
+ * Uses the world-frame variable convention:
+ *   - position = world-frame position of the camera/body
+ *   - orientation = world-from-camera rotation quaternion (R_wc)
  *
- * The cost function is of the form:
+ * The projection model is:
  *
- *   cost(x) = || A * (proj(K, [R|t], X) - obs) ||
+ *   p_cam = R_wc^{-1} * (X_world - p_world)
  *
- * where A is the square root information matrix (4x4), K contains the stereo
- * calibration parameters (fx, fy, cx, cy, baseline), [R|t] is the camera pose,
- * X is the 3D point, and obs is the 4D observation vector.
+ *   Left camera:  u_l = fx * p_cam[0] / p_cam[2] + cx
+ *                 v_l = fy * p_cam[1] / p_cam[2] + cy
+ *   Right camera: u_r = fx * (p_cam[0] - baseline) / p_cam[2] + cx
+ *                 v_r = fy * p_cam[1] / p_cam[2] + cy
  *
- * The projection equations are:
- *   Left camera:  u_l = fx * p[0] / p[2] + cx,  v_l = fy * p[1] / p[2] + cy
- *   Right camera: u_r = fx * (p[0] - baseline) / p[2] + cx,  v_r = fy * p[1] /
- * p[2] + cy
- *
- * where p = R * X + t is the point in the camera frame.
+ * This convention is compatible with IMU preintegration constraints which
+ * also use world-frame position and orientation variables.
  */
 class StereoReprojectionErrorCostFunctor {
 public:
@@ -112,15 +109,21 @@ bool StereoReprojectionErrorCostFunctor::operator()(const T *const position,
                                                     const T *const calibration,
                                                     const T *const point,
                                                     T *residual) const {
-  // Transform point to camera frame: p = R * point + t
-  // Rotate point (R * X)
-  T p[3];
-  ceres::QuaternionRotatePoint(orientation, point, p);
+  // World-frame convention: p_cam = R_wc^{-1} * (X_world - p_world)
+  T diff[3];
+  diff[0] = point[0] - position[0];
+  diff[1] = point[1] - position[1];
+  diff[2] = point[2] - position[2];
 
-  // Translate (+t)
-  p[0] += position[0];
-  p[1] += position[1];
-  p[2] += position[2];
+  // Rotate by inverse of orientation: q^{-1} = [w, -x, -y, -z]
+  T q_inv[4];
+  q_inv[0] = orientation[0];
+  q_inv[1] = -orientation[1];
+  q_inv[2] = -orientation[2];
+  q_inv[3] = -orientation[3];
+
+  T p[3];
+  ceres::QuaternionRotatePoint(q_inv, diff, p);
 
   // Extract calibration parameters
   const T &fx = calibration[0];

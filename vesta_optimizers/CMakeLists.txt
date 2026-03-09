@@ -31,4 +31,24 @@ if(BUILD_TESTING)
     CXX_STANDARD_REQUIRED YES
   )
   add_test(NAME test_variable_stamp_index COMMAND test_variable_stamp_index)
+
+  add_executable(test_pose_slam test/test_pose_slam.cpp)
+  target_link_libraries(test_pose_slam PRIVATE vesta_optimizers GTest::GTest GTest::Main)
+  set_target_properties(test_pose_slam PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
+  add_test(NAME test_pose_slam COMMAND test_pose_slam)
+
+  add_executable(test_visual_slam test/test_visual_slam.cpp)
+  target_link_libraries(test_visual_slam PRIVATE vesta_optimizers GTest::GTest GTest::Main)
+  set_target_properties(test_visual_slam PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
+  add_test(NAME test_visual_slam COMMAND test_visual_slam)
+
+  add_executable(test_schur_slam test/test_schur_slam.cpp)
+  target_link_libraries(test_schur_slam PRIVATE vesta_optimizers GTest::GTest GTest::Main)
+  set_target_properties(test_schur_slam PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
+  add_test(NAME test_schur_slam COMMAND test_schur_slam)
+
+  add_executable(test_visual_inertial_slam test/test_visual_inertial_slam.cpp)
+  target_link_libraries(test_visual_inertial_slam PRIVATE vesta_optimizers GTest::GTest GTest::Main)
+  set_target_properties(test_visual_inertial_slam PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
+  add_test(NAME test_visual_inertial_slam COMMAND test_visual_inertial_slam)
 endif()

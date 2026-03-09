@@ -34,41 +34,49 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#include <vesta_constraints/vision/reprojection_error_snavelly_constraint.h>
+#include <vesta_constraints/vision/reprojection_error_constraint.h>
 #include <vesta_core/eigen.h>
 #include <vesta_core/eigen_gtest.h>
-#include <vesta_core/serialization.h>
 #include <vesta_core/uuid.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
-#include <vesta_variables/vision/pinhole_camera_radial.h>
+#include <vesta_variables/vision/pinhole_camera_fixed.h>
 #include <vesta_variables/vision/point_3d_landmark.h>
 
 #include <ceres/ceres.h>
-#include <ceres/covariance.h>
 #include <ceres/problem.h>
 #include <ceres/rotation.h>
 #include <ceres/solver.h>
 #include <gtest/gtest.h>
 
 #include <string>
-#include <utility>
 #include <vector>
 
-using vesta_constraints::ReprojectionErrorSnavellyConstraint;
+using vesta_constraints::ReprojectionErrorConstraint;
 using vesta_variables::Orientation3DStamped;
-using vesta_variables::PinholeCameraRadial;
+using vesta_variables::PinholeCameraFixed;
 using vesta_variables::Point3DLandmark;
 using vesta_variables::Position3DStamped;
 
-#ifndef BAL_PROBLEM_H
-#define VESTA_CONSTRAINTS_REPROJECTION_ERROR_CONSTRAINT_H
-
 // BALProblem adapted from:
 // https://ceres-solver.googlesource.com/ceres-solver/+/master/examples/simple_bundle_adjuster.cc
+//
+// The BAL format stores cameras using the Snavelly convention:
+//   - Rotation: angle-axis (converted to quaternion q_cw on load)
+//   - Translation: t (camera-frame translation, p_cam = R_cw * X + t)
+//   - Intrinsics: focal, k1, k2
+//
+// We convert to world-frame convention on load:
+//   - q_wc = conjugate(q_cw)
+//   - p_world = -R_cw^T * t
+//   - fx = fy = -focal (negated to compensate for Snavelly's negative-z axis)
+//   - cx = cy = 0 (BAL has no principal point)
+//
+// Radial distortion (k1, k2) is ignored since ReprojectionErrorConstraint
+// uses a standard pinhole model without distortion.
 class BALProblem {
 public:
-  BALProblem() {}
+  BALProblem() = default;
   ~BALProblem() {
     delete[] point_index_;
     delete[] camera_index_;
@@ -76,33 +84,33 @@ public:
     delete[] parameters_;
   }
   int num_observations() const { return num_observations_; }
+  int num_cameras() const { return num_cameras_; }
+  int num_points() const { return num_points_; }
   const double *observations() const { return observations_; }
-  double *mutable_cameras() { return parameters_; }
-  double *mutable_points() { return parameters_ + 10 * num_cameras_; }
-  double *mutable_camera_for_observation(int i) {
-    return mutable_cameras() + camera_index_[i] * 10;
+
+  // Access world-frame camera parameters: [q_wc(4), p_world(3), fx, fy, cx, cy]
+  // = 11 doubles per camera
+  double *camera(int i) { return parameters_ + i * 11; }
+  double *points(int i) {
+    return parameters_ + 11 * num_cameras_ + i * 3;
   }
-  double *mutable_point_for_observation(int i) {
-    return mutable_points() + point_index_[i] * 3;
-  }
-  int camera_for_observation(int i) { return camera_index_[i]; }
-  int point_for_observation(int i) { return point_index_[i]; }
-  double *camera(int i) { return mutable_cameras() + i * 10; }
-  double *points(int i) { return mutable_points() + i * 3; }
+
+  int camera_for_observation(int i) const { return camera_index_[i]; }
+  int point_for_observation(int i) const { return point_index_[i]; }
 
   bool LoadFile(const char *filename) {
     FILE *fptr = fopen(filename, "r");
     if (fptr == nullptr) {
       return false;
-    };
+    }
     FscanfOrDie(fptr, "%d", &num_cameras_);
     FscanfOrDie(fptr, "%d", &num_points_);
     FscanfOrDie(fptr, "%d", &num_observations_);
+
     point_index_ = new int[num_observations_];
     camera_index_ = new int[num_observations_];
     observations_ = new double[2 * num_observations_];
-    num_parameters_ = 9 * num_cameras_ + 3 * num_points_;
-    parameters_ = new double[num_parameters_];
+
     for (int i = 0; i < num_observations_; ++i) {
       FscanfOrDie(fptr, "%d", camera_index_ + i);
       FscanfOrDie(fptr, "%d", point_index_ + i);
@@ -111,39 +119,60 @@ public:
       }
     }
 
-    for (int i = 0; i < num_parameters_; ++i) {
-      FscanfOrDie(fptr, "%lf", parameters_ + i);
+    // Read raw BAL parameters: 9 per camera (angle-axis(3), t(3), f, k1, k2)
+    // + 3 per point
+    int num_raw = 9 * num_cameras_ + 3 * num_points_;
+    auto *raw = new double[num_raw];
+    for (int i = 0; i < num_raw; ++i) {
+      FscanfOrDie(fptr, "%lf", raw + i);
+    }
+    fclose(fptr);
+
+    // Convert to world-frame convention:
+    // [q_wc(4), p_world(3), fx, fy, cx, cy] = 11 per camera
+    int num_params = 11 * num_cameras_ + 3 * num_points_;
+    parameters_ = new double[num_params];
+
+    double *src = raw;
+    double *dst = parameters_;
+    for (int i = 0; i < num_cameras_; ++i) {
+      // Convert angle-axis to quaternion (gives q_cw)
+      double q_cw[4];
+      ceres::AngleAxisToQuaternion(src, q_cw);
+      src += 3;
+
+      // q_wc = conjugate(q_cw)
+      dst[0] = q_cw[0];
+      dst[1] = -q_cw[1];
+      dst[2] = -q_cw[2];
+      dst[3] = -q_cw[3];
+
+      // p_world = -R_cw^T * t = R_wc * (-t)
+      double neg_t[3] = {-src[0], -src[1], -src[2]};
+      // R_wc rotates from camera to world, and q_wc is exactly that
+      ceres::QuaternionRotatePoint(dst, neg_t, dst + 4);
+      src += 3;
+
+      // fx = fy = -focal (Snavelly uses negative-z projection)
+      // cx = cy = 0
+      double focal = src[0];
+      dst[7] = -focal;  // fx
+      dst[8] = -focal;  // fy
+      dst[9] = 0.0;     // cx
+      dst[10] = 0.0;    // cy
+      src += 3; // skip focal, k1, k2
+
+      dst += 11;
     }
 
-    {
-      // Switch the angle-axis rotations to quaternions.
-      num_parameters_ = 10 * num_cameras_ + 3 * num_points_;
-      auto *quaternion_parameters = new double[num_parameters_];
-      double *original_cursor = parameters_;
-      double *quaternion_cursor = quaternion_parameters;
-      for (int i = 0; i < num_cameras_; ++i) {
-        ceres::AngleAxisToQuaternion(original_cursor, quaternion_cursor);
-        quaternion_cursor += 4;
-        original_cursor += 3;
-        for (int j = 4; j < 10; ++j) {
-          *quaternion_cursor++ = *original_cursor++;
-        }
-      }
-      // Copy the rest of the points.
-      for (int i = 0; i < 3 * num_points_; ++i) {
-        *quaternion_cursor++ = *original_cursor++;
-      }
-      // Swap in the quaternion parameters.
-      delete[] parameters_;
-      parameters_ = quaternion_parameters;
+    // Copy points as-is (world-frame coordinates)
+    for (int i = 0; i < 3 * num_points_; ++i) {
+      *dst++ = *src++;
     }
 
+    delete[] raw;
     return true;
   }
-
-  int num_cameras() { return num_cameras_; }
-
-  int num_points() { return num_points_; }
 
 private:
   template <typename T>
@@ -153,208 +182,163 @@ private:
       LOG(FATAL) << "Invalid UW data file.";
     }
   }
-  int num_cameras_;
-  int num_points_;
-  int num_observations_;
-  int num_parameters_;
-  int *point_index_;
-  int *camera_index_;
-  double *observations_;
-  double *parameters_;
-  bool use_quaternions_;
+  int num_cameras_ = 0;
+  int num_points_ = 0;
+  int num_observations_ = 0;
+  int *point_index_ = nullptr;
+  int *camera_index_ = nullptr;
+  double *observations_ = nullptr;
+  double *parameters_ = nullptr;
 };
-#endif
 
-// CeresSnavellyReprojectionErrorWithQuaternion adapted from:
-// https://ceres-solver.googlesource.com/ceres-solver/+/master/examples/snavely_reprojection_error.h
-// Templated pinhole camera model for used with Ceres.  The camera is
-// parameterized using 9 parameters: 3 for rotation, 3 for translation, 1 for
-// focal length and 2 for radial distortion. The principal point is not modeled
-// (i.e. it is assumed be located at the image center).
-struct SnavelyReprojectionErrorWithQuaternions {
-  // (u, v): the position of the observation with respect to the image
-  // center point.
-  SnavelyReprojectionErrorWithQuaternions(double observed_x, double observed_y)
+// Inline world-frame pinhole reprojection error for raw Ceres comparison.
+// Matches the convention in ReprojectionErrorCostFunctor:
+//   p_cam = R_wc^{-1} * (X - p_world)
+//   u = fx * p_cam[0] / p_cam[2] + cx
+//   v = fy * p_cam[1] / p_cam[2] + cy
+struct WorldFramePinholeReprojectionError {
+  WorldFramePinholeReprojectionError(double observed_x, double observed_y)
       : observed_x(observed_x), observed_y(observed_y) {}
-  template <typename T>
-  bool operator()(const T *const camera, const T *const point,
-                  T *residuals) const {
-    // camera[0,1,2,3] is the rotation of the camera as a quaternion.
-    //
-    // We use QuaternionRotatePoint as it does not assume that the
-    // quaternion is normalized, since one of the ways to run the
-    // bundle adjuster is to let Ceres optimize all 4 quaternion
-    // parameters without using a Quaternion manifold.
-    T p[3];
-    ceres::QuaternionRotatePoint(camera, point, p);
-    p[0] += camera[4];
-    p[1] += camera[5];
-    p[2] += camera[6];
-    // Compute the center of distortion. The sign change comes from
-    // the camera model that Noah Snavely's Bundler assumes, whereby
-    // the camera coordinate system has a negative z axis.
-    const T xp = -p[0] / p[2];
-    const T yp = -p[1] / p[2];
-    // Apply second and fourth order radial distortion.
-    const T &l1 = camera[8];
-    const T &l2 = camera[9];
-    const T r2 = xp * xp + yp * yp;
-    const T distortion = 1.0 + r2 * (l1 + l2 * r2);
-    // Compute final projected point position.
-    const T &focal = camera[7];
-    const T predicted_x = focal * distortion * xp;
-    const T predicted_y = focal * distortion * yp;
 
-    residuals[0] = predicted_x - observed_x;
-    residuals[1] = predicted_y - observed_y;
+  template <typename T>
+  bool operator()(const T *const position, const T *const orientation,
+                  const T *const calibration, const T *const point,
+                  T *residuals) const {
+    T diff[3];
+    diff[0] = point[0] - position[0];
+    diff[1] = point[1] - position[1];
+    diff[2] = point[2] - position[2];
+
+    T q_inv[4];
+    q_inv[0] = orientation[0];
+    q_inv[1] = -orientation[1];
+    q_inv[2] = -orientation[2];
+    q_inv[3] = -orientation[3];
+
+    T p[3];
+    ceres::QuaternionRotatePoint(q_inv, diff, p);
+
+    T u = calibration[0] * p[0] / p[2] + calibration[2];
+    T v = calibration[1] * p[1] / p[2] + calibration[3];
+
+    residuals[0] = u - T(observed_x);
+    residuals[1] = v - T(observed_y);
     return true;
   }
 
-  static ceres::CostFunction *Create(const double observed_x,
-                                     const double observed_y) {
-    return (new ceres::AutoDiffCostFunction<
-            SnavelyReprojectionErrorWithQuaternions, 2, 10, 3>(
-        new SnavelyReprojectionErrorWithQuaternions(observed_x, observed_y)));
+  static ceres::CostFunction *Create(double observed_x, double observed_y) {
+    return new ceres::AutoDiffCostFunction<WorldFramePinholeReprojectionError, 2,
+                                           3, 4, 4, 3>(
+        new WorldFramePinholeReprojectionError(observed_x, observed_y));
   }
+
   double observed_x;
   double observed_y;
 };
 
-TEST(ReprojectionErrorSnavellyConstraint, Constructor) {
-  // Construct a constraint just to make sure it compiles.
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
-                                      vesta_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(
-      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
-  Point3DLandmark point(0);
-  PinholeCameraRadial calibration_variable(0);
-
-  vesta_core::Vector2d mean;
-  mean << 320.0, 240.0; // Centre of a 640x480 camera
-
-  // Assume Half a pixel Variance
-  vesta_core::Matrix2d cov;
-  cov << 0.5, 0.0, // NOLINT
-      0.0, 0.5;    // NOLINT
-
-  EXPECT_NO_THROW(ReprojectionErrorSnavellyConstraint constraint(
-      "test", position_variable, orientation_variable, calibration_variable,
-      point, mean, cov));
-}
-
-TEST(ReprojectionErrorSnavellyConstraint, Covariance) {
-  // Verify the covariance <--> sqrt information conversions are correct
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
-                                      vesta_core::uuid::generate("mo"));
-  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678),
-                                            vesta_core::uuid::generate("mo"));
-  Point3DLandmark point(0);
-  PinholeCameraRadial calibration_variable(0);
-
-  vesta_core::Vector2d mean;
-  mean << 320.0, 240.0; // Centre of a 640x480 camera
-
-  // Assume Half a pixel Variance
-  vesta_core::Matrix2d cov;
-  cov << 0.5, 0.0, // NOLINT
-      0.0, 0.5;    // NOLINT
-
-  ReprojectionErrorSnavellyConstraint constraint(
-      "test", position_variable, orientation_variable, calibration_variable,
-      point, mean, cov);
-
-  // Define the expected matrices (used Octave to compute sqrt_info:
-  // 'chol(inv(A))')
-  vesta_core::Matrix2d expected_sqrt_info;
-  expected_sqrt_info << 1.414213562373095, 0, // NOLINT
-      0, 1.414213562373095;                   // NOLINT
-  vesta_core::Matrix2d expected_cov = cov;
-
-  // Compare
-  EXPECT_MATRIX_NEAR(expected_cov, constraint.covariance(), 1.0e-9);
-  EXPECT_MATRIX_NEAR(expected_sqrt_info, constraint.sqrtInformation(), 1.0e-9);
-}
-
-TEST(ReprojectionErrorSnavellyConstraint, BAL) {
+TEST(ReprojectionErrorConstraint, BAL) {
   std::string filename = "problem-21-11315-pre.txt";
-  BALProblem bal_problem_ceres;
-  if (!bal_problem_ceres.LoadFile(filename.c_str())) {
-    std::cerr << "ERROR: unable to open file " << filename << "\n";
-    throw;
+
+  // ---- Solve with raw Ceres ----
+  BALProblem bal_ceres;
+  ASSERT_TRUE(bal_ceres.LoadFile(filename.c_str()))
+      << "Unable to open file " << filename;
+
+  ceres::Problem problem_ceres;
+  const double *obs_ceres = bal_ceres.observations();
+  for (int i = 0; i < bal_ceres.num_observations(); ++i) {
+    double *cam = bal_ceres.camera(bal_ceres.camera_for_observation(i));
+    double *pt = bal_ceres.points(bal_ceres.point_for_observation(i));
+
+    // cam layout: [q_wc(4), p_world(3), fx, fy, cx, cy]
+    double *position = cam + 4;
+    double *orientation = cam;
+    double *calibration = cam + 7;
+
+    ceres::CostFunction *cost_function =
+        WorldFramePinholeReprojectionError::Create(obs_ceres[2 * i + 0],
+                                                   obs_ceres[2 * i + 1]);
+    problem_ceres.AddResidualBlock(cost_function, nullptr, position,
+                                   orientation, calibration, pt);
   }
 
-  // Use Ceres Standard
-  const double *observations_ceres = bal_problem_ceres.observations();
-  ceres::Problem problem_ceres;
-  for (int i = 0; i < bal_problem_ceres.num_observations(); ++i) {
-    ceres::CostFunction *cost_function =
-        SnavelyReprojectionErrorWithQuaternions::Create(
-            observations_ceres[2 * i + 0], observations_ceres[2 * i + 1]);
-    problem_ceres.AddResidualBlock(
-        cost_function, nullptr /* squared loss */,
-        bal_problem_ceres.mutable_camera_for_observation(i),
-        bal_problem_ceres.mutable_point_for_observation(i));
+  // Hold calibration constant for cameras that have observations
+  for (int i = 0; i < bal_ceres.num_cameras(); ++i) {
+    double *calibration = bal_ceres.camera(i) + 7;
+    if (problem_ceres.HasParameterBlock(calibration)) {
+      problem_ceres.SetParameterBlockConstant(calibration);
+    }
   }
+
   ceres::Solver::Options options_ceres;
-  options_ceres.linear_solver_type = ceres::DENSE_SCHUR;
+  options_ceres.linear_solver_type = ceres::SPARSE_SCHUR;
+  options_ceres.max_num_iterations = 10;
   ceres::Solver::Summary summary_ceres;
   ceres::Solve(options_ceres, &problem_ceres, &summary_ceres);
 
-  BALProblem bal_problem;
-  if (!bal_problem.LoadFile(filename.c_str())) {
-    std::cerr << "ERROR: unable to open file " << filename << "\n";
-    throw;
-  }
+  // ---- Solve with Vesta constraints ----
+  BALProblem bal_vesta;
+  ASSERT_TRUE(bal_vesta.LoadFile(filename.c_str()))
+      << "Unable to open file " << filename;
 
-  std::vector<Position3DStamped> cams_p(bal_problem.num_cameras());
-  std::vector<Orientation3DStamped> cams_q(bal_problem.num_cameras());
-  std::vector<PinholeCameraRadial> cams_k(bal_problem.num_cameras());
-  for (int i = 0; i < bal_problem.num_cameras(); i++) {
-    auto cam = bal_problem.camera(i);
+  // Create vesta variables from loaded data
+  std::vector<Position3DStamped> cams_p;
+  std::vector<Orientation3DStamped> cams_q;
+  std::vector<PinholeCameraFixed> cams_k;
+  cams_p.reserve(bal_vesta.num_cameras());
+  cams_q.reserve(bal_vesta.num_cameras());
+  cams_k.reserve(bal_vesta.num_cameras());
 
+  for (int i = 0; i < bal_vesta.num_cameras(); ++i) {
+    double *cam = bal_vesta.camera(i);
+    // cam layout: [q_wc(4), p_world(3), fx, fy, cx, cy]
+
+    cams_q.emplace_back(vesta_core::Timestamp(i, 0),
+                        vesta_core::uuid::generate("bal"));
     cams_q[i].w() = cam[0];
     cams_q[i].x() = cam[1];
     cams_q[i].y() = cam[2];
     cams_q[i].z() = cam[3];
 
+    cams_p.emplace_back(vesta_core::Timestamp(i, 0),
+                        vesta_core::uuid::generate("bal"));
     cams_p[i].x() = cam[4];
     cams_p[i].y() = cam[5];
     cams_p[i].z() = cam[6];
 
-    cams_k[i].f() = cam[7];
-    cams_k[i].r1() = cam[8];
-    cams_k[i].r2() = cam[9];
+    cams_k.emplace_back(static_cast<uint64_t>(i));
+    cams_k[i].fx() = cam[7];
+    cams_k[i].fy() = cam[8];
+    cams_k[i].cx() = cam[9];
+    cams_k[i].cy() = cam[10];
   }
 
-  std::vector<Point3DLandmark> pts(bal_problem.num_points());
-  for (int i = 0; i < bal_problem.num_points(); i++) {
-    auto pt = bal_problem.points(i);
+  std::vector<Point3DLandmark> pts;
+  pts.reserve(bal_vesta.num_points());
+  for (int i = 0; i < bal_vesta.num_points(); ++i) {
+    double *pt = bal_vesta.points(i);
+    pts.emplace_back(static_cast<uint64_t>(i));
     pts[i].x() = pt[0];
     pts[i].y() = pt[1];
     pts[i].z() = pt[2];
   }
 
+  ceres::Problem::Options problem_options;
+  problem_options.loss_function_ownership = vesta_core::Loss::Ownership;
   ceres::Problem problem;
-  const double *observations = bal_problem.observations();
-  for (int i = 0; i < bal_problem.num_observations(); ++i) {
-    int c = bal_problem.camera_for_observation(i);
-    cams_q[c];
-    cams_p[c];
-    cams_k[c];
+  const double *obs = bal_vesta.observations();
+  for (int i = 0; i < bal_vesta.num_observations(); ++i) {
+    int c = bal_vesta.camera_for_observation(i);
+    int p = bal_vesta.point_for_observation(i);
 
-    int p = bal_problem.point_for_observation(i);
-    pts[p];
-
-    // Create an observation
     vesta_core::Vector2d mean;
-    mean << observations[2 * i + 0], observations[2 * i + 1];
+    mean << obs[2 * i + 0], obs[2 * i + 1];
 
-    // Define Observation Covariance
     vesta_core::Matrix2d cov;
     cov << 1e-5, 0.0, // NOLINT
-        0.0, 1e-5;    // NOLINT
+        0.0, 1e-5;     // NOLINT
 
-    auto constraint = ReprojectionErrorSnavellyConstraint::make_shared(
+    auto constraint = ReprojectionErrorConstraint::make_shared(
         "test", cams_p[c], cams_q[c], cams_k[c], pts[p], mean, cov);
 
     problem.AddParameterBlock(pts[p].data(), pts[p].size(), pts[p].manifold());
@@ -367,15 +351,21 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL) {
 
     problem.AddResidualBlock(constraint->costFunction(),
                              constraint->lossFunction(), parameter_blocks);
+
+    if (cams_k[c].holdConstant()) {
+      problem.SetParameterBlockConstant(cams_k[c].data());
+    }
   }
 
   ceres::Solver::Options options;
-  options.linear_solver_type = ceres::DENSE_SCHUR;
+  options.linear_solver_type = ceres::SPARSE_SCHUR;
+  options.max_num_iterations = 10;
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
 
-  for (int i = 0; i < bal_problem.num_cameras(); i++) {
-    auto cam = bal_problem_ceres.camera(i);
+  // ---- Compare results ----
+  for (int i = 0; i < bal_vesta.num_cameras(); ++i) {
+    double *cam = bal_ceres.camera(i);
 
     EXPECT_NEAR(cams_q[i].w(), cam[0], 1e-2);
     EXPECT_NEAR(cams_q[i].x(), cam[1], 1e-2);
@@ -386,65 +376,18 @@ TEST(ReprojectionErrorSnavellyConstraint, BAL) {
     EXPECT_NEAR(cams_p[i].y(), cam[5], 1e-2);
     EXPECT_NEAR(cams_p[i].z(), cam[6], 1e-2);
 
-    EXPECT_NEAR(cams_k[i].f(), cam[7], 1e-2);
-    EXPECT_NEAR(cams_k[i].r1(), cam[8], 1e-2);
-    EXPECT_NEAR(cams_k[i].r2(), cam[9], 1e-2);
+    EXPECT_NEAR(cams_k[i].fx(), cam[7], 1e-2);
+    EXPECT_NEAR(cams_k[i].fy(), cam[8], 1e-2);
+    EXPECT_NEAR(cams_k[i].cx(), cam[9], 1e-2);
+    EXPECT_NEAR(cams_k[i].cy(), cam[10], 1e-2);
   }
 
-  for (int i = 0; i < bal_problem.num_points(); i++) {
-    auto pt = bal_problem_ceres.points(i);
+  for (int i = 0; i < bal_vesta.num_points(); ++i) {
+    double *pt = bal_ceres.points(i);
     EXPECT_NEAR(pts[i].x(), pt[0], 1e-2);
     EXPECT_NEAR(pts[i].y(), pt[1], 1e-2);
     EXPECT_NEAR(pts[i].z(), pt[2], 1e-2);
   }
-}
-
-TEST(ReprojectionErrorSnavellyConstraint, Serialization) {
-  // Construct a constraint
-  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678),
-                                      vesta_core::uuid::generate("walle"));
-  Orientation3DStamped orientation_variable(
-      vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
-
-  PinholeCameraRadial calibration_variable(0);
-  calibration_variable.f() = 640;
-  calibration_variable.r1() = 0.1;
-  calibration_variable.r2() = 0.1;
-
-  vesta_core::Vector2d mean;
-  mean << 261.71822455, 168.60442225;
-
-  // Generated PD matrix using Octave: R = rand(6, 6); A = R * R' (use format
-  // long g to get the required precision)
-  vesta_core::Matrix2d cov;
-  cov << 0.5, 0.0, // NOLINT
-      0.5, 0.5;    // NOLINT
-
-  Point3DLandmark point(0);
-
-  ReprojectionErrorSnavellyConstraint expected(
-      "test", position_variable, orientation_variable, calibration_variable,
-      point, mean, cov);
-
-  // Serialize the constraint into an archive
-  std::stringstream stream;
-  {
-    vesta_core::TextOutputArchive archive(stream);
-    expected.serialize(archive);
-  }
-
-  // Deserialize a new constraint from that same stream
-  ReprojectionErrorSnavellyConstraint actual;
-  {
-    vesta_core::TextInputArchive archive(stream);
-    actual.deserialize(archive);
-  }
-
-  // Compare
-  EXPECT_EQ(expected.uuid(), actual.uuid());
-  EXPECT_EQ(expected.variables(), actual.variables());
-  EXPECT_MATRIX_EQ(expected.mean(), actual.mean());
-  EXPECT_MATRIX_EQ(expected.sqrtInformation(), actual.sqrtInformation());
 }
 
 int main(int argc, char **argv) {

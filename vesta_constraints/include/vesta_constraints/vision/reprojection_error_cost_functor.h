@@ -37,42 +37,35 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <vesta_constraints/3d/normal_prior_orientation_3d_cost_functor.h>
 #include <vesta_core/eigen.h>
 #include <vesta_core/fuse_macros.h>
-#include <vesta_core/util.h>
 
 #include <Eigen/Core>
+#include <ceres/rotation.h>
 
 namespace vesta_constraints {
 
 /**
- * @brief Create a prior cost function on the marker position, minimising
- * reprojection error.
+ * @brief Reprojection error cost function using world-frame pose convention.
  *
- * The Ceres::NormalPrior cost function only supports a single variable. This is
- * a convenience cost function that applies a prior constraint on the 3D
- * position, orientation and calibration variables at once.
+ * Uses the world-frame variable convention:
+ *   - position = world-frame position of the camera/body
+ *   - orientation = world-from-camera rotation quaternion (R_wc)
  *
- * The cost function is of the form:
+ * The projection model is:
  *
- *   cost(x) = || A * (K * [R_q | p] * [R_{b(3:6)} | b(0:2))] * X - x) ||
+ *   p_cam = R_wc^{-1} * (X_world - p_world)
+ *   u = fx * p_cam.x / p_cam.z + cx
+ *   v = fy * p_cam.y / p_cam.z + cy
  *
- * where, the matrix A and the vector b are fixed, p is the camera position
- * variable, and q is the camera orientation variable, K is the calibration
- * matrix created from the calibration variable, X is the set of marker 3D
- * points, R_b(0:3) is the Rotation matrix from the fixed landmark orentation
- * (b(3:6)), b(0:2) is the fixed landmark position and x is the 2D observations.
+ * This convention is compatible with IMU preintegration constraints which
+ * also use world-frame position and orientation variables.
  *
- * Note that the covariance submatrix for the quaternion is 3x3, representing
- * errors in the orientation local parameterization tangent space. In case the
- * user is interested in implementing a cost function of the form
+ * The cost function is:
  *
- *   cost(X) = (X - mu)^T S^{-1} (X - mu)
+ *   cost = || A * ([u, v] - obs) ||
  *
- * where, mu is a vector and S is a covariance matrix, then, A = S^{-1/2}, i.e
- * the matrix A is the square root information matrix (the inverse of the
- * covariance).
+ * where A is the square root information matrix.
  */
 class ReprojectionErrorCostFunctor {
 public:
@@ -112,15 +105,22 @@ bool ReprojectionErrorCostFunctor::operator()(const T *const position,
                                               const T *const calibration,
                                               const T *const point,
                                               T *residual) const {
-  // Point to Camera CF ( X' = [R|t] X = RX + t )
-  // Rotate Point (RX)
-  T p[3];
-  ceres::QuaternionRotatePoint(orientation, point, p);
+  // World-frame convention: p_cam = R_wc^{-1} * (X_world - p_world)
+  // Compute difference in world frame
+  T diff[3];
+  diff[0] = point[0] - position[0];
+  diff[1] = point[1] - position[1];
+  diff[2] = point[2] - position[2];
 
-  // Ofset (+t)
-  p[0] += position[0];
-  p[1] += position[1];
-  p[2] += position[2];
+  // Rotate by inverse of orientation: q^{-1} = [w, -x, -y, -z]
+  T q_inv[4];
+  q_inv[0] = orientation[0];
+  q_inv[1] = -orientation[1];
+  q_inv[2] = -orientation[2];
+  q_inv[3] = -orientation[3];
+
+  T p[3];
+  ceres::QuaternionRotatePoint(q_inv, diff, p);
 
   // Project to camera ([u,v] = KX)
   // u = (x'fx + z'cx)/z'
