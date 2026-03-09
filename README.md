@@ -1,173 +1,304 @@
-# vesta
+# Vesta
 
-The vesta stack provides a general architecture for performing sensor fusion live on a robot. Some possible applications
-include state estimation, localization, mapping, and calibration.
+Vesta is a standalone C++ library for factor graph-based sensor fusion, built as an extension to [Google Ceres Solver](http://ceres-solver.org). It is designed specifically for SLAM (Simultaneous Localization and Mapping) and Visual SLAM applications.
 
-## Overview
+Vesta is a fork of [fuse](https://github.com/locusrobotics/fuse) (by Locus Robotics), re-engineered to be **fully ROS-agnostic**. Where fuse was tightly coupled to the ROS ecosystem (plugins via pluginlib, ROS parameters, nodelets, topics), Vesta is a pure C++ library with no framework dependencies beyond its core math libraries. This makes it suitable for embedding in any C++ application -- robotics or otherwise.
 
-vesta is a C++ library for performing sensor fusion using nonlinear least squares optimization techniques. In
-particular, vesta provides:
+## Key Differences from Fuse
 
-* a plugin-based system for modeling sensor measurements
-* a similar plugin-based system for motion models
-* a plugin-based system for publishing optimized state values
-* an extensible state variable definition
-* a "contract" on how an optimizer will interact with the above components
-* and some common implementations to get everyone started
+- **No ROS dependency** -- pure C++ library with CMake build
+- **No pluginlib** -- polymorphic serialization via Boost instead
+- **No internal threads or event loops** -- synchronous, caller-driven API
+- **C++20** with modern CMake
+- **Ceres 2.2+ Manifold API** -- uses the modern manifold interface instead of the deprecated local parameterization
+- **Visual SLAM support** -- camera models, landmark variables, reprojection error constraints, and IMU preintegration
+- **Boost serialization** -- all variables, constraints, and graphs are fully serializable
 
-(unpresented) ROSCon 2018 Lightning Talk [slides](doc/fuse_lightning_talk.pdf)
+## Packages
 
-Data flows through the system approximately like this:
+Vesta is organized into six packages, each with a focused responsibility:
 
-* A sensor model receives raw sensor data. The sensor model generates a constraint and sends it to the optimizer.
-* The optimizer receives the new sensor constraint. A request is sent to each configured motion model to generate
-  a constraint between the previous state and the new state involved in the sensor constraint.
-* The motion model receives the request and generates the required constraints to connect the new state to the
-  previously generated motion model chain. The motion model constraints are sent to the optimizer.
-* The optimizer adds the new sensor model and motion model constraints and variables to the graph and
-  computes the optimal values for each state variable.
-* The optimal state values are sent to each configured publisher (as well as the sensor models and motion models).
-* The publishers receive the optimized state values and publish any derived quantities on ROS topics.
-* Repeat
+| Package | Description |
+|---------|-------------|
+| [**vesta_core**](vesta_core/) | Abstract base classes and interfaces (`Variable`, `Constraint`, `Graph`, `Transaction`, `Loss`, `Manifold`), UUID utilities, timestamps, and Boost serialization support |
+| [**vesta_variables**](vesta_variables/) | Concrete variable types: 2D/3D poses, velocities, accelerations, IMU biases, camera intrinsics, and 2D/3D landmarks |
+| [**vesta_constraints**](vesta_constraints/) | Concrete constraint types: absolute/relative pose constraints, reprojection errors, stereo vision, IMU preintegration, motion models, and marginalization utilities |
+| [**vesta_graphs**](vesta_graphs/) | Graph storage implementations. `HashGraph` provides O(1) lookup with a persistent `ceres::Problem` for incremental solving |
+| [**vesta_loss**](vesta_loss/) | Robust loss functions (Huber, Cauchy, Tukey, DCS, etc.) with Boost serialization, wrapping `ceres::LossFunction` |
+| [**vesta_optimizers**](vesta_optimizers/) | High-level optimizers: `BatchOptimizer` for full solves and `FixedLagSmoother` for real-time sliding-window SLAM with automatic marginalization |
 
-It is important to note that much of this flow happens asynchronously in practice. Sensors are expected to operate
-independently from each other, so each sensor will be sending constraints to the optimizer at its own frequency. The
-optimizer will cache the constraints and process them in small batches on some schedule. The publishers may
-require considerable processing time, introducing a delay between the completion of the optimization cycle and the
-publishing of data to the ROS topic.
+## Dependencies
 
-![vesta sequence diagram](doc/vesta_sequence_diagram.png)
+- **CMake** >= 3.20
+- **C++20** compiler (GCC 10+, Clang 13+)
+- **Ceres Solver** >= 2.2
+- **Eigen3**
+- **Boost** (serialization component)
+- **glog**
+- **SuiteSparse** (CCOLAMD)
+- **Google Test** (for tests, optional)
 
-## Example
+## Building
 
-Let's consider a simple robotics example to illustrate this. Assume we have a typical indoor differential-drive robot.
-This robot has wheel encoders and a horizontal laser.
+```bash
+# Install dependencies (Ubuntu/Debian)
+sudo apt install libceres-dev libeigen3-dev libboost-serialization-dev \
+                 libgoogle-glog-dev libsuitesparse-dev libgtest-dev
 
-The first thing we must do is define our state variables. At a minimum, we want the robot pose at each timestamp.
-We model the pose using a 2D position and an orientation. Each 2D pose _at a specific time_ gets a unique variable
-name. For ease of notation, let's call the pose variables `X1`, `X2`, `X3`, etc. (In reality, each variable gets
-a UUID, but those are much harder to write down.) Each 2D pose is instantiated as a `example_robot::Pose2D` which is
-derived from the `vesta_core::Variable` base class. (`vesta` ships with several basic variables, such as 2D and 3D
-versions of position, orientation, and velocity variables, but you can derive your own variable types as you need them.)
+# Build
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
 
-Next we need to decide how to model our sensors. We can model the wheel encoders as providing an incremental
-pose measurement. Given a starting pose, `X1`, and a wheel encoder delta, `z`, we predict the pose `X2'` using some
-measurement function `f`.
+# Run tests
+ctest --output-on-failure
+```
 
-`X2' = f(X1, z)`
+To disable tests:
 
-The error term for our constraint is the difference between the predicted pose `X2'` and the actual pose `X2`
+```bash
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+```
 
-`error = X2'^-1 * X2`
+## Usage
 
-where `X2'^-1` is the inverse of the pose `X2'`
+Vesta follows a simple, synchronous pattern:
 
-We derive a `vesta_core::Constraint` that implements that error function. Similarly, we perform scan-to-scan matching
-using out laser data and create an incremental pose constraint between consecutive scans.
+1. **Create variables** representing your state (poses, landmarks, etc.)
+2. **Create constraints** representing measurements (odometry, reprojection errors, GPS, etc.)
+3. **Pack them into transactions** and submit to an optimizer
+4. **Call optimize()** to run the Ceres solver
+5. **Read results** from the optimized graph
 
-In the simplest example, the sensors are synchronized, i.e. the laser and the wheel encoders are sampled at the same
-time. This is enough to construct our first `vesta` system. Below is the constraint graph generated from this first
-system. The large circles represent state variables at a given time, while the small squares represent measurements.
-The graph connectivity indicates which variables are involved in what measurements.
+### Example: 2D Pose Graph SLAM
 
-![vesta graph](doc/vesta_graph_1.png)
+```cpp
+#include <vesta_variables/2d/position_2d_stamped.h>
+#include <vesta_variables/2d/orientation_2d_stamped.h>
+#include <vesta_constraints/2d/relative_pose_2d_stamped_constraint.h>
+#include <vesta_constraints/2d/absolute_pose_2d_stamped_constraint.h>
+#include <vesta_graphs/hash_graph.h>
+#include <vesta_optimizers/batch_optimizer.h>
+#include <vesta_core/transaction.h>
 
-The two sensor models are configured as plugins to an optimizer implementation. The optimizer performs the required
-computation to generate the optimal state variable values based on the provided sensor constraints. We will never be
-able to exactly satisfy both the wheel encoder constraints and the laserscan constraints. Instead we minimize the error
-of all the constraints using nonlinear least squares optimization.
+// Create an optimizer with a hash graph
+auto graph = std::make_unique<vesta_graphs::HashGraph>();
+vesta_optimizers::BatchOptimizerParams params;
+vesta_optimizers::BatchOptimizer optimizer(params, std::move(graph));
 
-![vesta optimizer](doc/vesta_optimizer_1.png)
+// Create a transaction with variables and constraints
+auto transaction = std::make_shared<vesta_core::Transaction>();
 
-While our `vesta` system is optimizing constraints from two different sensors, it is not yet publishing any data back
-out to ROS. In order to publish data to ROS, we derive a `vesta_core::Publisher` class and add it to the
-optimizer. Derived publishers have access to the optimized values of all state variables. The specific publisher
-implementation determines what type of messages are published and at what frequency. For our example system,
-we would like visualize the current pose of the robot in RViz, so we create a `vesta` publisher that finds the most
-recent pose and converts it into a `geometry_msgs::PoseStamped` message, then publishes the message to a topic.
+// Add pose variables at two timestamps
+vesta_core::Timestamp t1(0, 0);
+vesta_core::Timestamp t2(1, 0);
 
-![vesta optimizer](doc/vesta_optimizer_2.png)
+auto pos1 = vesta_variables::Position2DStamped(t1);
+auto ori1 = vesta_variables::Orientation2DStamped(t1);
+auto pos2 = vesta_variables::Position2DStamped(t2);
+auto ori2 = vesta_variables::Orientation2DStamped(t2);
 
-We finally have something that is starting to be useful.
+transaction->addVariable(std::make_shared<vesta_variables::Position2DStamped>(pos1));
+transaction->addVariable(std::make_shared<vesta_variables::Orientation2DStamped>(ori1));
+transaction->addVariable(std::make_shared<vesta_variables::Position2DStamped>(pos2));
+transaction->addVariable(std::make_shared<vesta_variables::Orientation2DStamped>(ori2));
 
-### Adaptation #1: Asynchronous sensors
+// Add an absolute prior on the first pose
+Eigen::Vector3d mean_abs;
+mean_abs << 0.0, 0.0, 0.0;  // x, y, yaw
+Eigen::Matrix3d cov_abs = Eigen::Matrix3d::Identity() * 0.01;
+transaction->addConstraint(
+    std::make_shared<vesta_constraints::AbsolutePose2DStampedConstraint>(
+        "gps", pos1, ori1, mean_abs, cov_abs));
 
-Typically the laser measurements and the wheel encoder measurements are not synchronized. The encoder measurements are
-sampled faster than the laser, and are sampled at different times using a different clock. If we do not do anything
-different in this situation, the constraint graph becomes disconnected.
+// Add a relative odometry constraint between poses
+Eigen::Vector3d delta;
+delta << 1.0, 0.0, 0.1;  // dx, dy, dyaw
+Eigen::Matrix3d cov_rel = Eigen::Matrix3d::Identity() * 0.1;
+transaction->addConstraint(
+    std::make_shared<vesta_constraints::RelativePose2DStampedConstraint>(
+        "odometry", pos1, ori1, pos2, ori2, delta, cov_rel));
 
-![vesta graph](doc/vesta_graph_2.png)
+// Submit and optimize
+optimizer.addTransaction("sensors", transaction);
+ceres::Solver::Summary summary = optimizer.optimize();
 
-This is where motion models come into play. A motion model differs from a sensor model in that constraints can be
-generated between any two requested timestamps. Motion model constraints are generated upon request, not due to their
-own internal clock. We use the motion model to connect the states introduced by the other sensor measurements. We
-derive a class from the `vesta_core::MotionModel` base class and implement a differential drive kinematic
-constraint for our robot.
+// Access optimized values
+const auto& optimized_graph = optimizer.graph();
+```
 
-![vesta optimizer](doc/vesta_optimizer_3.png)
+### Example: Fixed-Lag Smoother for Real-Time SLAM
 
-The motion models are also configured as plugins to the optimizer. The optimizer requests motion models constraints
-from the configured plugins whenever new states are created by the sensor models.
+```cpp
+#include <vesta_graphs/hash_graph.h>
+#include <vesta_optimizers/fixed_lag_smoother.h>
 
-![vesta graph](doc/vesta_graph_3.png)
+auto graph = std::make_unique<vesta_graphs::HashGraph>();
+vesta_optimizers::FixedLagSmootherParams params;
+params.lag_duration = vesta_core::Duration::fromSec(5.0);  // 5-second window
 
-### Adaptation #2: Full path publishing
+vesta_optimizers::FixedLagSmoother smoother(params, std::move(graph));
 
-Nothing about the `vesta` framework limits you to having a single publisher. What if you want to visualize the entire
-robot trajectory, instead of just the most recent pose? Well, we can create a new derived `vesta_core::Publisher` class
-that publishes all of the robot poses using a `nav_msgs::Path` message.
+// In your sensor callback loop:
+// smoother.addTransaction("lidar", lidar_transaction);
+// smoother.addTransaction("imu", imu_transaction);
+// auto summary = smoother.optimize();
+// Variables older than 5 seconds are automatically marginalized
+```
 
-![vesta optimizer](doc/vesta_optimizer_4.png)
+### Example: Bundle Adjustment with Schur Complement Solver
 
-### Adaptation #3: Changing kinematics
+```cpp
+#include <vesta_variables/3d/position_3d_stamped.h>
+#include <vesta_variables/3d/orientation_3d_stamped.h>
+#include <vesta_variables/vision/pinhole_camera_fixed.h>
+#include <vesta_variables/vision/point_3d_landmark.h>
+#include <vesta_constraints/vision/reprojection_error_constraint.h>
+#include <vesta_graphs/hash_graph.h>
+#include <vesta_optimizers/batch_optimizer.h>
+#include <vesta_core/schur_ordering.h>
+#include <vesta_loss/huber_loss.h>
 
-In your spare time, you also build [autonomous power wheels racers](http://www.powerracingseries.org/). But race cars
-don't use differential drive; you need a different motion model. Easy enough. We simply derive a new
-`vesta_core::MotionModel` class that implements an Ackermann steering model. Everything else can be reused.
+// -- Set up the optimizer with a Schur complement linear solver --
+auto graph = std::make_unique<vesta_graphs::HashGraph>();
+vesta_optimizers::BatchOptimizerParams params;
+params.solver_options.linear_solver_type = ceres::SPARSE_SCHUR;
+params.solver_options.max_num_iterations = 50;
 
-![vesta optimizer](doc/vesta_optimizer_5.png)
+vesta_optimizers::BatchOptimizer optimizer(params, std::move(graph));
 
-![vesta graph](doc/vesta_graph_4.png)
+// -- Create camera intrinsics (fixed, not optimized) --
+// Camera 0 with fx=525, fy=525, cx=320, cy=240
+auto camera = std::make_shared<vesta_variables::PinholeCameraFixed>(
+    /*camera_id=*/0, /*fx=*/525.0, /*fy=*/525.0, /*cx=*/320.0, /*cy=*/240.0);
 
-### Adaptation #4: Online calibration
+// -- Build the bundle adjustment problem --
+auto transaction = std::make_shared<vesta_core::Transaction>();
+transaction->addVariable(camera);
 
-Over time you notice that the accuracy of the odometry measurements is decreasing. After some investigation you realize
-that the soft rubber racing tires are wearing, decreasing the diameter of the wheels over time. It sure would be nice
-if the odometry system could compensate for that automatically. To do that, we derive a new variable type from
-`vesta_core::Variable` that holds a single scalar value representing a wheel diameter at a specific point in time. For
-ease of notation, we refer to this new variable as `D1, D2, ...`, etc. We also need to derive a new wheel encoder sensor
-model from the `vesta_core::SensorModel` base class. This new sensor model involves the previous pose and next pose as
-before, but it also involves the previous wheel diameter. Finally, we need a `vesta_core::MotionModel` that describes
-how the wheel diameter is expected to change over time. Maybe some sort of exponential decay? And for good measure, we
-derive a new publisher plugin from `vesta_core::Publisher` that publishes the current wheel diameter. This allows us to
-plot how the wheel diameter changes over the length of the race.
+// Add camera poses (one per keyframe)
+const int num_keyframes = 10;
+std::vector<vesta_variables::Position3DStamped> positions;
+std::vector<vesta_variables::Orientation3DStamped> orientations;
 
-![vesta optimizer](doc/vesta_optimizer_6.png)
+for (int i = 0; i < num_keyframes; ++i) {
+  vesta_core::Timestamp t(i, 0);
+  auto device = vesta_core::uuid::generate("camera0");
 
-![vesta graph](doc/vesta_graph_5.png)
+  auto pos = std::make_shared<vesta_variables::Position3DStamped>(t, device);
+  auto ori = std::make_shared<vesta_variables::Orientation3DStamped>(t, device);
 
-Now our system estimates the wheel diameters at each time step as well as the robot's pose.
+  // Initialize with your visual odometry estimate
+  pos->x() = initial_positions[i].x();
+  pos->y() = initial_positions[i].y();
+  pos->z() = initial_positions[i].z();
+  ori->w() = initial_orientations[i].w();
+  ori->x() = initial_orientations[i].x();
+  ori->y() = initial_orientations[i].y();
+  ori->z() = initial_orientations[i].z();
 
-## The Math
+  transaction->addVariable(pos);
+  transaction->addVariable(ori);
+  positions.push_back(*pos);
+  orientations.push_back(*ori);
+}
 
-Internally `vesta` uses Google's [Ceres Solver](http://ceres-solver.org) to perform the nonlinear least squares
-optimization, which produces the optimal state variable values. I direct any interested parties to the Ceres Solver
-["Non-linear Least Squares"](http://ceres-solver.org/nnls_tutorial.html) tutorial for an excellent primer on the core
-concepts and involved math.
+// Add 3D landmarks
+// Point3DLandmark returns schurGroup() == 0, so it is automatically
+// placed in the first elimination group for the Schur complement solver
+const int num_landmarks = 500;
+std::vector<vesta_variables::Point3DLandmark> landmarks;
 
-## Summary
+for (int j = 0; j < num_landmarks; ++j) {
+  auto lm = std::make_shared<vesta_variables::Point3DLandmark>(/*landmark_id=*/j);
+  lm->x() = initial_points[j].x();
+  lm->y() = initial_points[j].y();
+  lm->z() = initial_points[j].z();
 
-The purpose of `vesta` is to provide a framework for performing sensor fusion tasks, allowing common components to be
-reused between systems, while also allowing components to be customized for different use cases. The goal is to allow
-end users to concentrate on modeling the robot, sensor, system, etc. and spend less time wiring the different
-sensor models together into runable code. And since all of the models are implemented as plugins, separate plugin
-libraries can be shared or kept private at the discretion of their authors.
+  transaction->addVariable(lm);
+  landmarks.push_back(*lm);
+}
 
-## API Concepts
+// Add reprojection error constraints for each observation
+auto loss = std::make_shared<vesta_loss::HuberLoss>(1.0);  // Robust to outliers
 
-* [Variables](doc/Variables.md)
-* [Constraints](doc/Constraints.md)
-* Sensor Models -- coming soon
-* Motion Models -- coming soon
-* Publishers -- coming soon
-* Optimizers -- coming soon
+for (const auto& obs : observations) {
+  vesta_core::Vector2d pixel;
+  pixel << obs.u, obs.v;
+
+  vesta_core::Matrix2d cov = vesta_core::Matrix2d::Identity();  // 1px std dev
+
+  auto constraint =
+      std::make_shared<vesta_constraints::ReprojectionErrorConstraint>(
+          "visual_frontend",
+          positions[obs.keyframe_idx],
+          orientations[obs.keyframe_idx],
+          *camera,
+          landmarks[obs.landmark_idx],
+          pixel, cov);
+  constraint->loss(loss);
+
+  transaction->addConstraint(constraint);
+}
+
+// -- Submit and optimize --
+optimizer.addTransaction("ba", transaction);
+
+// Build Schur ordering from the graph (landmarks in group 0, poses in group 1)
+// This is done automatically when using SPARSE_SCHUR with Point3DLandmark
+// since Point3DLandmark::schurGroup() returns 0.
+// To explicitly set it:
+auto ordering = vesta_core::buildSchurOrdering(optimizer.graph());
+if (ordering) {
+  params.solver_options.linear_solver_ordering = ordering;
+}
+
+ceres::Solver::Summary summary = optimizer.optimize();
+
+// -- Read optimized results --
+const auto& optimized_graph = optimizer.graph();
+// Iterate variables to extract optimized camera poses and landmark positions
+```
+
+Key points for bundle adjustment performance:
+- `Point3DLandmark::schurGroup()` returns `0`, placing landmarks in the first elimination group. Camera poses default to group `1`.
+- Use `SPARSE_SCHUR` for large problems (many landmarks) or `DENSE_SCHUR` for small-to-medium problems.
+- `buildSchurOrdering()` reads each variable's `schurGroup()` and builds the `ceres::ParameterBlockOrdering` automatically.
+- Use `PinholeCameraFixed` to hold intrinsics constant, or `PinholeCamera` to jointly optimize intrinsics.
+- Apply a robust loss like `HuberLoss` to handle feature matching outliers.
+
+## Architecture
+
+Vesta is a **library**, not a framework. It does not manage threads, event loops, or sensor drivers. You control the execution:
+
+```
+Sensor Data --> Your Code --> Transaction --> Optimizer --> Optimized Graph --> Your Code
+```
+
+The core optimization loop:
+
+```
+addTransaction("sensor_a", transaction_a)
+addTransaction("sensor_b", transaction_b)
+summary = optimize()          // Runs Ceres solver
+graph = optimizer.graph()     // Read optimized state
+```
+
+### Core Abstractions
+
+- **Variable**: A block of related scalar values (e.g., a 3D position is 3 scalars). Each variable instance has a UUID and optionally a timestamp.
+- **Constraint**: A cost function connecting one or more variables. Wraps a `ceres::CostFunction` with an optional loss function.
+- **Graph**: Stores variables and constraints. The `HashGraph` implementation maintains a live `ceres::Problem`.
+- **Transaction**: A batch of variable/constraint additions and removals, applied atomically.
+- **Optimizer**: Accepts transactions, maintains a graph, and runs the Ceres solver.
+
+## API Documentation
+
+- [Variables](doc/Variables.md) -- Design principles and custom variable creation
+- [Constraints](doc/Constraints.md) -- Cost functions, loss functions, and custom constraint creation
+
+## License
+
+BSD License. See [LICENSE](LICENSE) for details.
+
+Originally developed by Locus Robotics. Modified and maintained as Vesta.
