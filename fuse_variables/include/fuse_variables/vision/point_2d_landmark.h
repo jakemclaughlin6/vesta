@@ -106,6 +106,13 @@ public:
   const uint64_t& id() const { return id_; }
 
   /**
+   * @brief Returns the Schur elimination group for this variable.
+   *
+   * Landmarks are placed in group 0 to be eliminated first in Schur complement-based solvers.
+   */
+  int schurGroup() const override { return 0; }
+
+  /**
    * @brief Print a human-readable description of the variable to the provided
    * stream.
    *

@@ -34,6 +34,8 @@
 #ifndef FUSE_GRAPHS_HASH_GRAPH_PARAMS_H
 #define FUSE_GRAPHS_HASH_GRAPH_PARAMS_H
 
+#include <fuse_core/jacobian_relinearization.h>
+
 #include <ceres/problem.h>
 
 
@@ -53,6 +55,32 @@ public:
    */
   ceres::Problem::Options problem_options;
 
+  /**
+   * @brief Controls how often Jacobians are recomputed during optimization.
+   *
+   * - kDefault: Standard Ceres behavior, recompute every iteration (zero overhead)
+   * - kEveryN: Recompute every N iterations, use cached Jacobians otherwise
+   * - kFirstEstimate: Full First Estimate Jacobian (FEJ) — freeze after first linearization
+   */
+  fuse_core::JacobianPolicy jacobian_policy = fuse_core::JacobianPolicy::kDefault;
+
+  /**
+   * @brief Relinearization period for JacobianPolicy::kEveryN.
+   *
+   * Only used when jacobian_policy is kEveryN. Jacobians are recomputed on iterations
+   * 1, 1+period, 1+2*period, etc. Ignored for other policies.
+   */
+  int jacobian_relinearization_period = 1;
+
+  /**
+   * @brief Change threshold for JacobianPolicy::kAdaptive.
+   *
+   * Only used when jacobian_policy is kAdaptive. A cost function's Jacobians are recomputed
+   * when any connected parameter block's L2 norm of change (since last linearization) exceeds
+   * this value. Smaller values relinearize more often (more accurate, slower). Ignored for
+   * other policies.
+   */
+  double jacobian_relinearization_threshold = 0.01;
 };
 
 }  // namespace fuse_graphs

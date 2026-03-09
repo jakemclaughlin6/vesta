@@ -51,18 +51,32 @@ namespace fuse_graphs
 {
 
 HashGraph::HashGraph(const HashGraphParams& params) :
-  problem_options_(params.problem_options)
+  problem_options_(params.problem_options),
+  jacobian_policy_(params.jacobian_policy),
+  jacobian_relinearization_period_(params.jacobian_relinearization_period),
+  jacobian_relinearization_threshold_(params.jacobian_relinearization_threshold)
 {
   // Set Ceres loss function ownership according to the fuse_core::Loss specification
   problem_options_.loss_function_ownership = fuse_core::Loss::Ownership;
   // Enable fast removal for incremental problem management
   problem_options_.enable_fast_removal = true;
+  // Set up Jacobian relinearization if a non-default policy is requested
+  if (jacobian_policy_ != fuse_core::JacobianPolicy::kDefault)
+  {
+    jacobian_controller_ = std::make_shared<fuse_core::JacobianRelinearizationController>(
+      jacobian_policy_, jacobian_relinearization_period_, jacobian_relinearization_threshold_);
+    jacobian_callback_ = std::make_unique<fuse_core::JacobianEvaluationCallback>(jacobian_controller_);
+    problem_options_.evaluation_callback = jacobian_callback_.get();
+  }
 }
 
 HashGraph::HashGraph(const HashGraph& other) :
   constraints_by_variable_uuid_(other.constraints_by_variable_uuid_),
   problem_options_(other.problem_options_),
-  variables_on_hold_(other.variables_on_hold_)
+  variables_on_hold_(other.variables_on_hold_),
+  jacobian_policy_(other.jacobian_policy_),
+  jacobian_relinearization_period_(other.jacobian_relinearization_period_),
+  jacobian_relinearization_threshold_(other.jacobian_relinearization_threshold_)
 {
   // Make a deep copy of the constraints
   std::transform(other.constraints_.begin(),
@@ -83,6 +97,15 @@ HashGraph::HashGraph(const HashGraph& other) :
   // The persistent problem refers to the other graph's variable memory; reset it
   problem_.reset();
   problem_dirty_ = true;
+  // Recreate Jacobian controller and callback if the source had one
+  if (other.jacobian_controller_)
+  {
+    jacobian_controller_ = std::make_shared<fuse_core::JacobianRelinearizationController>(
+      other.jacobian_controller_->policy(), other.jacobian_controller_->period(),
+      other.jacobian_controller_->threshold());
+    jacobian_callback_ = std::make_unique<fuse_core::JacobianEvaluationCallback>(jacobian_controller_);
+    problem_options_.evaluation_callback = jacobian_callback_.get();
+  }
 }
 
 HashGraph& HashGraph::operator=(const HashGraph& other)
@@ -95,10 +118,14 @@ HashGraph& HashGraph::operator=(const HashGraph& other)
   std::swap(problem_options_, tmp.problem_options_);
   std::swap(variables_, tmp.variables_);
   std::swap(variables_on_hold_, tmp.variables_on_hold_);
+  std::swap(jacobian_controller_, tmp.jacobian_controller_);
+  std::swap(jacobian_callback_, tmp.jacobian_callback_);
   // The persistent problem refers to stale memory after swap; reset it
   problem_.reset();
   residual_block_ids_.clear();
   problem_dirty_ = true;
+  // Update evaluation_callback pointer since the callback object may have changed
+  problem_options_.evaluation_callback = jacobian_callback_ ? jacobian_callback_.get() : nullptr;
   return *this;
 }
 
@@ -160,7 +187,7 @@ bool HashGraph::addConstraint(fuse_core::Constraint::SharedPtr constraint)
       parameter_blocks.push_back(variables_.at(vuuid)->data());
     }
     auto rid = problem_->AddResidualBlock(
-      constraint->costFunction(), constraint->lossFunction(), parameter_blocks);
+      wrapCostFunction(constraint->costFunction()), constraint->lossFunction(), parameter_blocks);
     residual_block_ids_[constraint_uuid] = rid;
   }
   return true;
@@ -500,6 +527,11 @@ ceres::Solver::Summary HashGraph::optimize(const ceres::Solver::Options& options
 {
   // Ensure the persistent problem is up-to-date
   ensureProblem();
+  // Reset Jacobian relinearization controller for this optimization run
+  if (jacobian_controller_)
+  {
+    jacobian_controller_->resetForNewOptimization();
+  }
   // Run the solver. This will update the variables in place.
   ceres::Solver::Summary summary;
   ceres::Solve(options, problem_.get(), &summary);
@@ -519,6 +551,11 @@ ceres::Solver::Summary HashGraph::optimizeFor(
   auto remaining = max_optimization_time - (ensured_problem - start);
   auto time_constrained_options = options;
   time_constrained_options.max_solver_time_in_seconds = std::max(0.0, remaining.toSec());
+  // Reset Jacobian relinearization controller for this optimization run
+  if (jacobian_controller_)
+  {
+    jacobian_controller_->resetForNewOptimization();
+  }
   // Run the solver. This will update the variables in place.
   ceres::Solver::Summary summary;
   ceres::Solve(time_constrained_options, problem_.get(), &summary);
@@ -529,7 +566,11 @@ ceres::Solver::Summary HashGraph::optimizeFor(
 bool HashGraph::evaluate(double* cost, std::vector<double>* residuals, std::vector<double>* gradient,
                          const ceres::Problem::EvaluateOptions& options) const
 {
-  ceres::Problem problem(problem_options_);
+  // Use clean problem options without the evaluation_callback to avoid perturbing
+  // the Jacobian controller state (which is shared with the persistent problem).
+  auto eval_options = problem_options_;
+  eval_options.evaluation_callback = nullptr;
+  ceres::Problem problem(eval_options);
   createProblem(problem);
 
   return problem.Evaluate(options, cost, residuals, gradient, nullptr);
@@ -594,7 +635,7 @@ void HashGraph::ensureProblem()
         parameter_blocks.push_back(variables_.at(vuuid)->data());
       }
       auto rid = problem_->AddResidualBlock(
-        constraint.costFunction(), constraint.lossFunction(), parameter_blocks);
+        wrapCostFunction(constraint.costFunction()), constraint.lossFunction(), parameter_blocks);
       residual_block_ids_[uuid] = rid;
     }
     problem_dirty_ = false;
@@ -603,6 +644,9 @@ void HashGraph::ensureProblem()
 
 void HashGraph::createProblem(ceres::Problem& problem) const
 {
+  // Note: This method intentionally does NOT wrap cost functions with CachedJacobianCostFunction.
+  // It is used by getCovariance() and evaluate() which need true (non-cached) Jacobians for
+  // correct results. Only the persistent problem used by optimize() wraps cost functions.
   // Add all the variables to the problem
   for (auto& uuid__variable : variables_)
   {
@@ -648,6 +692,15 @@ void HashGraph::createProblem(ceres::Problem& problem) const
       constraint.lossFunction(),
       parameter_blocks);
   }
+}
+
+ceres::CostFunction* HashGraph::wrapCostFunction(ceres::CostFunction* cost_function) const
+{
+  if (jacobian_controller_)
+  {
+    return new fuse_core::CachedJacobianCostFunction(cost_function, jacobian_controller_);
+  }
+  return cost_function;
 }
 
 }  // namespace fuse_graphs

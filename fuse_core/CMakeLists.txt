@@ -3,7 +3,9 @@ add_library(fuse_core
   src/constraint.cpp
   src/graph.cpp
   src/graph_deserializer.cpp
+  src/jacobian_relinearization.cpp
   src/loss.cpp
+  src/schur_ordering.cpp
   src/serialization.cpp
   src/timestamp.cpp
   src/timestamp_manager.cpp
@@ -58,4 +60,16 @@ if(BUILD_TESTING)
   fuse_core_add_test(test_util)
   fuse_core_add_test(test_uuid)
   fuse_core_add_test(test_variable)
+  # Schur ordering test needs fuse_graphs for HashGraph
+  add_executable(test_schur_ordering test/test_schur_ordering.cpp)
+  target_link_libraries(test_schur_ordering PRIVATE fuse_core fuse_graphs GTest::GTest GTest::Main)
+  target_include_directories(test_schur_ordering PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  set_target_properties(test_schur_ordering PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
+  add_test(NAME test_schur_ordering COMMAND test_schur_ordering)
+  # Jacobian relinearization test needs fuse_graphs for HashGraph
+  add_executable(test_jacobian_relinearization test/test_jacobian_relinearization.cpp)
+  target_link_libraries(test_jacobian_relinearization PRIVATE fuse_core fuse_graphs GTest::GTest GTest::Main)
+  target_include_directories(test_jacobian_relinearization PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+  set_target_properties(test_jacobian_relinearization PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES)
+  add_test(NAME test_jacobian_relinearization COMMAND test_jacobian_relinearization)
 endif()

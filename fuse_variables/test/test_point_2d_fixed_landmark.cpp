@@ -53,6 +53,12 @@ TEST(Point2DFixedLandmark, Type)
   EXPECT_EQ("fuse_variables::Point2DFixedLandmark", variable.type());
 }
 
+TEST(Point2DFixedLandmark, SchurGroup)
+{
+  Point2DFixedLandmark variable(0);
+  EXPECT_EQ(0, variable.schurGroup());
+}
+
 TEST(Point2DFixedLandmark, UUID)
 {
   // Verify two positions with the same landmark ids produce the same uuids

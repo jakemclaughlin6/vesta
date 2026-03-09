@@ -41,6 +41,7 @@
 #include <fuse_core/serialization.h>
 #include <fuse_core/uuid.h>
 #include <fuse_core/variable.h>
+#include <fuse_core/jacobian_relinearization.h>
 #include <fuse_graphs/hash_graph_params.h>
 
 #include <boost/archive/detail/basic_iarchive.hpp>
@@ -385,6 +386,23 @@ protected:
   std::unordered_map<fuse_core::UUID, ceres::ResidualBlockId, fuse_core::uuid::hash> residual_block_ids_;
   bool problem_dirty_ = true;  //!< If true, problem_ must be rebuilt from scratch on next optimize
 
+  //!< Jacobian policy configuration (serialized for round-trip fidelity)
+  fuse_core::JacobianPolicy jacobian_policy_ = fuse_core::JacobianPolicy::kDefault;
+  int jacobian_relinearization_period_ = 1;
+  double jacobian_relinearization_threshold_ = 0.01;
+  //!< Jacobian relinearization controller (shared with callback and cost function wrappers)
+  std::shared_ptr<fuse_core::JacobianRelinearizationController> jacobian_controller_;
+  //!< Ceres EvaluationCallback for Jacobian caching (owned by HashGraph, raw pointer given to Problem)
+  std::unique_ptr<fuse_core::JacobianEvaluationCallback> jacobian_callback_;
+
+  /**
+   * @brief Wrap a cost function with Jacobian caching if a non-default policy is active.
+   *
+   * @param[in] cost_function Raw pointer to the cost function (ownership transferred)
+   * @return The original pointer if kDefault, or a new CachedJacobianCostFunction wrapper
+   */
+  ceres::CostFunction* wrapCostFunction(ceres::CostFunction* cost_function) const;
+
   /**
    * @brief Ensure the persistent ceres::Problem is up-to-date
    *
@@ -422,6 +440,20 @@ private:
     archive & problem_options_;
     archive & variables_;
     archive & variables_on_hold_;
+    // Serialize JacobianPolicy as int since it's an enum class
+    if constexpr (std::is_base_of_v<boost::archive::detail::basic_iarchive, Archive>)
+    {
+      int policy_int = 0;
+      archive & policy_int;
+      jacobian_policy_ = static_cast<fuse_core::JacobianPolicy>(policy_int);
+    }
+    else
+    {
+      int policy_int = static_cast<int>(jacobian_policy_);
+      archive & policy_int;
+    }
+    archive & jacobian_relinearization_period_;
+    archive & jacobian_relinearization_threshold_;
     // Transient members rebuilt lazily — reset on deserialization
     if constexpr (std::is_base_of_v<boost::archive::detail::basic_iarchive, Archive>)
     {
@@ -431,6 +463,20 @@ private:
       // Ensure critical options are correct after deserialization
       problem_options_.enable_fast_removal = true;
       problem_options_.loss_function_ownership = fuse_core::Loss::Ownership;
+      problem_options_.evaluation_callback = nullptr;
+      // Rebuild Jacobian controller and callback from serialized policy
+      if (jacobian_policy_ != fuse_core::JacobianPolicy::kDefault)
+      {
+        jacobian_controller_ = std::make_shared<fuse_core::JacobianRelinearizationController>(
+          jacobian_policy_, jacobian_relinearization_period_, jacobian_relinearization_threshold_);
+        jacobian_callback_ = std::make_unique<fuse_core::JacobianEvaluationCallback>(jacobian_controller_);
+        problem_options_.evaluation_callback = jacobian_callback_.get();
+      }
+      else
+      {
+        jacobian_controller_.reset();
+        jacobian_callback_.reset();
+      }
     }
   }
 };
