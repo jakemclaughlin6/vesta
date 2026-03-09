@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [devel]
+  pull_request:
+    branches: [devel]
+
+jobs:
+  format:
+    name: Check Format
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+
+      - name: Check formatting
+        run: |
+          find . -name '*.h' -o -name '*.cpp' -o -name '*.cc' | \
+            xargs clang-format --dry-run --Werror
+
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            build-essential \
+            libeigen3-dev \
+            libboost-serialization-dev \
+            libgoogle-glog-dev \
+            libgtest-dev \
+            libsuitesparse-dev \
+            libceres-dev
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure -j$(nproc)
