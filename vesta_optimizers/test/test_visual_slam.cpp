@@ -244,9 +244,9 @@ TEST(VisualSlamTest, VisualSlam_MonoBatch)
   {
     const auto& pos =
         dynamic_cast<const vesta_variables::Position3DStamped&>(result_graph.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.2) << "Camera " << i << " x";
-    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.2) << "Camera " << i << " y";
-    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.2) << "Camera " << i << " z";
+    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.1) << "Camera " << i << " x";
+    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.1) << "Camera " << i << " y";
+    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.1) << "Camera " << i << " z";
   }
 
   // Check landmarks
@@ -254,9 +254,9 @@ TEST(VisualSlamTest, VisualSlam_MonoBatch)
   {
     const auto& lm =
         dynamic_cast<const vesta_variables::Point3DLandmark&>(result_graph.getVariable(landmarks[j]->uuid()));
-    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.5) << "Landmark " << j << " x";
-    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.5) << "Landmark " << j << " y";
-    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.5) << "Landmark " << j << " z";
+    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.25) << "Landmark " << j << " x";
+    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.25) << "Landmark " << j << " y";
+    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.25) << "Landmark " << j << " z";
   }
 }
 
@@ -389,18 +389,18 @@ TEST(VisualSlamTest, VisualSlam_StereoBatch)
   {
     const auto& pos =
         dynamic_cast<const vesta_variables::Position3DStamped&>(result_graph.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.2) << "Camera " << i << " x";
-    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.2) << "Camera " << i << " y";
-    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.2) << "Camera " << i << " z";
+    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.1) << "Camera " << i << " x";
+    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.1) << "Camera " << i << " y";
+    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.1) << "Camera " << i << " z";
   }
 
   for (size_t j = 0; j < kNumLandmarks; ++j)
   {
     const auto& lm =
         dynamic_cast<const vesta_variables::Point3DLandmark&>(result_graph.getVariable(landmarks[j]->uuid()));
-    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.5) << "Landmark " << j << " x";
-    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.5) << "Landmark " << j << " y";
-    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.5) << "Landmark " << j << " z";
+    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.25) << "Landmark " << j << " x";
+    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.25) << "Landmark " << j << " y";
+    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.25) << "Landmark " << j << " z";
   }
 }
 
@@ -539,18 +539,18 @@ TEST(VisualSlamTest, VisualSlam_MonoFixedLag)
   {
     const auto& pos =
         dynamic_cast<const vesta_variables::Position3DStamped&>(result_graph.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.2) << "Camera " << i << " x";
-    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.2) << "Camera " << i << " y";
-    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.2) << "Camera " << i << " z";
+    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.1) << "Camera " << i << " x";
+    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.1) << "Camera " << i << " y";
+    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.1) << "Camera " << i << " z";
   }
 
   for (size_t j = 0; j < kNumLandmarks; ++j)
   {
     const auto& lm =
         dynamic_cast<const vesta_variables::Point3DLandmark&>(result_graph.getVariable(landmarks[j]->uuid()));
-    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.5) << "Landmark " << j << " x";
-    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.5) << "Landmark " << j << " y";
-    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.5) << "Landmark " << j << " z";
+    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.25) << "Landmark " << j << " x";
+    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.25) << "Landmark " << j << " y";
+    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.25) << "Landmark " << j << " z";
   }
 }
 
@@ -690,18 +690,18 @@ TEST(VisualSlamTest, VisualSlam_StereoFixedLag)
   {
     const auto& pos =
         dynamic_cast<const vesta_variables::Position3DStamped&>(result_graph.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.2) << "Camera " << i << " x";
-    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.2) << "Camera " << i << " y";
-    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.2) << "Camera " << i << " z";
+    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.15) << "Camera " << i << " x";
+    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.15) << "Camera " << i << " y";
+    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.15) << "Camera " << i << " z";
   }
 
   for (size_t j = 0; j < kNumLandmarks; ++j)
   {
     const auto& lm =
         dynamic_cast<const vesta_variables::Point3DLandmark&>(result_graph.getVariable(landmarks[j]->uuid()));
-    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.5) << "Landmark " << j << " x";
-    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.5) << "Landmark " << j << " y";
-    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.5) << "Landmark " << j << " z";
+    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.25) << "Landmark " << j << " x";
+    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.25) << "Landmark " << j << " y";
+    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.25) << "Landmark " << j << " z";
   }
 }
 

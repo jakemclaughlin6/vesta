@@ -155,8 +155,8 @@ TEST(PoseSlam, Batch2D)
   for (int i = 0; i < n; ++i)
   {
     const auto& pos = dynamic_cast<const vesta_variables::Position2DStamped&>(g.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), gt[i].x, 0.15) << "Pose " << i << " x";
-    EXPECT_NEAR(pos.y(), gt[i].y, 0.15) << "Pose " << i << " y";
+    EXPECT_NEAR(pos.x(), gt[i].x, 0.06) << "Pose " << i << " x";
+    EXPECT_NEAR(pos.y(), gt[i].y, 0.06) << "Pose " << i << " y";
   }
 }
 
@@ -239,9 +239,9 @@ TEST(PoseSlam, Batch3D)
   for (int i = 0; i < n; ++i)
   {
     const auto& pos = dynamic_cast<const vesta_variables::Position3DStamped&>(g.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.15) << "Pose " << i;
-    EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.15) << "Pose " << i;
-    EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.15) << "Pose " << i;
+    EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.05) << "Pose " << i;
+    EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.05) << "Pose " << i;
+    EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.05) << "Pose " << i;
   }
 }
 
@@ -339,8 +339,8 @@ TEST(PoseSlam, FixedLag2D)
     if (!g.variableExists(positions[i]->uuid()))
       continue;
     const auto& pos = dynamic_cast<const vesta_variables::Position2DStamped&>(g.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), gt[i].x, 0.3) << "Pose " << i << " x";
-    EXPECT_NEAR(pos.y(), gt[i].y, 0.3) << "Pose " << i << " y";
+    EXPECT_NEAR(pos.x(), gt[i].x, 0.1) << "Pose " << i << " x";
+    EXPECT_NEAR(pos.y(), gt[i].y, 0.1) << "Pose " << i << " y";
   }
 }
 
@@ -434,9 +434,9 @@ TEST(PoseSlam, FixedLag3D)
     if (!g.variableExists(positions[i]->uuid()))
       continue;
     const auto& pos = dynamic_cast<const vesta_variables::Position3DStamped&>(g.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.3) << "Pose " << i;
-    EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.3) << "Pose " << i;
-    EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.3) << "Pose " << i;
+    EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.1) << "Pose " << i;
+    EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.1) << "Pose " << i;
+    EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.1) << "Pose " << i;
   }
 }
 

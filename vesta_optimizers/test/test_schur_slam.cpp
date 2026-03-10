@@ -205,9 +205,9 @@ TEST(SchurSlam, DenseSchur)
   // Check camera world positions
   for (int i = 0; i < 5; ++i)
   {
-    EXPECT_NEAR(result.cam_positions[i].x(), static_cast<double>(i), 0.2) << "Cam " << i;
-    EXPECT_NEAR(result.cam_positions[i].y(), 0.0, 0.2) << "Cam " << i;
-    EXPECT_NEAR(result.cam_positions[i].z(), 0.0, 0.2) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].x(), static_cast<double>(i), 0.1) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].y(), 0.0, 0.1) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].z(), 0.0, 0.1) << "Cam " << i;
   }
 }
 
@@ -221,9 +221,9 @@ TEST(SchurSlam, SparseSchur)
 
   for (int i = 0; i < 5; ++i)
   {
-    EXPECT_NEAR(result.cam_positions[i].x(), static_cast<double>(i), 0.2) << "Cam " << i;
-    EXPECT_NEAR(result.cam_positions[i].y(), 0.0, 0.2) << "Cam " << i;
-    EXPECT_NEAR(result.cam_positions[i].z(), 0.0, 0.2) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].x(), static_cast<double>(i), 0.1) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].y(), 0.0, 0.1) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].z(), 0.0, 0.1) << "Cam " << i;
   }
 }
 
@@ -237,9 +237,9 @@ TEST(SchurSlam, IterativeSchur)
 
   for (int i = 0; i < 5; ++i)
   {
-    EXPECT_NEAR(result.cam_positions[i].x(), static_cast<double>(i), 0.3) << "Cam " << i;
-    EXPECT_NEAR(result.cam_positions[i].y(), 0.0, 0.3) << "Cam " << i;
-    EXPECT_NEAR(result.cam_positions[i].z(), 0.0, 0.3) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].x(), static_cast<double>(i), 0.1) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].y(), 0.0, 0.1) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].z(), 0.0, 0.1) << "Cam " << i;
   }
 }
 

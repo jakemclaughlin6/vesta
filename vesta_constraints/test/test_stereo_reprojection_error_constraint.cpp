@@ -219,10 +219,10 @@ TEST(StereoReprojectionErrorConstraint, Optimization)
   EXPECT_NEAR(0.0, position_variable->y(), 1.0e-5);
   EXPECT_NEAR(0.0, position_variable->z(), 1.0e-5);
 
-  EXPECT_NEAR(1.0, orientation_variable->w(), 5.0e-3);
-  EXPECT_NEAR(0.0, orientation_variable->x(), 5.0e-3);
-  EXPECT_NEAR(0.0, orientation_variable->y(), 5.0e-3);
-  EXPECT_NEAR(0.0, orientation_variable->z(), 5.0e-3);
+  EXPECT_NEAR(1.0, orientation_variable->w(), 3.0e-3);
+  EXPECT_NEAR(0.0, orientation_variable->x(), 3.0e-3);
+  EXPECT_NEAR(0.0, orientation_variable->y(), 3.0e-3);
+  EXPECT_NEAR(0.0, orientation_variable->z(), 3.0e-3);
 }
 
 TEST(StereoReprojectionErrorConstraint, Serialization)
