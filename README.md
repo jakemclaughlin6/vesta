@@ -60,6 +60,27 @@ To disable tests:
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 ```
 
+### Docker
+
+A Dockerfile is provided with all dependencies pre-installed:
+
+```bash
+# Build the image
+docker build -t vesta .
+
+# Run a development shell with the repo mounted
+docker run -v $(pwd):/workspace -it vesta
+```
+
+From inside the container, build and test as usual:
+
+```bash
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+ctest --output-on-failure
+```
+
 ## Usage
 
 Vesta follows a simple, synchronous pattern:
