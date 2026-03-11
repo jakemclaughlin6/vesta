@@ -133,7 +133,10 @@ TEST(PoseSlam, Batch2D)
 
     vesta_core::VectorXd delta(3);
     delta << local_dx + noise_pos(rng), local_dy + noise_pos(rng), dyaw + noise_yaw(rng);
-    vesta_core::MatrixXd cov = vesta_core::MatrixXd::Identity(3, 3) * 0.01;
+    vesta_core::MatrixXd cov = vesta_core::MatrixXd::Zero(3, 3);
+    cov(0, 0) = 0.01 * 0.01;    // σ² matching noise_pos
+    cov(1, 1) = 0.01 * 0.01;    // σ² matching noise_pos
+    cov(2, 2) = 0.005 * 0.005;  // σ² matching noise_yaw
     auto rel = std::make_shared<vesta_constraints::RelativePose2DStampedConstraint>(
         "odom", *positions[i], *orientations[i], *positions[i + 1], *orientations[i + 1], delta, cov);
     txn->addConstraint(rel);
@@ -155,8 +158,8 @@ TEST(PoseSlam, Batch2D)
   for (int i = 0; i < n; ++i)
   {
     const auto& pos = dynamic_cast<const vesta_variables::Position2DStamped&>(g.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), gt[i].x, 0.15) << "Pose " << i << " x";
-    EXPECT_NEAR(pos.y(), gt[i].y, 0.15) << "Pose " << i << " y";
+    EXPECT_NEAR(pos.x(), gt[i].x, 0.1) << "Pose " << i << " x";
+    EXPECT_NEAR(pos.y(), gt[i].y, 0.1) << "Pose " << i << " y";
   }
 }
 
@@ -219,7 +222,8 @@ TEST(PoseSlam, Batch3D)
 
     vesta_core::Vector7d delta;
     delta << dp.x() + noise_pos(rng), dp.y() + noise_pos(rng), dp.z() + noise_pos(rng), dq.w(), dq.x(), dq.y(), dq.z();
-    vesta_core::Matrix6d cov = vesta_core::Matrix6d::Identity() * 0.01;
+    vesta_core::Matrix6d cov = vesta_core::Matrix6d::Zero();
+    cov.diagonal() << 0.01 * 0.01, 0.01 * 0.01, 0.01 * 0.01, 1e-6, 1e-6, 1e-6;
     auto rel = std::make_shared<vesta_constraints::RelativePose3DStampedConstraint>(
         "odom", *positions[i], *orientations[i], *positions[i + 1], *orientations[i + 1], delta, cov);
     txn->addConstraint(rel);
@@ -239,9 +243,9 @@ TEST(PoseSlam, Batch3D)
   for (int i = 0; i < n; ++i)
   {
     const auto& pos = dynamic_cast<const vesta_variables::Position3DStamped&>(g.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.15) << "Pose " << i;
-    EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.15) << "Pose " << i;
-    EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.15) << "Pose " << i;
+    EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.05) << "Pose " << i;
+    EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.05) << "Pose " << i;
+    EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.05) << "Pose " << i;
   }
 }
 
@@ -323,7 +327,10 @@ TEST(PoseSlam, FixedLag2D)
 
     vesta_core::VectorXd delta(3);
     delta << local_dx + noise_pos(rng), local_dy + noise_pos(rng), dyaw + noise_yaw(rng);
-    vesta_core::MatrixXd cov = vesta_core::MatrixXd::Identity(3, 3) * 0.01;
+    vesta_core::MatrixXd cov = vesta_core::MatrixXd::Zero(3, 3);
+    cov(0, 0) = 0.01 * 0.01;    // σ² matching noise_pos
+    cov(1, 1) = 0.01 * 0.01;    // σ² matching noise_pos
+    cov(2, 2) = 0.005 * 0.005;  // σ² matching noise_yaw
     auto rel = std::make_shared<vesta_constraints::RelativePose2DStampedConstraint>(
         "odom", *positions[i], *orientations[i], *positions[i + 1], *orientations[i + 1], delta, cov);
     txn->addConstraint(rel);
@@ -339,8 +346,8 @@ TEST(PoseSlam, FixedLag2D)
     if (!g.variableExists(positions[i]->uuid()))
       continue;
     const auto& pos = dynamic_cast<const vesta_variables::Position2DStamped&>(g.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), gt[i].x, 0.3) << "Pose " << i << " x";
-    EXPECT_NEAR(pos.y(), gt[i].y, 0.3) << "Pose " << i << " y";
+    EXPECT_NEAR(pos.x(), gt[i].x, 0.1) << "Pose " << i << " x";
+    EXPECT_NEAR(pos.y(), gt[i].y, 0.1) << "Pose " << i << " y";
   }
 }
 
@@ -419,7 +426,8 @@ TEST(PoseSlam, FixedLag3D)
 
     vesta_core::Vector7d delta;
     delta << dp.x() + noise_pos(rng), dp.y() + noise_pos(rng), dp.z() + noise_pos(rng), dq.w(), dq.x(), dq.y(), dq.z();
-    vesta_core::Matrix6d cov = vesta_core::Matrix6d::Identity() * 0.01;
+    vesta_core::Matrix6d cov = vesta_core::Matrix6d::Zero();
+    cov.diagonal() << 0.01 * 0.01, 0.01 * 0.01, 0.01 * 0.01, 1e-6, 1e-6, 1e-6;
     auto rel = std::make_shared<vesta_constraints::RelativePose3DStampedConstraint>(
         "odom", *positions[i], *orientations[i], *positions[i + 1], *orientations[i + 1], delta, cov);
     txn->addConstraint(rel);
@@ -434,9 +442,9 @@ TEST(PoseSlam, FixedLag3D)
     if (!g.variableExists(positions[i]->uuid()))
       continue;
     const auto& pos = dynamic_cast<const vesta_variables::Position3DStamped&>(g.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.3) << "Pose " << i;
-    EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.3) << "Pose " << i;
-    EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.3) << "Pose " << i;
+    EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.05) << "Pose " << i;
+    EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.05) << "Pose " << i;
+    EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.05) << "Pose " << i;
   }
 }
 

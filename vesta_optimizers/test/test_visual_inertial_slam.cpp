@@ -285,15 +285,15 @@ TEST(VisualInertialSlam, BatchWithPosePriors)
   for (int i = 0; i < num_keyframes; ++i)
   {
     const auto& pos = dynamic_cast<const vesta_variables::Position3DStamped&>(g.getVariable(states[i].pos->uuid()));
-    EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.2) << "KF " << i << " position x";
-    EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.2) << "KF " << i << " position y";
-    EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.2) << "KF " << i << " position z";
+    EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.05) << "KF " << i << " position x";
+    EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.05) << "KF " << i << " position y";
+    EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.05) << "KF " << i << " position z";
 
     const auto& vel =
         dynamic_cast<const vesta_variables::VelocityLinear3DStamped&>(g.getVariable(states[i].vel->uuid()));
-    EXPECT_NEAR(vel.x(), gt[i].velocity.x(), 0.2) << "KF " << i << " velocity x";
-    EXPECT_NEAR(vel.y(), gt[i].velocity.y(), 0.2) << "KF " << i << " velocity y";
-    EXPECT_NEAR(vel.z(), gt[i].velocity.z(), 0.2) << "KF " << i << " velocity z";
+    EXPECT_NEAR(vel.x(), gt[i].velocity.x(), 0.05) << "KF " << i << " velocity x";
+    EXPECT_NEAR(vel.y(), gt[i].velocity.y(), 0.05) << "KF " << i << " velocity y";
+    EXPECT_NEAR(vel.z(), gt[i].velocity.z(), 0.05) << "KF " << i << " velocity z";
   }
 }
 
@@ -448,9 +448,9 @@ TEST(VisualInertialSlam, BatchWithStereoReprojection)
   for (int i = 0; i < num_keyframes; ++i)
   {
     const auto& pos = dynamic_cast<const vesta_variables::Position3DStamped&>(g.getVariable(states[i].pos->uuid()));
-    EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.2) << "KF " << i << " position x";
-    EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.2) << "KF " << i << " position y";
-    EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.2) << "KF " << i << " position z";
+    EXPECT_NEAR(pos.x(), gt[i].position.x(), 0.05) << "KF " << i << " position x";
+    EXPECT_NEAR(pos.y(), gt[i].position.y(), 0.05) << "KF " << i << " position y";
+    EXPECT_NEAR(pos.z(), gt[i].position.z(), 0.05) << "KF " << i << " position z";
   }
 
   // Check velocities
@@ -458,9 +458,9 @@ TEST(VisualInertialSlam, BatchWithStereoReprojection)
   {
     const auto& vel =
         dynamic_cast<const vesta_variables::VelocityLinear3DStamped&>(g.getVariable(states[i].vel->uuid()));
-    EXPECT_NEAR(vel.x(), gt[i].velocity.x(), 0.2) << "KF " << i << " velocity x";
-    EXPECT_NEAR(vel.y(), gt[i].velocity.y(), 0.2) << "KF " << i << " velocity y";
-    EXPECT_NEAR(vel.z(), gt[i].velocity.z(), 0.2) << "KF " << i << " velocity z";
+    EXPECT_NEAR(vel.x(), gt[i].velocity.x(), 0.03) << "KF " << i << " velocity x";
+    EXPECT_NEAR(vel.y(), gt[i].velocity.y(), 0.03) << "KF " << i << " velocity y";
+    EXPECT_NEAR(vel.z(), gt[i].velocity.z(), 0.03) << "KF " << i << " velocity z";
   }
 
   // Check biases
@@ -468,24 +468,24 @@ TEST(VisualInertialSlam, BatchWithStereoReprojection)
   {
     const auto& gb =
         dynamic_cast<const vesta_variables::GyroscopeBias3DStamped&>(g.getVariable(states[i].gbias->uuid()));
-    EXPECT_NEAR(gb.x(), 0.0, 0.1) << "KF " << i << " gyro bias x";
-    EXPECT_NEAR(gb.y(), 0.0, 0.1) << "KF " << i << " gyro bias y";
-    EXPECT_NEAR(gb.z(), 0.0, 0.1) << "KF " << i << " gyro bias z";
+    EXPECT_NEAR(gb.x(), 0.0, 0.005) << "KF " << i << " gyro bias x";
+    EXPECT_NEAR(gb.y(), 0.0, 0.005) << "KF " << i << " gyro bias y";
+    EXPECT_NEAR(gb.z(), 0.0, 0.005) << "KF " << i << " gyro bias z";
 
     const auto& ab =
         dynamic_cast<const vesta_variables::AccelerationBias3DStamped&>(g.getVariable(states[i].abias->uuid()));
-    EXPECT_NEAR(ab.x(), 0.0, 0.1) << "KF " << i << " accel bias x";
-    EXPECT_NEAR(ab.y(), 0.0, 0.1) << "KF " << i << " accel bias y";
-    EXPECT_NEAR(ab.z(), 0.0, 0.1) << "KF " << i << " accel bias z";
+    EXPECT_NEAR(ab.x(), 0.0, 0.01) << "KF " << i << " accel bias x";
+    EXPECT_NEAR(ab.y(), 0.0, 0.01) << "KF " << i << " accel bias y";
+    EXPECT_NEAR(ab.z(), 0.0, 0.01) << "KF " << i << " accel bias z";
   }
 
   // Check landmarks
   for (int j = 0; j < actual_num_landmarks; ++j)
   {
     const auto& lm = dynamic_cast<const vesta_variables::Point3DLandmark&>(g.getVariable(landmarks[j]->uuid()));
-    EXPECT_NEAR(lm.x(), gt_landmarks[j].x(), 0.5) << "Landmark " << j << " x";
-    EXPECT_NEAR(lm.y(), gt_landmarks[j].y(), 0.5) << "Landmark " << j << " y";
-    EXPECT_NEAR(lm.z(), gt_landmarks[j].z(), 0.5) << "Landmark " << j << " z";
+    EXPECT_NEAR(lm.x(), gt_landmarks[j].x(), 0.35) << "Landmark " << j << " x";
+    EXPECT_NEAR(lm.y(), gt_landmarks[j].y(), 0.35) << "Landmark " << j << " y";
+    EXPECT_NEAR(lm.z(), gt_landmarks[j].z(), 0.35) << "Landmark " << j << " z";
   }
 }
 

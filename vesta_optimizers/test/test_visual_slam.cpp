@@ -244,9 +244,9 @@ TEST(VisualSlamTest, VisualSlam_MonoBatch)
   {
     const auto& pos =
         dynamic_cast<const vesta_variables::Position3DStamped&>(result_graph.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.2) << "Camera " << i << " x";
-    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.2) << "Camera " << i << " y";
-    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.2) << "Camera " << i << " z";
+    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.1) << "Camera " << i << " x";
+    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.1) << "Camera " << i << " y";
+    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.1) << "Camera " << i << " z";
   }
 
   // Check landmarks
@@ -254,9 +254,9 @@ TEST(VisualSlamTest, VisualSlam_MonoBatch)
   {
     const auto& lm =
         dynamic_cast<const vesta_variables::Point3DLandmark&>(result_graph.getVariable(landmarks[j]->uuid()));
-    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.5) << "Landmark " << j << " x";
-    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.5) << "Landmark " << j << " y";
-    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.5) << "Landmark " << j << " z";
+    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.35) << "Landmark " << j << " x";
+    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.35) << "Landmark " << j << " y";
+    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.35) << "Landmark " << j << " z";
   }
 }
 
@@ -389,18 +389,18 @@ TEST(VisualSlamTest, VisualSlam_StereoBatch)
   {
     const auto& pos =
         dynamic_cast<const vesta_variables::Position3DStamped&>(result_graph.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.2) << "Camera " << i << " x";
-    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.2) << "Camera " << i << " y";
-    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.2) << "Camera " << i << " z";
+    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.1) << "Camera " << i << " x";
+    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.1) << "Camera " << i << " y";
+    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.1) << "Camera " << i << " z";
   }
 
   for (size_t j = 0; j < kNumLandmarks; ++j)
   {
     const auto& lm =
         dynamic_cast<const vesta_variables::Point3DLandmark&>(result_graph.getVariable(landmarks[j]->uuid()));
-    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.5) << "Landmark " << j << " x";
-    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.5) << "Landmark " << j << " y";
-    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.5) << "Landmark " << j << " z";
+    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.3) << "Landmark " << j << " x";
+    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.3) << "Landmark " << j << " y";
+    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.3) << "Landmark " << j << " z";
   }
 }
 
@@ -539,18 +539,18 @@ TEST(VisualSlamTest, VisualSlam_MonoFixedLag)
   {
     const auto& pos =
         dynamic_cast<const vesta_variables::Position3DStamped&>(result_graph.getVariable(positions[i]->uuid()));
-    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.2) << "Camera " << i << " x";
-    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.2) << "Camera " << i << " y";
-    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.2) << "Camera " << i << " z";
+    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.1) << "Camera " << i << " x";
+    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.1) << "Camera " << i << " y";
+    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.1) << "Camera " << i << " z";
   }
 
   for (size_t j = 0; j < kNumLandmarks; ++j)
   {
     const auto& lm =
         dynamic_cast<const vesta_variables::Point3DLandmark&>(result_graph.getVariable(landmarks[j]->uuid()));
-    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.5) << "Landmark " << j << " x";
-    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.5) << "Landmark " << j << " y";
-    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.5) << "Landmark " << j << " z";
+    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.1) << "Landmark " << j << " x";
+    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.1) << "Landmark " << j << " y";
+    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.1) << "Landmark " << j << " z";
   }
 }
 
@@ -699,9 +699,284 @@ TEST(VisualSlamTest, VisualSlam_StereoFixedLag)
   {
     const auto& lm =
         dynamic_cast<const vesta_variables::Point3DLandmark&>(result_graph.getVariable(landmarks[j]->uuid()));
-    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.5) << "Landmark " << j << " x";
-    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.5) << "Landmark " << j << " y";
-    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.5) << "Landmark " << j << " z";
+    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 0.3) << "Landmark " << j << " x";
+    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 0.3) << "Landmark " << j << " y";
+    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 0.3) << "Landmark " << j << " z";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Test: Noiseless mono batch — verifies exact convergence to ground truth
+// ---------------------------------------------------------------------------
+TEST(VisualSlamTest, VisualSlam_MonoBatchNoiseless)
+{
+  std::mt19937 rng(42);
+  std::normal_distribution<double> pos_noise(0.0, 0.05);
+  std::normal_distribution<double> lm_noise(0.0, 0.1);
+
+  const auto cam_device_id = vesta_core::uuid::generate("cam");
+
+  auto txn = std::make_shared<vesta_core::Transaction>();
+  txn->stamp(vesta_core::Timestamp(kNumCameras - 1, 0));
+  for (size_t i = 0; i < kNumCameras; ++i)
+  {
+    txn->addInvolvedStamp(vesta_core::Timestamp(i, 0));
+  }
+
+  auto cam = vesta_variables::PinholeCameraFixed::make_shared(uint64_t{ 0 });
+  cam->fx() = kFx;
+  cam->fy() = kFy;
+  cam->cx() = kCx;
+  cam->cy() = kCy;
+  txn->addVariable(cam);
+
+  std::vector<vesta_variables::Position3DStamped::SharedPtr> positions;
+  std::vector<vesta_variables::Orientation3DStamped::SharedPtr> orientations;
+  for (size_t i = 0; i < kNumCameras; ++i)
+  {
+    auto pos = vesta_variables::Position3DStamped::make_shared(vesta_core::Timestamp(i, 0), cam_device_id);
+    auto ori = vesta_variables::Orientation3DStamped::make_shared(vesta_core::Timestamp(i, 0), cam_device_id);
+
+    pos->x() = kCamPositions[i].x() + pos_noise(rng);
+    pos->y() = kCamPositions[i].y() + pos_noise(rng);
+    pos->z() = kCamPositions[i].z() + pos_noise(rng);
+
+    ori->w() = 1.0;
+    ori->x() = pos_noise(rng) * 0.01;
+    ori->y() = pos_noise(rng) * 0.01;
+    ori->z() = pos_noise(rng) * 0.01;
+    double norm = std::sqrt(ori->w() * ori->w() + ori->x() * ori->x() + ori->y() * ori->y() + ori->z() * ori->z());
+    ori->w() /= norm;
+    ori->x() /= norm;
+    ori->y() /= norm;
+    ori->z() /= norm;
+
+    positions.push_back(pos);
+    orientations.push_back(ori);
+    txn->addVariable(pos);
+    txn->addVariable(ori);
+  }
+
+  std::vector<vesta_variables::Point3DLandmark::SharedPtr> landmarks;
+  for (size_t j = 0; j < kNumLandmarks; ++j)
+  {
+    auto lm = vesta_variables::Point3DLandmark::make_shared(uint64_t{ j });
+    lm->x() = kLandmarks[j].x() + lm_noise(rng);
+    lm->y() = kLandmarks[j].y() + lm_noise(rng);
+    lm->z() = kLandmarks[j].z() + lm_noise(rng);
+    landmarks.push_back(lm);
+    txn->addVariable(lm);
+  }
+
+  // Tight prior on first camera at exact ground truth
+  {
+    vesta_core::Vector7d prior_mean;
+    prior_mean << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
+    vesta_core::Matrix6d prior_cov = vesta_core::Matrix6d::Identity() * 1e-8;
+    auto prior = vesta_constraints::AbsolutePose3DStampedConstraint::make_shared(
+        "prior", *positions[0], *orientations[0], prior_mean, prior_cov);
+    txn->addConstraint(prior);
+  }
+
+  // Noiseless reprojection constraints
+  vesta_core::Matrix2d pixel_cov = vesta_core::Matrix2d::Identity();
+  for (size_t i = 0; i < kNumCameras; ++i)
+  {
+    for (size_t j = 0; j < kNumLandmarks; ++j)
+    {
+      double z_cam = 0.0;
+      Eigen::Vector2d uv = projectMono(kCamPositions[i], kLandmarks[j], z_cam);
+      if (z_cam <= 0.0)
+      {
+        continue;
+      }
+      vesta_core::Vector2d obs;
+      obs << uv.x(), uv.y();
+
+      auto constraint = vesta_constraints::ReprojectionErrorConstraint::make_shared(
+          "camera", *positions[i], *orientations[i], *cam, *landmarks[j], obs, pixel_cov);
+      txn->addConstraint(constraint);
+    }
+  }
+
+  // Noiseless odometry at exact ground truth
+  for (size_t i = 0; i < kNumCameras - 1; ++i)
+  {
+    Eigen::Vector3d dt = kCamPositions[i + 1] - kCamPositions[i];
+    vesta_core::Vector7d delta;
+    delta << dt.x(), dt.y(), dt.z(), 1.0, 0.0, 0.0, 0.0;
+    vesta_core::Matrix6d cov = vesta_core::Matrix6d::Identity() * 0.01;
+    auto rel = vesta_constraints::RelativePose3DStampedConstraint::make_shared(
+        "odom", *positions[i], *orientations[i], *positions[i + 1], *orientations[i + 1], delta, cov);
+    txn->addConstraint(rel);
+  }
+
+  auto graph = std::make_unique<vesta_graphs::HashGraph>();
+  vesta_optimizers::BatchOptimizerParams params;
+  params.solver_options.max_num_iterations = 100;
+  params.solver_options.linear_solver_type = ceres::DENSE_QR;
+  vesta_optimizers::BatchOptimizer optimizer(params, std::move(graph));
+
+  optimizer.addTransaction("visual_slam", txn);
+  auto summary = optimizer.optimize();
+
+  ASSERT_TRUE(summary.IsSolutionUsable());
+
+  const auto& result_graph = optimizer.graph();
+  for (size_t i = 0; i < kNumCameras; ++i)
+  {
+    const auto& pos =
+        dynamic_cast<const vesta_variables::Position3DStamped&>(result_graph.getVariable(positions[i]->uuid()));
+    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 1e-3) << "Camera " << i << " x";
+    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 1e-3) << "Camera " << i << " y";
+    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 1e-3) << "Camera " << i << " z";
+  }
+
+  for (size_t j = 0; j < kNumLandmarks; ++j)
+  {
+    const auto& lm =
+        dynamic_cast<const vesta_variables::Point3DLandmark&>(result_graph.getVariable(landmarks[j]->uuid()));
+    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 1e-3) << "Landmark " << j << " x";
+    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 1e-3) << "Landmark " << j << " y";
+    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 1e-3) << "Landmark " << j << " z";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Test: Noiseless stereo batch — verifies exact convergence to ground truth
+// ---------------------------------------------------------------------------
+TEST(VisualSlamTest, VisualSlam_StereoBatchNoiseless)
+{
+  std::mt19937 rng(42);
+  std::normal_distribution<double> pos_noise(0.0, 0.05);
+  std::normal_distribution<double> lm_noise(0.0, 0.1);
+
+  const auto cam_device_id = vesta_core::uuid::generate("cam");
+
+  auto txn = std::make_shared<vesta_core::Transaction>();
+  txn->stamp(vesta_core::Timestamp(kNumCameras - 1, 0));
+  for (size_t i = 0; i < kNumCameras; ++i)
+  {
+    txn->addInvolvedStamp(vesta_core::Timestamp(i, 0));
+  }
+
+  auto stereo_cam = vesta_variables::StereoCameraFixed::make_shared(uint64_t{ 0 });
+  stereo_cam->fx() = kFx;
+  stereo_cam->fy() = kFy;
+  stereo_cam->cx() = kCx;
+  stereo_cam->cy() = kCy;
+  stereo_cam->baseline() = kBaseline;
+  txn->addVariable(stereo_cam);
+
+  std::vector<vesta_variables::Position3DStamped::SharedPtr> positions;
+  std::vector<vesta_variables::Orientation3DStamped::SharedPtr> orientations;
+  for (size_t i = 0; i < kNumCameras; ++i)
+  {
+    auto pos = vesta_variables::Position3DStamped::make_shared(vesta_core::Timestamp(i, 0), cam_device_id);
+    auto ori = vesta_variables::Orientation3DStamped::make_shared(vesta_core::Timestamp(i, 0), cam_device_id);
+
+    pos->x() = kCamPositions[i].x() + pos_noise(rng);
+    pos->y() = kCamPositions[i].y() + pos_noise(rng);
+    pos->z() = kCamPositions[i].z() + pos_noise(rng);
+
+    ori->w() = 1.0;
+    ori->x() = pos_noise(rng) * 0.01;
+    ori->y() = pos_noise(rng) * 0.01;
+    ori->z() = pos_noise(rng) * 0.01;
+    double norm = std::sqrt(ori->w() * ori->w() + ori->x() * ori->x() + ori->y() * ori->y() + ori->z() * ori->z());
+    ori->w() /= norm;
+    ori->x() /= norm;
+    ori->y() /= norm;
+    ori->z() /= norm;
+
+    positions.push_back(pos);
+    orientations.push_back(ori);
+    txn->addVariable(pos);
+    txn->addVariable(ori);
+  }
+
+  std::vector<vesta_variables::Point3DLandmark::SharedPtr> landmarks;
+  for (size_t j = 0; j < kNumLandmarks; ++j)
+  {
+    auto lm = vesta_variables::Point3DLandmark::make_shared(uint64_t{ j });
+    lm->x() = kLandmarks[j].x() + lm_noise(rng);
+    lm->y() = kLandmarks[j].y() + lm_noise(rng);
+    lm->z() = kLandmarks[j].z() + lm_noise(rng);
+    landmarks.push_back(lm);
+    txn->addVariable(lm);
+  }
+
+  // Tight prior on first camera at exact ground truth
+  {
+    vesta_core::Vector7d prior_mean;
+    prior_mean << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
+    vesta_core::Matrix6d prior_cov = vesta_core::Matrix6d::Identity() * 1e-8;
+    auto prior = vesta_constraints::AbsolutePose3DStampedConstraint::make_shared(
+        "prior", *positions[0], *orientations[0], prior_mean, prior_cov);
+    txn->addConstraint(prior);
+  }
+
+  // Noiseless stereo reprojection constraints
+  vesta_core::Matrix4d pixel_cov = vesta_core::Matrix4d::Identity();
+  for (size_t i = 0; i < kNumCameras; ++i)
+  {
+    for (size_t j = 0; j < kNumLandmarks; ++j)
+    {
+      double z_cam = 0.0;
+      Eigen::Vector4d obs_gt = projectStereo(kCamPositions[i], kLandmarks[j], z_cam);
+      if (z_cam <= 0.0)
+      {
+        continue;
+      }
+      vesta_core::Vector4d obs;
+      obs << obs_gt[0], obs_gt[1], obs_gt[2], obs_gt[3];
+
+      auto constraint = vesta_constraints::StereoReprojectionErrorConstraint::make_shared(
+          "stereo_camera", *positions[i], *orientations[i], *stereo_cam, *landmarks[j], obs, pixel_cov);
+      txn->addConstraint(constraint);
+    }
+  }
+
+  // Noiseless odometry at exact ground truth
+  for (size_t i = 0; i < kNumCameras - 1; ++i)
+  {
+    Eigen::Vector3d dt = kCamPositions[i + 1] - kCamPositions[i];
+    vesta_core::Vector7d delta;
+    delta << dt.x(), dt.y(), dt.z(), 1.0, 0.0, 0.0, 0.0;
+    vesta_core::Matrix6d cov = vesta_core::Matrix6d::Identity() * 0.01;
+    auto rel = vesta_constraints::RelativePose3DStampedConstraint::make_shared(
+        "odom", *positions[i], *orientations[i], *positions[i + 1], *orientations[i + 1], delta, cov);
+    txn->addConstraint(rel);
+  }
+
+  auto graph = std::make_unique<vesta_graphs::HashGraph>();
+  vesta_optimizers::BatchOptimizerParams params;
+  params.solver_options.max_num_iterations = 100;
+  params.solver_options.linear_solver_type = ceres::DENSE_QR;
+  vesta_optimizers::BatchOptimizer optimizer(params, std::move(graph));
+
+  optimizer.addTransaction("visual_slam", txn);
+  auto summary = optimizer.optimize();
+
+  ASSERT_TRUE(summary.IsSolutionUsable());
+
+  const auto& result_graph = optimizer.graph();
+  for (size_t i = 0; i < kNumCameras; ++i)
+  {
+    const auto& pos =
+        dynamic_cast<const vesta_variables::Position3DStamped&>(result_graph.getVariable(positions[i]->uuid()));
+    EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 1e-3) << "Camera " << i << " x";
+    EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 1e-3) << "Camera " << i << " y";
+    EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 1e-3) << "Camera " << i << " z";
+  }
+
+  for (size_t j = 0; j < kNumLandmarks; ++j)
+  {
+    const auto& lm =
+        dynamic_cast<const vesta_variables::Point3DLandmark&>(result_graph.getVariable(landmarks[j]->uuid()));
+    EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 1e-3) << "Landmark " << j << " x";
+    EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 1e-3) << "Landmark " << j << " y";
+    EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 1e-3) << "Landmark " << j << " z";
   }
 }
 

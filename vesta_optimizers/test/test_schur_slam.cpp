@@ -10,7 +10,7 @@
 #include <vesta_optimizers/batch_optimizer_params.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
-#include <vesta_variables/vision/pinhole_camera.h>
+#include <vesta_variables/vision/pinhole_camera_fixed.h>
 #include <vesta_variables/vision/point_3d_landmark.h>
 
 #include <ceres/ceres.h>
@@ -64,7 +64,7 @@ static SchurTestResult runVisualSlamWithSolver(ceres::LinearSolverType solver_ty
   std::normal_distribution<double> lm_init_noise(0.0, 0.1);
 
   // Camera intrinsics
-  auto cam_k = std::make_shared<vesta_variables::PinholeCamera>(0);
+  auto cam_k = std::make_shared<vesta_variables::PinholeCameraFixed>(0);
   cam_k->fx() = kFx;
   cam_k->fy() = kFy;
   cam_k->cx() = kCx;
@@ -205,9 +205,9 @@ TEST(SchurSlam, DenseSchur)
   // Check camera world positions
   for (int i = 0; i < 5; ++i)
   {
-    EXPECT_NEAR(result.cam_positions[i].x(), static_cast<double>(i), 0.2) << "Cam " << i;
-    EXPECT_NEAR(result.cam_positions[i].y(), 0.0, 0.2) << "Cam " << i;
-    EXPECT_NEAR(result.cam_positions[i].z(), 0.0, 0.2) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].x(), static_cast<double>(i), 0.05) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].y(), 0.0, 0.05) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].z(), 0.0, 0.05) << "Cam " << i;
   }
 }
 
@@ -221,9 +221,9 @@ TEST(SchurSlam, SparseSchur)
 
   for (int i = 0; i < 5; ++i)
   {
-    EXPECT_NEAR(result.cam_positions[i].x(), static_cast<double>(i), 0.2) << "Cam " << i;
-    EXPECT_NEAR(result.cam_positions[i].y(), 0.0, 0.2) << "Cam " << i;
-    EXPECT_NEAR(result.cam_positions[i].z(), 0.0, 0.2) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].x(), static_cast<double>(i), 0.05) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].y(), 0.0, 0.05) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].z(), 0.0, 0.05) << "Cam " << i;
   }
 }
 
@@ -237,9 +237,9 @@ TEST(SchurSlam, IterativeSchur)
 
   for (int i = 0; i < 5; ++i)
   {
-    EXPECT_NEAR(result.cam_positions[i].x(), static_cast<double>(i), 0.3) << "Cam " << i;
-    EXPECT_NEAR(result.cam_positions[i].y(), 0.0, 0.3) << "Cam " << i;
-    EXPECT_NEAR(result.cam_positions[i].z(), 0.0, 0.3) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].x(), static_cast<double>(i), 0.05) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].y(), 0.0, 0.05) << "Cam " << i;
+    EXPECT_NEAR(result.cam_positions[i].z(), 0.0, 0.05) << "Cam " << i;
   }
 }
 
