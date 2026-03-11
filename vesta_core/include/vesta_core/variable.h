@@ -41,11 +41,14 @@
 #include <vesta_core/uuid.h>
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
 
+#include <algorithm>
 #include <iostream>
 #include <limits>
 #include <ostream>
 #include <string>
+#include <vector>
 
 /**
  * @brief Implementation of the clone() member function for derived classes
@@ -350,6 +353,41 @@ public:
   }
 
   /**
+   * @brief Save the current variable values as the linearization point
+   *
+   * Copies data() into an internal buffer. Used by FEJ (First Estimate Jacobian)
+   * marginalization to evaluate Jacobians at a fixed linearization point.
+   */
+  void setLinearizationPoint()
+  {
+    linearization_point_.assign(data(), data() + size());
+  }
+
+  /**
+   * @brief Returns the linearization point, or data() if none has been set
+   */
+  const double* linearizationPoint() const
+  {
+    return linearization_point_.empty() ? data() : linearization_point_.data();
+  }
+
+  /**
+   * @brief Returns true if a linearization point has been explicitly set
+   */
+  bool hasLinearizationPoint() const
+  {
+    return !linearization_point_.empty();
+  }
+
+  /**
+   * @brief Clear the stored linearization point
+   */
+  void clearLinearizationPoint()
+  {
+    linearization_point_.clear();
+  }
+
+  /**
    * @brief Specifies the lower bound value of each variable dimension
    *
    * Defaults to -max.
@@ -451,7 +489,8 @@ public:
   virtual void deserialize(vesta_core::TextInputArchive& /* archive */) = 0;
 
 private:
-  vesta_core::UUID uuid_;  //!< The unique ID number for this variable
+  vesta_core::UUID uuid_;                         //!< The unique ID number for this variable
+  std::vector<double> linearization_point_;        //!< Stored linearization point for FEJ
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;
@@ -474,6 +513,7 @@ private:
   void serialize(Archive& archive, const unsigned int /* version */)
   {
     archive & uuid_;
+    archive & linearization_point_;
   }
 };
 

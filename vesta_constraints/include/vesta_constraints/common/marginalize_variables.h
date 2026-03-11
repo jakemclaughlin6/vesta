@@ -35,6 +35,7 @@
  */
 
 #include <vesta_constraints/common/marginal_constraint.h>
+#include <vesta_constraints/common/marginalizer.h>
 #include <vesta_constraints/common/uuid_ordering.h>
 #include <vesta_core/constraint.h>
 #include <vesta_core/eigen.h>
@@ -136,6 +137,23 @@ vesta_core::Transaction marginalizeVariables(const std::string& source,
                                              const vesta_core::Graph& graph,
                                              const vesta_constraints::UuidOrdering& elimination_order);
 
+/**
+ * @brief Generate a transaction that marginalizes out the requested variables
+ * using the provided marginalizer
+ *
+ * This overload allows the caller to choose a marginalization strategy at
+ * runtime (e.g. QRMarginalizer or SchurMarginalizer).
+ *
+ * @param[in] source                 The name of the sensor or motion model
+ * @param[in] marginalized_variables The set of variable UUIDs to marginalize out
+ * @param[in] graph                  The graph containing the variables and constraints
+ * @param[in] marginalizer           The marginalization strategy to use
+ * @return A transaction containing marginal constraints to add and variables/constraints to remove
+ */
+vesta_core::Transaction marginalizeVariables(const std::string& source,
+                                             const std::vector<vesta_core::UUID>& marginalized_variables,
+                                             const vesta_core::Graph& graph, Marginalizer& marginalizer);
+
 namespace detail
 {
 
@@ -168,6 +186,22 @@ struct LinearTerm
  */
 LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core::Graph& graph,
                      const UuidOrdering& elimination_order);
+
+/**
+ * @brief Linearize the nonlinear constraint with optional FEJ support
+ *
+ * When \p use_fej is true, Jacobians are evaluated at the stored linearization
+ * points while residuals use current variable values. Variables without a
+ * stored linearization point fall back to current values.
+ *
+ * @param[in] constraint        The constraint to linearize
+ * @param[in] graph             A graph containing the variables
+ * @param[in] elimination_order A mapping from variable UUID to elimination order
+ * @param[in] use_fej           If true, use First Estimate Jacobian linearization
+ * @return A LinearTerm consisting of Jacobian blocks in elimination order
+ */
+LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core::Graph& graph,
+                     const UuidOrdering& elimination_order, bool use_fej);
 
 /**
  * @brief Marginalize out the lowest-ordered variable from the provided set of

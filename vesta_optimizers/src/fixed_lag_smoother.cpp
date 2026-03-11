@@ -35,6 +35,7 @@
 
 #include <glog/logging.h>
 #include <vesta_constraints/common/marginalize_variables.h>
+#include <vesta_constraints/common/qr_marginalizer.h>
 #include <vesta_core/graph.h>
 #include <vesta_core/transaction.h>
 #include <vesta_core/uuid.h>
@@ -71,8 +72,14 @@ namespace vesta_optimizers
 {
 
 FixedLagSmoother::FixedLagSmoother(const FixedLagSmootherParams& params, vesta_core::Graph::UniquePtr graph)
-  : params_(params), graph_(std::move(graph)), started_(false)
+  : params_(params), graph_(std::move(graph)), started_(false),
+    marginalizer_(std::make_unique<vesta_constraints::QRMarginalizer>())
 {
+}
+
+void FixedLagSmoother::setMarginalizer(std::unique_ptr<vesta_constraints::Marginalizer> marginalizer)
+{
+  marginalizer_ = std::move(marginalizer);
 }
 
 void FixedLagSmoother::addTransaction(const std::string& sensor_name, vesta_core::Transaction::SharedPtr transaction)
@@ -161,8 +168,8 @@ ceres::Solver::Summary FixedLagSmoother::optimize()
 
   // Compute a transaction that marginalizes out old variables
   lag_expiration_ = computeLagExpirationTime();
-  marginal_transaction_ = vesta_constraints::marginalizeVariables(
-      "FixedLagSmoother", computeVariablesToMarginalize(lag_expiration_), *graph_);
+  marginal_transaction_ =
+      marginalizer_->marginalize("FixedLagSmoother", computeVariablesToMarginalize(lag_expiration_), *graph_);
 
   // Perform any post-marginal cleanup
   postprocessMarginalization(marginal_transaction_);

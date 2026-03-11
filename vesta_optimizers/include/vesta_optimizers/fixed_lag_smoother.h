@@ -34,6 +34,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <vesta_constraints/common/marginalizer.h>
 #include <vesta_core/graph.h>
 #include <vesta_core/timestamp.h>
 #include <vesta_core/transaction.h>
@@ -94,6 +95,16 @@ public:
    * @brief Destructor
    */
   ~FixedLagSmoother() override = default;
+
+  /**
+   * @brief Set the marginalization strategy
+   *
+   * By default, QRMarginalizer is used. Call this method to use a different
+   * strategy (e.g. SchurMarginalizer for graphs with many non-stamped variables).
+   *
+   * @param[in] marginalizer The marginalization strategy (takes ownership)
+   */
+  void setMarginalizer(std::unique_ptr<vesta_constraints::Marginalizer> marginalizer);
 
   /**
    * @brief Add a transaction to the pending queue
@@ -222,6 +233,7 @@ private:
   vesta_core::Timestamp start_time_;              //!< The timestamp of the first transaction
   bool started_;                                  //!< Flag indicating the optimizer has received at least one
                                                   //!< transaction
+  std::unique_ptr<vesta_constraints::Marginalizer> marginalizer_;  //!< The marginalization strategy
 };
 
 }  // namespace vesta_optimizers

@@ -33,6 +33,7 @@
  */
 #include <vesta_constraints/common/marginal_constraint.h>
 #include <vesta_constraints/common/marginalize_variables.h>
+#include <vesta_constraints/common/qr_marginalizer.h>
 #include <vesta_constraints/common/uuid_ordering.h>
 #include <vesta_constraints/common/variable_constraints.h>
 #include <vesta_core/uuid.h>
@@ -162,8 +163,7 @@ vesta_core::Transaction marginalizeVariables(const std::string& source,
                                              const std::vector<vesta_core::UUID>& marginalized_variables,
                                              const vesta_core::Graph& graph)
 {
-  return marginalizeVariables(source, marginalized_variables, graph,
-                              computeEliminationOrder(marginalized_variables, graph));
+  return QRMarginalizer(false).marginalize(source, marginalized_variables, graph);
 }
 
 vesta_core::Transaction marginalizeVariables(const std::string& source,
@@ -171,87 +171,14 @@ vesta_core::Transaction marginalizeVariables(const std::string& source,
                                              const vesta_core::Graph& graph,
                                              const vesta_constraints::UuidOrdering& elimination_order)
 {
-  // TODO(swilliams) The method used to marginalize variables assumes that all
-  // variables are fully constrained.
-  //                 However, with the introduction of "variables held
-  //                 constant", it is possible to have a well-behaved system
-  //                 that is not fully-constrained. Ceres handles this issue by
-  //                 removing constant variables from the problem before the
-  //                 linearization and solve steps. A similar approach should be
-  //                 implemented here, but that will require a major refactor.
+  return QRMarginalizer(false).marginalize(source, marginalized_variables, graph, elimination_order);
+}
 
-  assert(std::all_of(marginalized_variables.begin(), marginalized_variables.end(),
-                     [&elimination_order, &marginalized_variables](const vesta_core::UUID& variable_uuid) {
-                       return elimination_order.exists(variable_uuid) &&
-                              elimination_order.at(variable_uuid) < marginalized_variables.size();
-                     }));  // NOLINT
-
-  vesta_core::Transaction transaction;
-
-  // Mark all of the marginalized variables for removal
-  for (const auto& variable_uuid : marginalized_variables)
-  {
-    transaction.removeVariable(variable_uuid);
-  }
-
-  // Copy the elimination order so we can add additional variables if needed
-  auto variable_order = elimination_order;
-
-  // Linearize all involved constraints, and store them with the variable where
-  // they will be used
-  auto used_constraints = std::unordered_set<vesta_core::UUID, vesta_core::uuid::hash>();
-  std::vector<std::vector<detail::LinearTerm>> linear_terms(variable_order.size());
-  for (size_t i = 0ul; i < marginalized_variables.size(); ++i)
-  {
-    const auto constraints = graph.getConnectedConstraints(variable_order[i]);
-    for (const auto& constraint : constraints)
-    {
-      if (used_constraints.find(constraint.uuid()) == used_constraints.end())
-      {
-        used_constraints.insert(constraint.uuid());
-        // Ensure all connected variables are added to the ordering
-        for (const auto& variable_uuid : constraint.variables())
-        {
-          variable_order.push_back(variable_uuid);
-        }
-        // Add the linearized constraint to the lowest-ordered connected
-        // variable
-        linear_terms[i].push_back(detail::linearize(constraint, graph, variable_order));
-        // And mark the constraint for removal from the graph
-        transaction.removeConstraint(constraint.uuid());
-      }
-    }
-  }
-
-  // Expand the linear_terms to include all the connected variables as well
-  // During the marginalize process, marginal variables may be associated with
-  // these higher-ordered variables
-  linear_terms.resize(variable_order.size());
-
-  // Use the linearized constraints to marginalize each variable in order
-  // Place the resulting marginal in the linear constraint bucket associated
-  // with the lowest-ordered remaining variable
-  for (size_t i = 0ul; i < marginalized_variables.size(); ++i)
-  {
-    auto linear_marginal = detail::marginalizeNext(linear_terms[i]);
-    if (!linear_marginal.variables.empty())
-    {
-      auto lowest_ordered_variable = linear_marginal.variables.front();
-      linear_terms[lowest_ordered_variable].push_back(std::move(linear_marginal));
-    }
-  }
-
-  // Convert all remaining linear marginals into marginal constraints
-  for (size_t i = marginalized_variables.size(); i < linear_terms.size(); ++i)
-  {
-    for (const auto& linear_term : linear_terms[i])
-    {
-      auto marginal_constraint = detail::createMarginalConstraint(source, linear_term, graph, variable_order);
-      transaction.addConstraint(std::move(marginal_constraint));
-    }
-  }
-
-  return transaction;
+vesta_core::Transaction marginalizeVariables(const std::string& source,
+                                             const std::vector<vesta_core::UUID>& marginalized_variables,
+                                             const vesta_core::Graph& graph, Marginalizer& marginalizer)
+{
+  return marginalizer.marginalize(source, marginalized_variables, graph);
 }
 
 namespace detail
@@ -282,39 +209,61 @@ namespace detail
 LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core::Graph& graph,
                      const UuidOrdering& elimination_order)
 {
+  return linearize(constraint, graph, elimination_order, false);
+}
+
+LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core::Graph& graph,
+                     const UuidOrdering& elimination_order, bool use_fej)
+{
   LinearTerm result;
 
-  // Generate the cost function from the input constraint
   auto cost_function = constraint.costFunction();
   size_t row_count = cost_function->num_residuals();
 
-  // Loop over the constraint's variables and do several things:
-  // * Generate a vector of variable value pointers. This is needed for the
-  // Ceres API.
-  // * Allocate a matrix for each jacobian block. We will have Ceres populate
-  // the matrix.
-  // * Generate a vector of jacobian pointers. This is needed for the Ceres API.
   const auto& variable_uuids = constraint.variables();
   const size_t variable_count = variable_uuids.size();
-  std::vector<const double*> variable_values;
-  variable_values.reserve(variable_count);
+
+  std::vector<const double*> current_values;
+  std::vector<const double*> linearization_values;
+  current_values.reserve(variable_count);
+  if (use_fej)
+  {
+    linearization_values.reserve(variable_count);
+  }
+
   std::vector<double*> jacobians;
   jacobians.reserve(variable_count);
   result.variables.reserve(variable_count);
   result.A.reserve(variable_count);
+
   for (const auto& variable_uuid : variable_uuids)
   {
     const auto& variable = graph.getVariable(variable_uuid);
-    variable_values.push_back(variable.data());
+    current_values.push_back(variable.data());
+    if (use_fej)
+    {
+      linearization_values.push_back(variable.linearizationPoint());
+    }
     result.variables.push_back(elimination_order.at(variable_uuid));
     result.A.push_back(vesta_core::MatrixXd(row_count, variable.size()));
     jacobians.push_back(result.A.back().data());
   }
   result.b = vesta_core::VectorXd(row_count);
 
-  // Evaluate the cost function, populating the A matrices and b vector
-  bool success = cost_function->Evaluate(variable_values.data(), result.b.data(), jacobians.data());
+  bool success;
+  if (use_fej)
+  {
+    // FEJ: Jacobians at linearization points, residuals at current values
+    vesta_core::VectorXd dummy_residuals(row_count);
+    success = cost_function->Evaluate(linearization_values.data(), dummy_residuals.data(), jacobians.data());
+    success = success && cost_function->Evaluate(current_values.data(), result.b.data(), nullptr);
+  }
+  else
+  {
+    success = cost_function->Evaluate(current_values.data(), result.b.data(), jacobians.data());
+  }
   delete cost_function;
+
   success = success && result.b.array().isFinite().all();
   for (const auto& A : result.A)
   {
@@ -322,21 +271,14 @@ LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core:
   }
   if (!success)
   {
-    throw std::runtime_error("Error in evaluating the cost function. There are "
-                             "two possible reasons. "
-                             "Either the CostFunction did not evaluate and "
-                             "fill all residual and jacobians "
-                             "that were requested or there was a non-finite "
-                             "value (nan/infinite) generated "
+    throw std::runtime_error("Error in evaluating the cost function. "
+                             "Either the CostFunction did not evaluate and fill all residual and jacobians "
+                             "that were requested or there was a non-finite value (nan/infinite) generated "
                              "during the jacobian computation.");
   }
 
-  // Update the Jacobians with the manifolds. This potentially changes the size
-  // of the Jacobian block. The classic example is a quaternion parameter, which
-  // has 4 components but only 3 degrees of freedom. The Jacobian will be
-  // transformed from 4 columns to 3 columns after the manifold is applied. We
-  // also check for variables that have been marked as constants. Since these
-  // variables cannot change value, their derivatives/Jacobians should be zero.
+  // Apply manifold corrections
+  const auto& eval_values = use_fej ? linearization_values : current_values;
   for (size_t index = 0ul; index < variable_count; ++index)
   {
     const auto& variable_uuid = variable_uuids[index];
@@ -354,7 +296,7 @@ LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core:
     else if (manifold)
     {
       vesta_core::MatrixXd J(manifold->AmbientSize(), manifold->TangentSize());
-      manifold->PlusJacobian(variable_values[index], J.data());
+      manifold->PlusJacobian(eval_values[index], J.data());
       jacobian *= J;
     }
     if (manifold)
@@ -382,7 +324,6 @@ LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core:
       alpha = 1.0 - std::sqrt(D);
     }
 
-    // Correct the Jacobians
     for (auto& jacobian : result.A)
     {
       if (alpha == 0.0)
@@ -391,13 +332,10 @@ LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core:
       }
       else
       {
-        // TODO(swilliams) This may be inefficient, at least according to notes
-        // in the Ceres codebase.
         jacobian = sqrt_rho1 * (jacobian - (alpha / squared_norm) * result.b * (result.b.transpose() * jacobian));
       }
     }
 
-    // Correct the residuals
     result.b *= sqrt_rho1 / (1 - alpha);
   }
 
