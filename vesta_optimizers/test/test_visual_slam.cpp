@@ -51,6 +51,8 @@
 #include <vesta_variables/vision/point_3d_landmark.h>
 #include <vesta_variables/vision/stereo_camera_fixed.h>
 
+#include "common.h"
+
 #include <ceres/ceres.h>
 #include <gtest/gtest.h>
 
@@ -235,6 +237,7 @@ TEST(VisualSlamTest, VisualSlam_MonoBatch)
 
   optimizer.addTransaction("visual_slam", txn);
   auto summary = optimizer.optimize();
+  logSolverSummary("VisualSlam::MonoBatch", summary);
 
   ASSERT_TRUE(summary.IsSolutionUsable());
 
@@ -381,6 +384,7 @@ TEST(VisualSlamTest, VisualSlam_StereoBatch)
 
   optimizer.addTransaction("visual_slam", txn);
   auto summary = optimizer.optimize();
+  logSolverSummary("VisualSlam::StereoBatch", summary);
 
   ASSERT_TRUE(summary.IsSolutionUsable());
 
@@ -530,6 +534,7 @@ TEST(VisualSlamTest, VisualSlam_MonoFixedLag)
 
     smoother.addTransaction("visual_slam", txn);
     auto summary = smoother.optimize();
+    logSolverSummary("VisualSlam::MonoFixedLag [step " + std::to_string(i) + "]", summary);
     ASSERT_TRUE(summary.IsSolutionUsable()) << "Fixed-lag optimize failed at step " << i;
   }
 
@@ -681,6 +686,7 @@ TEST(VisualSlamTest, VisualSlam_StereoFixedLag)
 
     smoother.addTransaction("visual_slam", txn);
     auto summary = smoother.optimize();
+    logSolverSummary("VisualSlam::StereoFixedLag [step " + std::to_string(i) + "]", summary);
     ASSERT_TRUE(summary.IsSolutionUsable()) << "Fixed-lag optimize failed at step " << i;
   }
 
@@ -819,6 +825,7 @@ TEST(VisualSlamTest, VisualSlam_MonoBatchNoiseless)
 
   optimizer.addTransaction("visual_slam", txn);
   auto summary = optimizer.optimize();
+  logSolverSummary("VisualSlam::MonoBatchNoiseless", summary);
 
   ASSERT_TRUE(summary.IsSolutionUsable());
 
@@ -957,6 +964,7 @@ TEST(VisualSlamTest, VisualSlam_StereoBatchNoiseless)
 
   optimizer.addTransaction("visual_slam", txn);
   auto summary = optimizer.optimize();
+  logSolverSummary("VisualSlam::StereoBatchNoiseless", summary);
 
   ASSERT_TRUE(summary.IsSolutionUsable());
 
@@ -977,6 +985,205 @@ TEST(VisualSlamTest, VisualSlam_StereoBatchNoiseless)
     EXPECT_NEAR(lm.x(), kLandmarks[j].x(), 1e-3) << "Landmark " << j << " x";
     EXPECT_NEAR(lm.y(), kLandmarks[j].y(), 1e-3) << "Landmark " << j << " y";
     EXPECT_NEAR(lm.z(), kLandmarks[j].z(), 1e-3) << "Landmark " << j << " z";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Test: Large-scale stereo fixed-lag smoother with marginalization
+//
+// 20 keyframes at 2 Hz over 10 seconds, 5-second lag window.
+// ~2000 landmarks spread along the trajectory; the sliding window
+// holds ~1000 landmarks at any time. Marginalization kicks in once
+// the window fills, exercising the full fixed-lag pipeline.
+// ---------------------------------------------------------------------------
+TEST(VisualSlamTest, StereoFixedLagLargeScale)
+{
+  // --- Configuration ---
+  constexpr int NUM_KEYFRAMES = 20;
+  constexpr double KEYFRAME_DT = 0.5;            // seconds between keyframes
+  constexpr double LAG_DURATION = 5.0;            // sliding window duration
+  constexpr int TOTAL_LANDMARKS = 200;            // total landmarks in environment
+  constexpr double IMAGE_W = 640.0;
+  constexpr double IMAGE_H = 480.0;
+  constexpr double MIN_DEPTH = 0.5;
+
+  std::mt19937 rng(42);
+  const auto cam_device_id = vesta_core::uuid::generate("cam");
+
+  // Ground truth: constant velocity along x-axis at 1 m/s
+  // (keyframe spacing = KEYFRAME_DT * 1 m/s = 0.5 m)
+  std::vector<Eigen::Vector3d> gt_cam;
+  for (int i = 0; i < NUM_KEYFRAMES; ++i)
+  {
+    gt_cam.emplace_back(i * KEYFRAME_DT, 0.0, 0.0);
+  }
+  const double traj_length = (NUM_KEYFRAMES - 1) * KEYFRAME_DT;
+
+  // Generate landmarks spread along and beyond the trajectory
+  std::uniform_real_distribution<double> lm_x(-2.0, traj_length + 2.0);
+  std::uniform_real_distribution<double> lm_y(-3.0, 3.0);
+  std::uniform_real_distribution<double> lm_z(4.0, 15.0);
+
+  std::vector<Eigen::Vector3d> gt_landmarks;
+  gt_landmarks.reserve(TOTAL_LANDMARKS);
+  for (int j = 0; j < TOTAL_LANDMARKS; ++j)
+  {
+    gt_landmarks.emplace_back(lm_x(rng), lm_y(rng), lm_z(rng));
+  }
+
+  // Stereo camera intrinsics (fixed)
+  auto stereo_cam = vesta_variables::StereoCameraFixed::make_shared(uint64_t{ 0 });
+  stereo_cam->fx() = kFx;
+  stereo_cam->fy() = kFy;
+  stereo_cam->cx() = kCx;
+  stereo_cam->cy() = kCy;
+  stereo_cam->baseline() = kBaseline;
+
+  // Pre-create all landmark variables (only added to graph on first observation)
+  std::normal_distribution<double> lm_init_noise(0.0, 0.2);
+  std::vector<vesta_variables::Point3DLandmark::SharedPtr> landmarks;
+  landmarks.reserve(TOTAL_LANDMARKS);
+  for (int j = 0; j < TOTAL_LANDMARKS; ++j)
+  {
+    auto lm = vesta_variables::Point3DLandmark::make_shared(static_cast<uint64_t>(j));
+    lm->x() = gt_landmarks[j].x() + lm_init_noise(rng);
+    lm->y() = gt_landmarks[j].y() + lm_init_noise(rng);
+    lm->z() = gt_landmarks[j].z() + lm_init_noise(rng);
+    landmarks.push_back(lm);
+  }
+
+  // Track which landmarks have been added to the graph
+  std::vector<bool> landmark_added(TOTAL_LANDMARKS, false);
+
+  // Set up fixed-lag smoother
+  auto graph = std::make_unique<vesta_graphs::HashGraph>();
+  vesta_optimizers::FixedLagSmootherParams params;
+  params.lag_duration = vesta_core::Duration(static_cast<int64_t>(LAG_DURATION * 1e9));
+  params.solver_options.max_num_iterations = 50;
+  params.solver_options.linear_solver_type = ceres::SPARSE_SCHUR;
+  vesta_optimizers::FixedLagSmoother smoother(params, std::move(graph));
+
+  std::vector<vesta_variables::Position3DStamped::SharedPtr> positions;
+  std::vector<vesta_variables::Orientation3DStamped::SharedPtr> orientations;
+
+  std::normal_distribution<double> pixel_noise(0.0, 1.0);
+  std::normal_distribution<double> pos_init_noise(0.0, 0.05);
+  vesta_core::Matrix4d pixel_cov = vesta_core::Matrix4d::Identity();
+
+  for (int i = 0; i < NUM_KEYFRAMES; ++i)
+  {
+    auto txn = std::make_shared<vesta_core::Transaction>();
+    vesta_core::Timestamp stamp(static_cast<int64_t>(i * KEYFRAME_DT * 1e9));
+    txn->stamp(stamp);
+    txn->addInvolvedStamp(stamp);
+
+    // Camera pose (identity orientation, perturbed position)
+    auto pos = vesta_variables::Position3DStamped::make_shared(stamp, cam_device_id);
+    auto ori = vesta_variables::Orientation3DStamped::make_shared(stamp, cam_device_id);
+    pos->x() = gt_cam[i].x() + pos_init_noise(rng);
+    pos->y() = gt_cam[i].y() + pos_init_noise(rng);
+    pos->z() = gt_cam[i].z() + pos_init_noise(rng);
+    ori->w() = 1.0;
+    ori->x() = 0.0;
+    ori->y() = 0.0;
+    ori->z() = 0.0;
+
+    positions.push_back(pos);
+    orientations.push_back(ori);
+    txn->addVariable(pos);
+    txn->addVariable(ori);
+
+    // First transaction: add stereo camera intrinsics
+    if (i == 0)
+    {
+      txn->addVariable(stereo_cam);
+    }
+
+    // Pose prior on first camera
+    if (i == 0)
+    {
+      vesta_core::Vector7d prior_mean;
+      prior_mean << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
+      vesta_core::Matrix6d prior_cov = vesta_core::Matrix6d::Identity() * 1e-4;
+      auto prior =
+          vesta_constraints::AbsolutePose3DStampedConstraint::make_shared("prior", *pos, *ori, prior_mean, prior_cov);
+      txn->addConstraint(prior);
+    }
+
+    // Relative odometry from previous keyframe
+    if (i > 0)
+    {
+      vesta_core::Timestamp prev_stamp(static_cast<int64_t>((i - 1) * KEYFRAME_DT * 1e9));
+      txn->addInvolvedStamp(prev_stamp);
+
+      Eigen::Vector3d dt = gt_cam[i] - gt_cam[i - 1];
+      vesta_core::Vector7d delta;
+      delta << dt.x(), dt.y(), dt.z(), 1.0, 0.0, 0.0, 0.0;
+      vesta_core::Matrix6d odom_cov = vesta_core::Matrix6d::Identity() * 0.01;
+      auto rel = vesta_constraints::RelativePose3DStampedConstraint::make_shared(
+          "odom", *positions[i - 1], *orientations[i - 1], *pos, *ori, delta, odom_cov);
+      txn->addConstraint(rel);
+    }
+
+    // Stereo reprojection constraints for all visible landmarks
+    int obs_count = 0;
+    for (int j = 0; j < TOTAL_LANDMARKS; ++j)
+    {
+      // p_cam = R_wc^{-1} * (X - p_world) = X - p_world  (identity R)
+      Eigen::Vector3d p_cam = gt_landmarks[j] - gt_cam[i];
+      if (p_cam.z() <= MIN_DEPTH)
+      {
+        continue;
+      }
+
+      double u_left = kFx * p_cam.x() / p_cam.z() + kCx;
+      double v_left = kFy * p_cam.y() / p_cam.z() + kCy;
+      double u_right = kFx * (p_cam.x() - kBaseline) / p_cam.z() + kCx;
+
+      if (u_left < 0 || u_left > IMAGE_W || v_left < 0 || v_left > IMAGE_H)
+      {
+        continue;
+      }
+
+      // Add landmark variable on first observation
+      if (!landmark_added[j])
+      {
+        txn->addVariable(landmarks[j]);
+        landmark_added[j] = true;
+      }
+
+      vesta_core::Vector4d obs;
+      obs << u_left + pixel_noise(rng), v_left + pixel_noise(rng), u_right + pixel_noise(rng),
+          v_left + pixel_noise(rng);  // v_right == v_left for rectified stereo
+
+      auto constraint = vesta_constraints::StereoReprojectionErrorConstraint::make_shared(
+          "stereo_camera", *pos, *ori, *stereo_cam, *landmarks[j], obs, pixel_cov);
+      txn->addConstraint(constraint);
+      ++obs_count;
+    }
+
+    smoother.addTransaction("visual_slam", txn);
+    auto summary = smoother.optimize();
+
+    // Log stats with observation count for context
+    std::cout << "  [kf " << i << "] observations=" << obs_count;
+    logSolverSummary("StereoFixedLagLargeScale [kf " + std::to_string(i) + "]", summary);
+    ASSERT_TRUE(summary.IsSolutionUsable()) << "Fixed-lag optimize failed at keyframe " << i;
+  }
+
+  // Verify the most recent poses in the window are close to ground truth
+  const auto& result_graph = smoother.graph();
+  for (int i = NUM_KEYFRAMES - 3; i < NUM_KEYFRAMES; ++i)
+  {
+    if (!result_graph.variableExists(positions[i]->uuid()))
+    {
+      continue;
+    }
+    const auto& pos =
+        dynamic_cast<const vesta_variables::Position3DStamped&>(result_graph.getVariable(positions[i]->uuid()));
+    EXPECT_NEAR(pos.x(), gt_cam[i].x(), 0.2) << "Camera " << i << " x";
+    EXPECT_NEAR(pos.y(), gt_cam[i].y(), 0.2) << "Camera " << i << " y";
+    EXPECT_NEAR(pos.z(), gt_cam[i].z(), 0.2) << "Camera " << i << " z";
   }
 }
 

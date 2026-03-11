@@ -35,11 +35,32 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
+#include <ceres/ceres.h>
+
 #include <algorithm>
+#include <iostream>
 #include <ostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+inline void logSolverSummary(const std::string& label, const ceres::Solver::Summary& summary)
+{
+  std::cout << "\n=== Solver Statistics: " << label << " ===" << "\n"
+            << "  Parameter blocks:  " << summary.num_parameter_blocks << "\n"
+            << "  Parameters:        " << summary.num_parameters << "\n"
+            << "  Effective params:  " << summary.num_effective_parameters << "\n"
+            << "  Residual blocks:   " << summary.num_residual_blocks << "\n"
+            << "  Residuals:         " << summary.num_residuals << "\n"
+            << "  Iterations:        " << summary.num_successful_steps << " successful, "
+            << summary.num_unsuccessful_steps << " unsuccessful\n"
+            << "  Initial cost:      " << summary.initial_cost << "\n"
+            << "  Final cost:        " << summary.final_cost << "\n"
+            << "  Total time:        " << summary.total_time_in_seconds * 1000.0 << " ms\n"
+            << "  Linear solver:     " << summary.linear_solver_time_in_seconds * 1000.0 << " ms\n"
+            << "  Solver type:       " << ceres::LinearSolverTypeToString(summary.linear_solver_type_used) << "\n"
+            << std::endl;
+}
 
 /**
  * @brief Helper function to print the elements of std::vector<T> objects

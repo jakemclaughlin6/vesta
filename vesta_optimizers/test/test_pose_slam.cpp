@@ -16,6 +16,8 @@
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 
+#include "common.h"
+
 #include <ceres/ceres.h>
 #include <gtest/gtest.h>
 
@@ -150,6 +152,7 @@ TEST(PoseSlam, Batch2D)
   vesta_optimizers::BatchOptimizer optimizer(params, std::move(graph));
   optimizer.addTransaction("odom", txn);
   auto summary = optimizer.optimize();
+  logSolverSummary("PoseSlam::Batch2D", summary);
 
   EXPECT_TRUE(summary.IsSolutionUsable());
 
@@ -236,6 +239,7 @@ TEST(PoseSlam, Batch3D)
   vesta_optimizers::BatchOptimizer optimizer(params, std::move(graph));
   optimizer.addTransaction("odom", txn);
   auto summary = optimizer.optimize();
+  logSolverSummary("PoseSlam::Batch3D", summary);
 
   EXPECT_TRUE(summary.IsSolutionUsable());
 
@@ -336,6 +340,7 @@ TEST(PoseSlam, FixedLag2D)
     txn->addConstraint(rel);
     smoother.addTransaction("odom", txn);
     auto summary = smoother.optimize();
+    logSolverSummary("PoseSlam::FixedLag2D [step " + std::to_string(i) + "]", summary);
     ASSERT_TRUE(summary.IsSolutionUsable()) << "FLS optimize failed at step " << i;
   }
 
@@ -433,6 +438,7 @@ TEST(PoseSlam, FixedLag3D)
     txn->addConstraint(rel);
     smoother.addTransaction("odom", txn);
     auto summary = smoother.optimize();
+    logSolverSummary("PoseSlam::FixedLag3D [step " + std::to_string(i) + "]", summary);
     ASSERT_TRUE(summary.IsSolutionUsable()) << "FLS optimize failed at step " << i;
   }
 

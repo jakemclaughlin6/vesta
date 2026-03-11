@@ -18,6 +18,8 @@
 #include <vesta_variables/vision/point_3d_landmark.h>
 #include <vesta_variables/vision/stereo_camera_fixed.h>
 
+#include "common.h"
+
 #include <ceres/ceres.h>
 #include <gtest/gtest.h>
 
@@ -278,6 +280,7 @@ TEST(VisualInertialSlam, BatchWithPosePriors)
   vesta_optimizers::BatchOptimizer optimizer(params, std::move(graph));
   optimizer.addTransaction("vio", txn);
   auto summary = optimizer.optimize();
+  logSolverSummary("VIO::BatchWithPosePriors", summary);
 
   ASSERT_TRUE(summary.IsSolutionUsable());
 
@@ -438,6 +441,7 @@ TEST(VisualInertialSlam, BatchWithStereoReprojection)
   vesta_optimizers::BatchOptimizer optimizer(params, std::move(graph));
   optimizer.addTransaction("vio", txn);
   auto summary = optimizer.optimize();
+  logSolverSummary("VIO::BatchWithStereoReprojection", summary);
 
   ASSERT_TRUE(summary.IsSolutionUsable());
 

@@ -13,6 +13,8 @@
 #include <vesta_variables/vision/pinhole_camera_fixed.h>
 #include <vesta_variables/vision/point_3d_landmark.h>
 
+#include "common.h"
+
 #include <ceres/ceres.h>
 #include <gtest/gtest.h>
 
@@ -39,7 +41,8 @@ struct SchurTestResult
 // Build and solve a visual SLAM problem with the given linear solver type.
 // The reprojection cost functor uses world-frame position and orientation
 // (R_wc). For identity orientation: p_cam = landmark - position.
-static SchurTestResult runVisualSlamWithSolver(ceres::LinearSolverType solver_type)
+static SchurTestResult runVisualSlamWithSolver(ceres::LinearSolverType solver_type,
+                                               const std::string& solver_label = "")
 {
   const int num_cams = 5;
   const auto device_id = vesta_core::uuid::generate("cam");
@@ -174,6 +177,8 @@ static SchurTestResult runVisualSlamWithSolver(ceres::LinearSolverType solver_ty
   optimizer.addTransaction("slam", txn);
   auto summary = optimizer.optimize();
 
+  logSolverSummary("SchurSlam::" + solver_label, summary);
+
   // Extract results
   SchurTestResult result;
   result.solution_usable = summary.IsSolutionUsable();
@@ -199,7 +204,7 @@ static SchurTestResult runVisualSlamWithSolver(ceres::LinearSolverType solver_ty
 // =============================================================================
 TEST(SchurSlam, DenseSchur)
 {
-  auto result = runVisualSlamWithSolver(ceres::DENSE_SCHUR);
+  auto result = runVisualSlamWithSolver(ceres::DENSE_SCHUR, "DenseSchur");
   EXPECT_TRUE(result.solution_usable);
 
   // Check camera world positions
@@ -216,7 +221,7 @@ TEST(SchurSlam, DenseSchur)
 // =============================================================================
 TEST(SchurSlam, SparseSchur)
 {
-  auto result = runVisualSlamWithSolver(ceres::SPARSE_SCHUR);
+  auto result = runVisualSlamWithSolver(ceres::SPARSE_SCHUR, "SparseSchur");
   EXPECT_TRUE(result.solution_usable);
 
   for (int i = 0; i < 5; ++i)
@@ -232,7 +237,7 @@ TEST(SchurSlam, SparseSchur)
 // =============================================================================
 TEST(SchurSlam, IterativeSchur)
 {
-  auto result = runVisualSlamWithSolver(ceres::ITERATIVE_SCHUR);
+  auto result = runVisualSlamWithSolver(ceres::ITERATIVE_SCHUR, "IterativeSchur");
   EXPECT_TRUE(result.solution_usable);
 
   for (int i = 0; i < 5; ++i)
