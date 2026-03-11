@@ -93,7 +93,7 @@ vesta_core::Transaction convertToNullspaceConstraints(const std::string& source,
 
     // Create the nullspace projection constraint
     auto nullspace_constraint = NullspaceProjectionConstraint::make_shared(source, positions, orientations,
-                                                                          *calibration_ptr, observations, covariance);
+                                                                           *calibration_ptr, observations, covariance);
 
     transaction.addConstraint(nullspace_constraint);
 

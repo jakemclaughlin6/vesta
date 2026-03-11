@@ -8,8 +8,8 @@
 #include <vesta_graphs/hash_graph.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
-#include <vesta_variables/vision/stereo_camera_fixed.h>
 #include <vesta_variables/vision/point_3d_landmark.h>
+#include <vesta_variables/vision/stereo_camera_fixed.h>
 
 #include <ceres/problem.h>
 #include <ceres/solver.h>
@@ -30,8 +30,7 @@ namespace
 
 // Helper: project a world point through a stereo camera
 Eigen::Vector4d stereoProject(const Eigen::Vector3d& p_world_cam, const Eigen::Quaterniond& q_wc,
-                              const Eigen::Vector3d& point, double fx, double fy, double cx, double cy,
-                              double baseline)
+                              const Eigen::Vector3d& point, double fx, double fy, double cx, double cy, double baseline)
 {
   Eigen::Vector3d p_cam = q_wc.inverse() * (point - p_world_cam);
   double u_l = fx * p_cam.x() / p_cam.z() + cx;
@@ -51,8 +50,8 @@ struct TestScene
   double baseline = 0.12;
 
   // 6 landmarks at varying depths
-  std::vector<Eigen::Vector3d> landmarks = { { -1.0, -1.0, 8.0 },  { 1.0, -1.0, 10.0 }, { 1.0, 1.0, 12.0 },
-                                             { -1.0, 1.0, 9.0 },   { 0.0, 0.0, 15.0 },  { 0.5, -0.5, 6.0 } };
+  std::vector<Eigen::Vector3d> landmarks = { { -1.0, -1.0, 8.0 }, { 1.0, -1.0, 10.0 }, { 1.0, 1.0, 12.0 },
+                                             { -1.0, 1.0, 9.0 },  { 0.0, 0.0, 15.0 },  { 0.5, -0.5, 6.0 } };
 
   // 3 camera poses with both translation and rotation variety
   struct Pose
@@ -61,15 +60,13 @@ struct TestScene
     Eigen::Quaterniond orientation;  // world-from-camera
   };
 
-  std::vector<Pose> poses = {
-    { { 0.0, 0.0, 0.0 }, Eigen::Quaterniond::Identity() },
-    { { 1.5, 0.0, 0.2 },
-      Eigen::Quaterniond(Eigen::AngleAxisd(0.1, Eigen::Vector3d::UnitY())).normalized() },
-    { { 0.5, 1.0, -0.3 },
-      Eigen::Quaterniond(Eigen::AngleAxisd(-0.08, Eigen::Vector3d::UnitY()) *
-                         Eigen::AngleAxisd(0.05, Eigen::Vector3d::UnitX()))
-          .normalized() }
-  };
+  std::vector<Pose> poses = { { { 0.0, 0.0, 0.0 }, Eigen::Quaterniond::Identity() },
+                              { { 1.5, 0.0, 0.2 },
+                                Eigen::Quaterniond(Eigen::AngleAxisd(0.1, Eigen::Vector3d::UnitY())).normalized() },
+                              { { 0.5, 1.0, -0.3 },
+                                Eigen::Quaterniond(Eigen::AngleAxisd(-0.08, Eigen::Vector3d::UnitY()) *
+                                                   Eigen::AngleAxisd(0.05, Eigen::Vector3d::UnitX()))
+                                    .normalized() } };
 
   // Generate stereo observations for all landmarks from all poses
   std::vector<std::vector<Eigen::Vector4d>> generateObservations() const
@@ -279,10 +276,12 @@ TEST(StereoNullspaceProjectionConstraint, Optimization)
   TestScene scene;
   auto all_obs = scene.generateObservations();
 
-  auto make_pos = [](int i)
-  { return Position3DStamped::make_shared(vesta_core::Timestamp(i, 0), vesta_core::uuid::generate("cam")); };
-  auto make_ori = [](int i)
-  { return Orientation3DStamped::make_shared(vesta_core::Timestamp(i, 0), vesta_core::uuid::generate("cam")); };
+  auto make_pos = [](int i) {
+    return Position3DStamped::make_shared(vesta_core::Timestamp(i, 0), vesta_core::uuid::generate("cam"));
+  };
+  auto make_ori = [](int i) {
+    return Orientation3DStamped::make_shared(vesta_core::Timestamp(i, 0), vesta_core::uuid::generate("cam"));
+  };
 
   std::vector<Position3DStamped::SharedPtr> positions;
   std::vector<Orientation3DStamped::SharedPtr> orientations;
@@ -345,8 +344,8 @@ TEST(StereoNullspaceProjectionConstraint, Optimization)
       ori_vec.push_back(*orientations[i]);
     }
 
-    auto constraint = StereoNullspaceProjectionConstraint::make_shared("test", pos_vec, ori_vec, *calibration,
-                                                                       all_obs[j], cov);
+    auto constraint =
+        StereoNullspaceProjectionConstraint::make_shared("test", pos_vec, ori_vec, *calibration, all_obs[j], cov);
 
     std::vector<double*> param_blocks;
     for (size_t i = 0; i < scene.poses.size(); ++i)
@@ -427,8 +426,8 @@ TEST(StereoNullspaceProjectionConstraint, ConvertFromStereoReprojection)
 
     for (size_t i = 0; i < scene.poses.size(); ++i)
     {
-      auto constraint = StereoReprojectionErrorConstraint::make_shared(
-          "test", *positions[i], *orientations[i], *calibration, *landmark, all_obs[j][i], cov);
+      auto constraint = StereoReprojectionErrorConstraint::make_shared("test", *positions[i], *orientations[i],
+                                                                       *calibration, *landmark, all_obs[j][i], cov);
       graph.addConstraint(constraint);
     }
   }

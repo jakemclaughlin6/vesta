@@ -72,8 +72,10 @@ namespace vesta_optimizers
 {
 
 FixedLagSmoother::FixedLagSmoother(const FixedLagSmootherParams& params, vesta_core::Graph::UniquePtr graph)
-  : params_(params), graph_(std::move(graph)), started_(false),
-    marginalizer_(std::make_unique<vesta_constraints::QRMarginalizer>())
+  : params_(params)
+  , graph_(std::move(graph))
+  , started_(false)
+  , marginalizer_(std::make_unique<vesta_constraints::QRMarginalizer>())
 {
 }
 

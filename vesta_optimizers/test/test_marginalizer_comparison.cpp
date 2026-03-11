@@ -69,7 +69,7 @@ Eigen::Vector2d projectMono(const Eigen::Vector3d& cam_pos, const Eigen::Vector3
 {
   Eigen::Vector3d p = landmark - cam_pos;
   z_cam = p.z();
-  return {kFx * p.x() / p.z() + kCx, kFy * p.y() / p.z() + kCy};
+  return { kFx * p.x() / p.z() + kCx, kFy * p.y() / p.z() + kCy };
 }
 
 /**
@@ -101,18 +101,18 @@ struct VisualSlamGraph
     // Generate ground truth
     for (size_t i = 0; i < num_cameras; ++i)
     {
-      gt_cam_positions.push_back({static_cast<double>(i), 0.0, 0.0});
+      gt_cam_positions.push_back({ static_cast<double>(i), 0.0, 0.0 });
     }
     for (size_t j = 0; j < num_landmarks; ++j)
     {
       double x = static_cast<double>(j % 5) - 1.0;
       double y = (static_cast<double>(j / 5) - 1.0) * 0.8;
       double z = 5.0 + static_cast<double>(j % 3) * 2.0;
-      gt_landmarks.push_back({x, y, z});
+      gt_landmarks.push_back({ x, y, z });
     }
 
     // Camera intrinsics (fixed, not optimized)
-    camera = vesta_variables::PinholeCameraFixed::make_shared(uint64_t{0});
+    camera = vesta_variables::PinholeCameraFixed::make_shared(uint64_t{ 0 });
     camera->fx() = kFx;
     camera->fy() = kFy;
     camera->cx() = kCx;
@@ -134,8 +134,7 @@ struct VisualSlamGraph
       ori->x() = pos_noise(rng) * 0.01;
       ori->y() = pos_noise(rng) * 0.01;
       ori->z() = pos_noise(rng) * 0.01;
-      double norm =
-          std::sqrt(ori->w() * ori->w() + ori->x() * ori->x() + ori->y() * ori->y() + ori->z() * ori->z());
+      double norm = std::sqrt(ori->w() * ori->w() + ori->x() * ori->x() + ori->y() * ori->y() + ori->z() * ori->z());
       ori->w() /= norm;
       ori->x() /= norm;
       ori->y() /= norm;
@@ -150,7 +149,7 @@ struct VisualSlamGraph
     // Landmarks
     for (size_t j = 0; j < num_landmarks; ++j)
     {
-      auto lm = vesta_variables::Point3DLandmark::make_shared(uint64_t{j});
+      auto lm = vesta_variables::Point3DLandmark::make_shared(uint64_t{ j });
       lm->x() = gt_landmarks[j].x() + lm_noise(rng);
       lm->y() = gt_landmarks[j].y() + lm_noise(rng);
       lm->z() = gt_landmarks[j].z() + lm_noise(rng);
@@ -217,8 +216,7 @@ MarginalizationResult runMarginalization(const vesta_graphs::HashGraph& source_g
   auto t0 = std::chrono::high_resolution_clock::now();
   auto txn = marginalizer.marginalize("test", vars_to_marginalize, result.graph);
   auto t1 = std::chrono::high_resolution_clock::now();
-  result.marginalize_us =
-      static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count());
+  result.marginalize_us = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count());
 
   result.graph.update(txn);
 
@@ -229,8 +227,7 @@ MarginalizationResult runMarginalization(const vesta_graphs::HashGraph& source_g
   auto t2 = std::chrono::high_resolution_clock::now();
   result.summary = result.graph.optimize(options);
   auto t3 = std::chrono::high_resolution_clock::now();
-  result.optimize_us =
-      static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count());
+  result.optimize_us = static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count());
 
   return result;
 }
@@ -274,8 +271,8 @@ TEST(MarginalizerComparison, LandmarkOnly_Accuracy)
 
   for (size_t j = 3; j < 8; ++j)
   {
-    const auto& lm_qr = dynamic_cast<const vesta_variables::Point3DLandmark&>(
-        result_qr.graph.getVariable(vslam.landmarks[j]->uuid()));
+    const auto& lm_qr =
+        dynamic_cast<const vesta_variables::Point3DLandmark&>(result_qr.graph.getVariable(vslam.landmarks[j]->uuid()));
     const auto& lm_schur = dynamic_cast<const vesta_variables::Point3DLandmark&>(
         result_schur.graph.getVariable(vslam.landmarks[j]->uuid()));
 
@@ -331,8 +328,8 @@ TEST(MarginalizerComparison, Mixed_Accuracy)
 
   for (size_t j = 2; j < 10; ++j)
   {
-    const auto& lm_qr = dynamic_cast<const vesta_variables::Point3DLandmark&>(
-        result_qr.graph.getVariable(vslam.landmarks[j]->uuid()));
+    const auto& lm_qr =
+        dynamic_cast<const vesta_variables::Point3DLandmark&>(result_qr.graph.getVariable(vslam.landmarks[j]->uuid()));
     const auto& lm_schur = dynamic_cast<const vesta_variables::Point3DLandmark&>(
         result_schur.graph.getVariable(vslam.landmarks[j]->uuid()));
 

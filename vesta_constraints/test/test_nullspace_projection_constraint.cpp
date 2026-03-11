@@ -46,8 +46,8 @@ struct TestScene
   double cy = 240.0;
 
   // 6 landmarks at varying depths for strong geometric constraints
-  std::vector<Eigen::Vector3d> landmarks = { { -1.0, -1.0, 8.0 },  { 1.0, -1.0, 10.0 }, { 1.0, 1.0, 12.0 },
-                                             { -1.0, 1.0, 9.0 },   { 0.0, 0.0, 15.0 },  { 0.5, -0.5, 6.0 } };
+  std::vector<Eigen::Vector3d> landmarks = { { -1.0, -1.0, 8.0 }, { 1.0, -1.0, 10.0 }, { 1.0, 1.0, 12.0 },
+                                             { -1.0, 1.0, 9.0 },  { 0.0, 0.0, 15.0 },  { 0.5, -0.5, 6.0 } };
 
   // 3 camera poses with both translation and rotation variety
   struct Pose
@@ -59,15 +59,13 @@ struct TestScene
   // Pose 0: at origin, looking forward
   // Pose 1: shifted right and slightly rotated about Y
   // Pose 2: shifted up-right with rotation about Y and X
-  std::vector<Pose> poses = {
-    { { 0.0, 0.0, 0.0 }, Eigen::Quaterniond::Identity() },
-    { { 1.5, 0.0, 0.2 },
-      Eigen::Quaterniond(Eigen::AngleAxisd(0.1, Eigen::Vector3d::UnitY())).normalized() },
-    { { 0.5, 1.0, -0.3 },
-      Eigen::Quaterniond(Eigen::AngleAxisd(-0.08, Eigen::Vector3d::UnitY()) *
-                         Eigen::AngleAxisd(0.05, Eigen::Vector3d::UnitX()))
-          .normalized() }
-  };
+  std::vector<Pose> poses = { { { 0.0, 0.0, 0.0 }, Eigen::Quaterniond::Identity() },
+                              { { 1.5, 0.0, 0.2 },
+                                Eigen::Quaterniond(Eigen::AngleAxisd(0.1, Eigen::Vector3d::UnitY())).normalized() },
+                              { { 0.5, 1.0, -0.3 },
+                                Eigen::Quaterniond(Eigen::AngleAxisd(-0.08, Eigen::Vector3d::UnitY()) *
+                                                   Eigen::AngleAxisd(0.05, Eigen::Vector3d::UnitX()))
+                                    .normalized() } };
 
   // Generate observations for all landmarks from all poses
   std::vector<std::vector<Eigen::Vector2d>> generateObservations() const
@@ -109,8 +107,7 @@ TEST(NullspaceProjectionConstraint, Constructor)
   cov << 1.0, 0.0, 0.0, 1.0;
 
   // Construct for landmark 0 (observed from 3 poses)
-  EXPECT_NO_THROW(
-      NullspaceProjectionConstraint constraint("test", positions, orientations, calibration, obs[0], cov));
+  EXPECT_NO_THROW(NullspaceProjectionConstraint constraint("test", positions, orientations, calibration, obs[0], cov));
 
   NullspaceProjectionConstraint constraint("test", positions, orientations, calibration, obs[0], cov);
   EXPECT_EQ(3u, constraint.numObservations());
@@ -293,10 +290,12 @@ TEST(NullspaceProjectionConstraint, Optimization)
   TestScene scene;
   auto all_obs = scene.generateObservations();
 
-  auto make_pos = [](int i)
-  { return Position3DStamped::make_shared(vesta_core::Timestamp(i, 0), vesta_core::uuid::generate("cam")); };
-  auto make_ori = [](int i)
-  { return Orientation3DStamped::make_shared(vesta_core::Timestamp(i, 0), vesta_core::uuid::generate("cam")); };
+  auto make_pos = [](int i) {
+    return Position3DStamped::make_shared(vesta_core::Timestamp(i, 0), vesta_core::uuid::generate("cam"));
+  };
+  auto make_ori = [](int i) {
+    return Orientation3DStamped::make_shared(vesta_core::Timestamp(i, 0), vesta_core::uuid::generate("cam"));
+  };
 
   std::vector<Position3DStamped::SharedPtr> positions;
   std::vector<Orientation3DStamped::SharedPtr> orientations;
@@ -412,15 +411,15 @@ TEST(NullspaceProjectionConstraint, ConvertFromReprojection)
   std::vector<Orientation3DStamped::SharedPtr> orientations;
   for (size_t i = 0; i < scene.poses.size(); ++i)
   {
-    auto pos =
-        Position3DStamped::make_shared(vesta_core::Timestamp(static_cast<int32_t>(i), 0), vesta_core::uuid::generate("cam"));
+    auto pos = Position3DStamped::make_shared(vesta_core::Timestamp(static_cast<int32_t>(i), 0),
+                                              vesta_core::uuid::generate("cam"));
     pos->x() = scene.poses[i].position.x();
     pos->y() = scene.poses[i].position.y();
     pos->z() = scene.poses[i].position.z();
     positions.push_back(pos);
 
-    auto ori =
-        Orientation3DStamped::make_shared(vesta_core::Timestamp(static_cast<int32_t>(i), 0), vesta_core::uuid::generate("cam"));
+    auto ori = Orientation3DStamped::make_shared(vesta_core::Timestamp(static_cast<int32_t>(i), 0),
+                                                 vesta_core::uuid::generate("cam"));
     ori->w() = scene.poses[i].orientation.w();
     ori->x() = scene.poses[i].orientation.x();
     ori->y() = scene.poses[i].orientation.y();

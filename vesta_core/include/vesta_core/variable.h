@@ -489,8 +489,8 @@ public:
   virtual void deserialize(vesta_core::TextInputArchive& /* archive */) = 0;
 
 private:
-  vesta_core::UUID uuid_;                         //!< The unique ID number for this variable
-  std::vector<double> linearization_point_;        //!< Stored linearization point for FEJ
+  vesta_core::UUID uuid_;                    //!< The unique ID number for this variable
+  std::vector<double> linearization_point_;  //!< Stored linearization point for FEJ
 
   // Allow Boost Serialization access to private methods
   friend class boost::serialization::access;

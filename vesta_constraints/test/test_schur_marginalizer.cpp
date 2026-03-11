@@ -16,10 +16,10 @@
 
 #include <ceres/cost_function.h>
 #include <ceres/sized_cost_function.h>
+#include <gtest/gtest.h>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
-#include <gtest/gtest.h>
 
 #include <chrono>
 #include <cmath>
@@ -85,7 +85,7 @@ public:
   PoseLandmarkConstraint(const std::string& source, const vesta_variables::Position3DStamped& position,
                          const vesta_variables::Point3DLandmark& landmark, const Eigen::Vector3d& delta,
                          const Eigen::Matrix3d& covariance)
-    : vesta_core::Constraint(source, {position.uuid(), landmark.uuid()})
+    : vesta_core::Constraint(source, { position.uuid(), landmark.uuid() })
     , delta_(delta)
     , sqrt_information_(covariance.inverse().llt().matrixL().transpose())
   {
@@ -101,8 +101,8 @@ public:
   }
 
 private:
-  Eigen::Vector3d delta_{Eigen::Vector3d::Zero()};
-  Eigen::Matrix3d sqrt_information_{Eigen::Matrix3d::Identity()};
+  Eigen::Vector3d delta_{ Eigen::Vector3d::Zero() };
+  Eigen::Matrix3d sqrt_information_{ Eigen::Matrix3d::Identity() };
 
   friend class boost::serialization::access;
 
@@ -144,12 +144,12 @@ struct MixedGraph
     p2->y() = 0.0;
     p2->z() = 0.0;
 
-    l1 = vesta_variables::Point3DLandmark::make_shared(uint64_t{1});
+    l1 = vesta_variables::Point3DLandmark::make_shared(uint64_t{ 1 });
     l1->x() = 1.0;
     l1->y() = 1.0;
     l1->z() = 0.0;
 
-    l2 = vesta_variables::Point3DLandmark::make_shared(uint64_t{2});
+    l2 = vesta_variables::Point3DLandmark::make_shared(uint64_t{ 2 });
     l2->x() = 2.0;
     l2->y() = 1.0;
     l2->z() = 0.0;
@@ -163,22 +163,22 @@ struct MixedGraph
     Eigen::Vector3d mean_p1;
     mean_p1 << 1.0, 0.0, 0.0;
     Eigen::Matrix3d cov_p1 = Eigen::Matrix3d::Identity() * 0.1;
-    graph.addConstraint(
-        vesta_constraints::AbsoluteConstraint<vesta_variables::Position3DStamped>::make_shared("test", *p1, mean_p1, cov_p1));
+    graph.addConstraint(vesta_constraints::AbsoluteConstraint<vesta_variables::Position3DStamped>::make_shared(
+        "test", *p1, mean_p1, cov_p1));
 
     // Prior on l1
     Eigen::Vector3d mean_l1;
     mean_l1 << 1.0, 1.0, 0.0;
     Eigen::Matrix3d cov_l1 = Eigen::Matrix3d::Identity() * 0.5;
-    graph.addConstraint(
-        vesta_constraints::AbsoluteConstraint<vesta_variables::Point3DLandmark>::make_shared("test", *l1, mean_l1, cov_l1));
+    graph.addConstraint(vesta_constraints::AbsoluteConstraint<vesta_variables::Point3DLandmark>::make_shared(
+        "test", *l1, mean_l1, cov_l1));
 
     // Odometry p1 -> p2
     Eigen::Vector3d odom_delta;
     odom_delta << 1.0, 0.0, 0.0;
     Eigen::Matrix3d cov_odom = Eigen::Matrix3d::Identity() * 0.2;
-    graph.addConstraint(
-        vesta_constraints::RelativeConstraint<vesta_variables::Position3DStamped>::make_shared("test", *p1, *p2, odom_delta, cov_odom));
+    graph.addConstraint(vesta_constraints::RelativeConstraint<vesta_variables::Position3DStamped>::make_shared(
+        "test", *p1, *p2, odom_delta, cov_odom));
 
     // Observation p1 -> l1
     Eigen::Vector3d obs_delta1;
@@ -210,8 +210,8 @@ TEST(SchurMarginalizer, MatchesQR_NoNonStamped)
   vesta_constraints::QRMarginalizer qr(false);
   vesta_constraints::SchurMarginalizer schur(false);
 
-  auto txn_qr = qr.marginalize("test", {tg1.p1->uuid()}, tg1.graph);
-  auto txn_schur = schur.marginalize("test", {tg2.p1->uuid()}, tg2.graph);
+  auto txn_qr = qr.marginalize("test", { tg1.p1->uuid() }, tg1.graph);
+  auto txn_schur = schur.marginalize("test", { tg2.p1->uuid() }, tg2.graph);
 
   tg1.graph.update(txn_qr);
   tg2.graph.update(txn_schur);
@@ -243,12 +243,12 @@ TEST(SchurMarginalizer, MatchesQR_MixedVariables)
   tg1.graph.optimize();
   tg2.graph.optimize();
 
-  std::vector<vesta_core::UUID> to_marginalize = {tg1.p1->uuid(), tg1.l1->uuid()};
+  std::vector<vesta_core::UUID> to_marginalize = { tg1.p1->uuid(), tg1.l1->uuid() };
 
   vesta_constraints::QRMarginalizer qr(false);
   auto txn_qr = qr.marginalize("test", to_marginalize, tg1.graph);
 
-  std::vector<vesta_core::UUID> to_marginalize2 = {tg2.p1->uuid(), tg2.l1->uuid()};
+  std::vector<vesta_core::UUID> to_marginalize2 = { tg2.p1->uuid(), tg2.l1->uuid() };
   vesta_constraints::SchurMarginalizer schur(false);
   auto txn_schur = schur.marginalize("test", to_marginalize2, tg2.graph);
 
@@ -278,12 +278,12 @@ TEST(SchurMarginalizer, MatchesQR_OnlyNonStamped)
   tg1.graph.optimize();
   tg2.graph.optimize();
 
-  std::vector<vesta_core::UUID> to_marginalize = {tg1.l1->uuid()};
+  std::vector<vesta_core::UUID> to_marginalize = { tg1.l1->uuid() };
 
   vesta_constraints::QRMarginalizer qr(false);
   auto txn_qr = qr.marginalize("test", to_marginalize, tg1.graph);
 
-  std::vector<vesta_core::UUID> to_marginalize2 = {tg2.l1->uuid()};
+  std::vector<vesta_core::UUID> to_marginalize2 = { tg2.l1->uuid() };
   vesta_constraints::SchurMarginalizer schur(false);
   auto txn_schur = schur.marginalize("test", to_marginalize2, tg2.graph);
 
@@ -312,8 +312,8 @@ TEST(SchurMarginalizer, FejFallbackMatchesNonFej)
   tg1.graph.optimize();
   tg2.graph.optimize();
 
-  std::vector<vesta_core::UUID> to_marginalize1 = {tg1.l1->uuid()};
-  std::vector<vesta_core::UUID> to_marginalize2 = {tg2.l1->uuid()};
+  std::vector<vesta_core::UUID> to_marginalize1 = { tg1.l1->uuid() };
+  std::vector<vesta_core::UUID> to_marginalize2 = { tg2.l1->uuid() };
 
   vesta_constraints::SchurMarginalizer non_fej(false);
   vesta_constraints::SchurMarginalizer fej(true);
@@ -343,7 +343,7 @@ TEST(SchurMarginalizer, StructuralCorrectness)
   MixedGraph tg;
   tg.graph.optimize();
 
-  std::vector<vesta_core::UUID> to_marginalize = {tg.l1->uuid()};
+  std::vector<vesta_core::UUID> to_marginalize = { tg.l1->uuid() };
 
   vesta_constraints::SchurMarginalizer schur(false);
   auto txn = schur.marginalize("test", to_marginalize, tg.graph);
@@ -374,7 +374,7 @@ TEST(SchurMarginalizer, RuntimeComparison)
     MixedGraph tg;
     tg.graph.optimize();
     vesta_constraints::QRMarginalizer qr(false);
-    qr.marginalize("test", {tg.l1->uuid(), tg.l2->uuid()}, tg.graph);
+    qr.marginalize("test", { tg.l1->uuid(), tg.l2->uuid() }, tg.graph);
   }
   auto end_qr = std::chrono::high_resolution_clock::now();
   auto qr_us = std::chrono::duration_cast<std::chrono::microseconds>(end_qr - start_qr).count();
@@ -386,7 +386,7 @@ TEST(SchurMarginalizer, RuntimeComparison)
     MixedGraph tg;
     tg.graph.optimize();
     vesta_constraints::SchurMarginalizer schur(false);
-    schur.marginalize("test", {tg.l1->uuid(), tg.l2->uuid()}, tg.graph);
+    schur.marginalize("test", { tg.l1->uuid(), tg.l2->uuid() }, tg.graph);
   }
   auto end_schur = std::chrono::high_resolution_clock::now();
   auto schur_us = std::chrono::duration_cast<std::chrono::microseconds>(end_schur - start_schur).count();

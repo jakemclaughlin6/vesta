@@ -10,9 +10,8 @@
 namespace
 {
 
-std::vector<vesta_core::UUID> buildVariableUuids(
-    const std::vector<vesta_variables::Position3DStamped>& positions,
-    const std::vector<vesta_variables::Orientation3DStamped>& orientations)
+std::vector<vesta_core::UUID> buildVariableUuids(const std::vector<vesta_variables::Position3DStamped>& positions,
+                                                 const std::vector<vesta_variables::Orientation3DStamped>& orientations)
 {
   std::vector<vesta_core::UUID> uuids;
   uuids.reserve(2 * positions.size());
@@ -47,11 +46,10 @@ StereoNullspaceProjectionConstraint::StereoNullspaceProjectionConstraint(
     const std::vector<vesta_variables::Orientation3DStamped>& orientations,
     const vesta_variables::StereoCamera& calibration, const std::vector<Eigen::Vector4d>& observations,
     const vesta_core::Matrix4d& covariance)
-  : StereoNullspaceProjectionConstraint(
-        source, buildVariableUuids(positions, orientations), observations, covariance,
-        (Eigen::Matrix<double, 5, 1>() << calibration.data()[0], calibration.data()[1], calibration.data()[2],
-         calibration.data()[3], calibration.data()[4])
-            .finished())
+  : StereoNullspaceProjectionConstraint(source, buildVariableUuids(positions, orientations), observations, covariance,
+                                        (Eigen::Matrix<double, 5, 1>() << calibration.data()[0], calibration.data()[1],
+                                         calibration.data()[2], calibration.data()[3], calibration.data()[4])
+                                            .finished())
 {
   assert(positions.size() == orientations.size());
   assert(positions.size() == observations.size());

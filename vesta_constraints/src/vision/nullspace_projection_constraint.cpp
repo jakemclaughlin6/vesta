@@ -10,9 +10,8 @@
 namespace
 {
 
-std::vector<vesta_core::UUID> buildVariableUuids(
-    const std::vector<vesta_variables::Position3DStamped>& positions,
-    const std::vector<vesta_variables::Orientation3DStamped>& orientations)
+std::vector<vesta_core::UUID> buildVariableUuids(const std::vector<vesta_variables::Position3DStamped>& positions,
+                                                 const std::vector<vesta_variables::Orientation3DStamped>& orientations)
 {
   std::vector<vesta_core::UUID> uuids;
   uuids.reserve(2 * positions.size());

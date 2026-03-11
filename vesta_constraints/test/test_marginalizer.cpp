@@ -97,12 +97,11 @@ TEST(QRMarginalizer, MatchesFreeFunctions)
   tg2.graph.optimize();
 
   // Marginalize x1 using free function
-  auto transaction_free =
-      vesta_constraints::marginalizeVariables("test", {tg1.x1->uuid()}, tg1.graph);
+  auto transaction_free = vesta_constraints::marginalizeVariables("test", { tg1.x1->uuid() }, tg1.graph);
 
   // Marginalize x1 using QRMarginalizer
   vesta_constraints::QRMarginalizer marginalizer(false);
-  auto transaction_class = marginalizer.marginalize("test", {tg2.x1->uuid()}, tg2.graph);
+  auto transaction_class = marginalizer.marginalize("test", { tg2.x1->uuid() }, tg2.graph);
 
   // Both should produce the same structure
   auto free_removed_vars_range = transaction_free.removedVariables();
@@ -119,8 +118,7 @@ TEST(QRMarginalizer, MatchesFreeFunctions)
 
   auto free_added = transaction_free.addedConstraints();
   auto class_added = transaction_class.addedConstraints();
-  EXPECT_EQ(std::distance(free_added.begin(), free_added.end()),
-            std::distance(class_added.begin(), class_added.end()));
+  EXPECT_EQ(std::distance(free_added.begin(), free_added.end()), std::distance(class_added.begin(), class_added.end()));
 
   // Apply both and re-optimize, results should be equivalent
   tg1.graph.update(transaction_free);
@@ -152,8 +150,8 @@ TEST(QRMarginalizer, FejFallbackMatchesNonFej)
   vesta_constraints::QRMarginalizer non_fej(false);
   vesta_constraints::QRMarginalizer fej(true);
 
-  auto transaction1 = non_fej.marginalize("test", {tg1.x1->uuid()}, tg1.graph);
-  auto transaction2 = fej.marginalize("test", {tg2.x1->uuid()}, tg2.graph);
+  auto transaction1 = non_fej.marginalize("test", { tg1.x1->uuid() }, tg1.graph);
+  auto transaction2 = fej.marginalize("test", { tg2.x1->uuid() }, tg2.graph);
 
   // Apply and re-optimize
   tg1.graph.update(transaction1);
@@ -207,8 +205,8 @@ TEST(QRMarginalizer, FejProducesDifferentJacobians)
   vesta_constraints::QRMarginalizer non_fej(false);
   vesta_constraints::QRMarginalizer fej(true);
 
-  auto transaction1 = non_fej.marginalize("test", {tg1.x1->uuid()}, tg1.graph);
-  auto transaction2 = fej.marginalize("test", {tg2.x1->uuid()}, tg2.graph);
+  auto transaction1 = non_fej.marginalize("test", { tg1.x1->uuid() }, tg1.graph);
+  auto transaction2 = fej.marginalize("test", { tg2.x1->uuid() }, tg2.graph);
 
   // The marginal constraints should differ because Jacobians are evaluated at different points
   // We verify this by applying both and checking that the optimized results diverge
@@ -258,7 +256,7 @@ TEST(QRMarginalizer, FejConsistency)
 
   // Marginalize x1 with FEJ
   vesta_constraints::QRMarginalizer fej(true);
-  auto transaction = fej.marginalize("test", {tg.x1->uuid()}, tg.graph);
+  auto transaction = fej.marginalize("test", { tg.x1->uuid() }, tg.graph);
   tg.graph.update(transaction);
   tg.graph.optimize();
 
@@ -316,7 +314,7 @@ TEST(QRMarginalizer, RuntimeMeasurement)
     TestGraph warmup;
     warmup.graph.optimize();
     vesta_constraints::QRMarginalizer m(false);
-    m.marginalize("test", {warmup.x1->uuid()}, warmup.graph);
+    m.marginalize("test", { warmup.x1->uuid() }, warmup.graph);
   }
 
   constexpr int NUM_ITERATIONS = 100;
@@ -327,7 +325,7 @@ TEST(QRMarginalizer, RuntimeMeasurement)
     TestGraph t;
     t.graph.optimize();
     vesta_constraints::QRMarginalizer m(false);
-    m.marginalize("test", {t.x1->uuid()}, t.graph);
+    m.marginalize("test", { t.x1->uuid() }, t.graph);
   }
 
   auto end = std::chrono::high_resolution_clock::now();

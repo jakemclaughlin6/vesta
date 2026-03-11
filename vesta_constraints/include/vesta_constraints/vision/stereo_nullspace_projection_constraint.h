@@ -127,9 +127,9 @@ private:
   void serialize(Archive& archive, const unsigned int /* version */)
   {
     archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
-    archive& observations_;
-    archive& sqrt_information_;
-    archive& calibration_;
+    archive & observations_;
+    archive & sqrt_information_;
+    archive & calibration_;
   }
 };
 

@@ -1,6 +1,6 @@
-#include <vesta_constraints/common/qr_marginalizer.h>
 #include <vesta_constraints/common/marginal_constraint.h>
 #include <vesta_constraints/common/marginalize_variables.h>
+#include <vesta_constraints/common/qr_marginalizer.h>
 #include <vesta_constraints/common/uuid_ordering.h>
 #include <vesta_core/graph.h>
 #include <vesta_core/uuid.h>
@@ -95,6 +95,5 @@ vesta_core::Transaction QRMarginalizer::marginalize(const std::string& source,
 
   return transaction;
 }
-
 
 }  // namespace vesta_constraints

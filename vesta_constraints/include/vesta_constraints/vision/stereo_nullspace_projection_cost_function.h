@@ -133,9 +133,9 @@ public:
     }
 
     // Compute per-observation stereo reprojection errors and Jacobians
-    Eigen::VectorXd b(4 * n);                                          // stacked weighted residuals
-    Eigen::MatrixXd E(4 * n, 3);                                       // stacked landmark Jacobians
-    std::vector<Eigen::Matrix<double, 4, 3>> F_pos(n);                 // pose position Jacobians
+    Eigen::VectorXd b(4 * n);                                            // stacked weighted residuals
+    Eigen::MatrixXd E(4 * n, 3);                                         // stacked landmark Jacobians
+    std::vector<Eigen::Matrix<double, 4, 3>> F_pos(n);                   // pose position Jacobians
     std::vector<Eigen::Matrix<double, 4, 4, Eigen::RowMajor>> F_ori(n);  // pose orientation Jacobians
 
     for (int i = 0; i < n; ++i)

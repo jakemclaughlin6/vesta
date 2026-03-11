@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vesta_constraints/common/marginalizer.h>
 #include <vesta_constraints/common/marginalize_variables.h>
+#include <vesta_constraints/common/marginalizer.h>
 #include <vesta_constraints/common/uuid_ordering.h>
 #include <vesta_core/graph.h>
 #include <vesta_core/transaction.h>
@@ -48,8 +48,7 @@ public:
    */
   vesta_core::Transaction marginalize(const std::string& source,
                                       const std::vector<vesta_core::UUID>& marginalized_variables,
-                                      const vesta_core::Graph& graph,
-                                      const UuidOrdering& elimination_order);
+                                      const vesta_core::Graph& graph, const UuidOrdering& elimination_order);
 
 private:
   bool use_fej_;
