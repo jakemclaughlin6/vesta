@@ -34,6 +34,7 @@
 
 #include <vesta_constraints/3d/absolute_pose_3d_stamped_constraint.h>
 #include <vesta_constraints/3d/relative_pose_3d_stamped_constraint.h>
+#include <vesta_constraints/common/block_diagonal_marginalizer.h>
 #include <vesta_constraints/vision/reprojection_error_constraint.h>
 #include <vesta_constraints/vision/stereo_reprojection_error_constraint.h>
 #include <vesta_core/eigen.h>
@@ -1062,6 +1063,8 @@ TEST(VisualSlamTest, StereoFixedLagLargeScale)
   params.solver_options.max_num_iterations = 50;
   params.solver_options.linear_solver_type = ceres::SPARSE_SCHUR;
   vesta_optimizers::FixedLagSmoother smoother(params, std::move(graph));
+
+  smoother.setMarginalizer(std::make_unique<vesta_constraints::BlockDiagonalMarginalizer>());
 
   std::vector<vesta_variables::Position3DStamped::SharedPtr> positions;
   std::vector<vesta_variables::Orientation3DStamped::SharedPtr> orientations;

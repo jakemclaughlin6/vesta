@@ -170,24 +170,6 @@ struct LinearTerm
 };
 
 /**
- * @brief Linearize the nonlinear constraint
- *
- * Variable UUIDs are converted into indices using the \p elimination_order. The
- * variable linearization points are extracted from the current variable values
- * in the \p graph.
- *
- * @param[in] constraint        The constraint to linearize
- * @param[in] graph             A graph containing, at least, the variables
- * involved in the constraint
- * @param[in] elimination_order A mapping from variable UUID to elimination
- * order
- * @return A LinearTerm consisting of Jacobian blocks associated with each
- * involved variable in elimination order
- */
-LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core::Graph& graph,
-                     const UuidOrdering& elimination_order);
-
-/**
  * @brief Linearize the nonlinear constraint with optional FEJ support
  *
  * When \p use_fej is true, Jacobians are evaluated at the stored linearization
@@ -201,7 +183,7 @@ LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core:
  * @return A LinearTerm consisting of Jacobian blocks in elimination order
  */
 LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core::Graph& graph,
-                     const UuidOrdering& elimination_order, bool use_fej);
+                     const UuidOrdering& elimination_order, bool use_fej = false);
 
 /**
  * @brief Marginalize out the lowest-ordered variable from the provided set of

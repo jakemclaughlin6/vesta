@@ -2,6 +2,7 @@
 add_library(vesta_constraints
   # Common
   src/common/absolute_constraint.cpp
+  src/common/block_diagonal_marginalizer.cpp
   src/common/marginal_constraint.cpp
   src/common/marginal_cost_function.cpp
   src/common/marginalize_variables.cpp
@@ -88,6 +89,7 @@ if(BUILD_TESTING)
   vesta_constraints_add_test(test_stereo_nullspace_projection_constraint)
   vesta_constraints_add_test(test_marginal_constraint)
   vesta_constraints_add_test(test_marginalizer)
+  vesta_constraints_add_test(test_block_diagonal_marginalizer)
   vesta_constraints_add_test(test_schur_marginalizer)
   vesta_constraints_add_test(test_marginalize_variables)
   vesta_constraints_add_test(test_normal_delta_pose_2d)

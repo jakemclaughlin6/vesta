@@ -207,12 +207,6 @@ namespace detail
  * https://github.com/ceres-solver/ceres-solver/blob/master/internal/ceres/corrector.cc
  */
 LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core::Graph& graph,
-                     const UuidOrdering& elimination_order)
-{
-  return linearize(constraint, graph, elimination_order, false);
-}
-
-LinearTerm linearize(const vesta_core::Constraint& constraint, const vesta_core::Graph& graph,
                      const UuidOrdering& elimination_order, bool use_fej)
 {
   LinearTerm result;
