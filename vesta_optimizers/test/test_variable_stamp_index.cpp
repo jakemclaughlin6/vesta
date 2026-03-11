@@ -310,12 +310,19 @@ TEST(VariableStampIndex, Query)
   transaction.addConstraint(c5);
   index.addNewTransaction(transaction);
 
-  auto expected1 = std::vector<vesta_core::UUID>{};
+  // x1 (stamp=1) is old at threshold 1.5, and its only cross-window link is
+  // to x2 via c1.  Old stamped variables are no longer shielded by
+  // cross-window constraints, so x1 is now returned for marginalization.
+  auto expected1 = std::vector<vesta_core::UUID>{ x1->uuid() };
+  std::sort(expected1.begin(), expected1.end());
   auto actual1 = std::vector<vesta_core::UUID>();
   index.query(vesta_core::Timestamp(1, 500000), std::back_inserter(actual1));
+  std::sort(actual1.begin(), actual1.end());
   EXPECT_EQ(expected1, actual1);
 
-  auto expected2 = std::vector<vesta_core::UUID>{ x1->uuid(), l1->uuid() };
+  // At threshold 2.5, x1 (stamp=1) and x2 (stamp=2) are both old.
+  // l1 is connected only to old variables.  All three are returned.
+  auto expected2 = std::vector<vesta_core::UUID>{ x1->uuid(), x2->uuid(), l1->uuid() };
   std::sort(expected2.begin(), expected2.end());
   auto actual2 = std::vector<vesta_core::UUID>();
   index.query(vesta_core::Timestamp(2, 500000), std::back_inserter(actual2));
@@ -367,8 +374,10 @@ TEST(VariableStampIndex, MarginalTransaction)
   // The x1 variable should be removed
   EXPECT_EQ(4u, index.size());
 
-  // And the marginal constraint x3->l1 should not affect future queries
-  auto expected = std::vector<vesta_core::UUID>{ l1->uuid() };
+  // At threshold 2.5 only x3 (stamp=3) is recent.  x2 (stamp=2) is old and
+  // no longer shielded by the cross-window constraint c2(x2,x3).  l1 is
+  // connected only to x2 (old).  Both x2 and l1 are returned.
+  auto expected = std::vector<vesta_core::UUID>{ x2->uuid(), l1->uuid() };
   std::sort(expected.begin(), expected.end());
   auto actual = std::vector<vesta_core::UUID>();
   index.query(vesta_core::Timestamp(2, 500000), std::back_inserter(actual));

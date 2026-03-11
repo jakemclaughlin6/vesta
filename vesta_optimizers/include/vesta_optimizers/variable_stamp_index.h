@@ -142,7 +142,12 @@ public:
       }
     }
 
-    // Now find all of the variables connected to the recent variables
+    // Now find all of the variables connected to the recent variables.
+    // Old stamped variables (stamp < threshold) are NOT added to the connected
+    // set even if they share a constraint with a recent variable (e.g. via an
+    // odometry factor). This ensures that expired poses—and the non-stamped
+    // variables attached exclusively to them—are marginalized promptly instead
+    // of being kept alive by cross-window constraints.
     std::unordered_set<vesta_core::UUID> connected_variable_uuids;
     for (const auto& recent_variable_uuid : recent_variable_uuids)
     {
@@ -160,6 +165,14 @@ public:
           {
             for (const auto& connected_variable_uuid : constraints_iter->second)
             {
+              // Skip old stamped variables: they are candidates for
+              // marginalization and should not be protected by cross-window
+              // constraints (e.g. odometry linking an old pose to a recent one)
+              const auto stamped_iter = stamped_index_.find(connected_variable_uuid);
+              if (stamped_iter != stamped_index_.end() && stamped_iter->second < stamp)
+              {
+                continue;
+              }
               connected_variable_uuids.insert(connected_variable_uuid);
             }
           }
