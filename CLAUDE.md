@@ -8,26 +8,23 @@ Vesta is a pure C++ library for factor graph-based sensor fusion (SLAM / Visual 
 
 ## Build Commands
 
+**All builds and tests must run inside the Docker container** — cmake and dependencies are not installed on the host.
+
 ```bash
-# Configure and build (from repo root)
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j$(nproc)
+# Build the Docker image (one-time)
+docker build -t vesta .
+
+# Configure and build
+docker run --rm -v $(pwd):/workspace -w /workspace vesta bash -c "cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j\$(nproc)"
 
 # Run all tests
-ctest --test-dir build --output-on-failure
+docker run --rm -v $(pwd):/workspace -w /workspace vesta bash -c "ctest --test-dir build --output-on-failure"
 
 # Run a single test by name
-ctest --test-dir build -R test_hash_graph --output-on-failure
+docker run --rm -v $(pwd):/workspace -w /workspace vesta bash -c "ctest --test-dir build -R test_hash_graph --output-on-failure"
 
-# Build without tests
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
-```
-
-### Docker
-
-```bash
-docker build -t vesta .
-docker run -v $(pwd):/workspace -it vesta
+# Interactive shell
+docker run -v $(pwd):/workspace -w /workspace -it vesta
 ```
 
 ### Formatting and Linting

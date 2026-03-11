@@ -1,0 +1,91 @@
+#include <vesta_constraints/vision/nullspace_projection_constraint.h>
+#include <vesta_constraints/vision/nullspace_projection_cost_function.h>
+
+#include <boost/serialization/export.hpp>
+
+#include <cassert>
+#include <string>
+#include <vector>
+
+namespace
+{
+
+std::vector<vesta_core::UUID> buildVariableUuids(
+    const std::vector<vesta_variables::Position3DStamped>& positions,
+    const std::vector<vesta_variables::Orientation3DStamped>& orientations)
+{
+  std::vector<vesta_core::UUID> uuids;
+  uuids.reserve(2 * positions.size());
+  for (size_t i = 0; i < positions.size(); ++i)
+  {
+    uuids.push_back(positions[i].uuid());
+    uuids.push_back(orientations[i].uuid());
+  }
+  return uuids;
+}
+
+}  // namespace
+
+namespace vesta_constraints
+{
+
+// Private delegating constructor
+NullspaceProjectionConstraint::NullspaceProjectionConstraint(const std::string& source,
+                                                             std::vector<vesta_core::UUID> variable_uuids,
+                                                             const std::vector<Eigen::Vector2d>& observations,
+                                                             const vesta_core::Matrix2d& covariance,
+                                                             const Eigen::Vector4d& calibration)
+  : vesta_core::Constraint(source, variable_uuids.begin(), variable_uuids.end())
+  , observations_(observations)
+  , sqrt_information_(covariance.inverse().llt().matrixU())
+  , calibration_(calibration)
+{
+}
+
+// Public constructor: builds UUIDs then delegates
+NullspaceProjectionConstraint::NullspaceProjectionConstraint(
+    const std::string& source, const std::vector<vesta_variables::Position3DStamped>& positions,
+    const std::vector<vesta_variables::Orientation3DStamped>& orientations,
+    const vesta_variables::PinholeCamera& calibration, const std::vector<Eigen::Vector2d>& observations,
+    const vesta_core::Matrix2d& covariance)
+  : NullspaceProjectionConstraint(
+        source, buildVariableUuids(positions, orientations), observations, covariance,
+        Eigen::Vector4d(calibration.data()[0], calibration.data()[1], calibration.data()[2], calibration.data()[3]))
+{
+  assert(positions.size() == orientations.size());
+  assert(positions.size() == observations.size());
+  assert(positions.size() >= 2);
+}
+
+void NullspaceProjectionConstraint::print(std::ostream& stream) const
+{
+  stream << type() << "\n"
+         << "  source: " << source() << "\n"
+         << "  uuid: " << uuid() << "\n"
+         << "  observations: " << numObservations() << "\n"
+         << "  calibration: [" << calibration_[0] << ", " << calibration_[1] << ", " << calibration_[2] << ", "
+         << calibration_[3] << "]\n"
+         << "  sqrt_info:\n"
+         << sqrt_information_ << "\n";
+
+  for (size_t i = 0; i < numObservations(); ++i)
+  {
+    stream << "  pose " << i << ": pos=" << variables().at(2 * i) << " ori=" << variables().at(2 * i + 1) << "\n";
+    stream << "    observation: " << observations_[i].transpose() << "\n";
+  }
+
+  if (loss())
+  {
+    stream << "  loss: ";
+    loss()->print(stream);
+  }
+}
+
+ceres::CostFunction* NullspaceProjectionConstraint::costFunction() const
+{
+  return new NullspaceProjectionCostFunction(observations_, sqrt_information_, calibration_);
+}
+
+}  // namespace vesta_constraints
+
+BOOST_CLASS_EXPORT_IMPLEMENT(vesta_constraints::NullspaceProjectionConstraint);
