@@ -1000,9 +1000,9 @@ TEST(VisualSlamTest, StereoFixedLagLargeScale)
 {
   // --- Configuration ---
   constexpr int NUM_KEYFRAMES = 20;
-  constexpr double KEYFRAME_DT = 0.5;            // seconds between keyframes
-  constexpr double LAG_DURATION = 5.0;            // sliding window duration
-  constexpr int TOTAL_LANDMARKS = 200;            // total landmarks in environment
+  constexpr double KEYFRAME_DT = 0.5;   // seconds between keyframes
+  constexpr double LAG_DURATION = 5.0;  // sliding window duration
+  constexpr int TOTAL_LANDMARKS = 200;  // total landmarks in environment
   constexpr double IMAGE_W = 640.0;
   constexpr double IMAGE_H = 480.0;
   constexpr double MIN_DEPTH = 0.5;
