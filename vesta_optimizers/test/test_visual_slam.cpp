@@ -1003,7 +1003,7 @@ TEST(VisualSlamTest, StereoFixedLagLargeScale)
   constexpr int NUM_KEYFRAMES = 20;
   constexpr double KEYFRAME_DT = 0.5;   // seconds between keyframes
   constexpr double LAG_DURATION = 5.0;  // sliding window duration
-  constexpr int TOTAL_LANDMARKS = 200;  // total landmarks in environment
+  constexpr int TOTAL_LANDMARKS = 500;  // total landmarks in environment
   constexpr double IMAGE_W = 640.0;
   constexpr double IMAGE_H = 480.0;
   constexpr double MIN_DEPTH = 0.5;
@@ -1063,8 +1063,6 @@ TEST(VisualSlamTest, StereoFixedLagLargeScale)
   params.solver_options.max_num_iterations = 50;
   params.solver_options.linear_solver_type = ceres::SPARSE_SCHUR;
   vesta_optimizers::FixedLagSmoother smoother(params, std::move(graph));
-
-  smoother.setMarginalizer(std::make_unique<vesta_constraints::BlockDiagonalMarginalizer>());
 
   std::vector<vesta_variables::Position3DStamped::SharedPtr> positions;
   std::vector<vesta_variables::Orientation3DStamped::SharedPtr> orientations;

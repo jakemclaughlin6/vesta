@@ -35,7 +35,7 @@
 
 #include <glog/logging.h>
 #include <vesta_constraints/common/marginalize_variables.h>
-#include <vesta_constraints/common/qr_marginalizer.h>
+#include <vesta_constraints/common/block_diagonal_marginalizer.h>
 #include <vesta_core/graph.h>
 #include <vesta_core/transaction.h>
 #include <vesta_core/uuid.h>
@@ -75,7 +75,7 @@ FixedLagSmoother::FixedLagSmoother(const FixedLagSmootherParams& params, vesta_c
   : params_(params)
   , graph_(std::move(graph))
   , started_(false)
-  , marginalizer_(std::make_unique<vesta_constraints::QRMarginalizer>())
+  , marginalizer_(std::make_unique<vesta_constraints::BlockDiagonalMarginalizer>())
 {
 }
 
