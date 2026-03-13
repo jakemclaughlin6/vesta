@@ -83,6 +83,44 @@ Test directories contain shared fixtures/helpers:
 
 Ceres Solver (>=2.2), Eigen3, Boost (serialization), glog, SuiteSparse (CCOLAMD), GoogleTest (optional).
 
+## Token Optimization with rtk
+
+`rtk` is installed at `~/.local/bin/rtk`. Use it to wrap shell commands whenever possible to reduce token consumption. Prefix commands with `rtk` — it filters and compresses output automatically.
+
+**Use `rtk` for these commands:**
+
+```bash
+# Git
+rtk git status
+rtk git diff
+rtk git log
+rtk git add <files>
+rtk git commit -m "msg"
+rtk git push
+rtk git pull
+
+# File browsing
+rtk ls .
+rtk read <file>              # instead of cat/head/tail
+rtk grep "pattern" <path>    # instead of grep/rg
+rtk find "*.cpp" .           # instead of find
+
+# Docker (builds and tests run inside Docker)
+rtk docker ps
+rtk docker images
+rtk docker logs <container>
+
+# GitHub CLI
+rtk gh pr list
+rtk gh pr view <number>
+rtk gh issue list
+```
+
+**Do NOT use `rtk` for:**
+- Commands inside `docker run ... bash -c "..."` (rtk is on the host, not in the container)
+- Heredocs or piped commands — pass those through directly
+- Commands that are already prefixed with `rtk`
+
 ## Agent Guidelines
 
 ## Workflow Orchestration
