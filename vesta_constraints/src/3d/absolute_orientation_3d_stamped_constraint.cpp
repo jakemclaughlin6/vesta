@@ -34,6 +34,7 @@
 #include <vesta_constraints/3d/absolute_orientation_3d_stamped_constraint.h>
 
 #include <vesta_constraints/3d/normal_prior_orientation_3d_cost_functor.h>
+#include <vesta_constraints/3d/normal_prior_orientation_3d_with_extrinsic_cost_functor.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <Eigen/Geometry>
@@ -61,6 +62,19 @@ AbsoluteOrientation3DStampedConstraint::AbsoluteOrientation3DStampedConstraint(
 {
 }
 
+AbsoluteOrientation3DStampedConstraint::AbsoluteOrientation3DStampedConstraint(
+    const std::string& source, const vesta_variables::Orientation3DStamped& orientation,
+    const vesta_variables::Extrinsic3DPosition& ext_position,
+    const vesta_variables::Extrinsic3DOrientation& ext_orientation, const vesta_core::Vector4d& mean,
+    const vesta_core::Matrix3d& covariance)
+  : vesta_core::Constraint(source, { orientation.uuid(), ext_position.uuid(), ext_orientation.uuid() })
+  ,  // NOLINT(whitespace/braces)
+  mean_(mean)
+  , sqrt_information_(covariance.inverse().llt().matrixU())
+  , has_extrinsic_(true)
+{
+}
+
 vesta_core::Matrix3d AbsoluteOrientation3DStampedConstraint::covariance() const
 {
   return (sqrt_information_.transpose() * sqrt_information_).inverse();
@@ -71,8 +85,15 @@ void AbsoluteOrientation3DStampedConstraint::print(std::ostream& stream) const
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
-         << "  orientation variable: " << variables().at(0) << "\n"
-         << "  mean: " << mean().transpose() << "\n"
+         << "  orientation variable: " << variables().at(0) << "\n";
+
+  if (has_extrinsic_)
+  {
+    stream << "  ext_position variable: " << variables().at(1) << "\n"
+           << "  ext_orientation variable: " << variables().at(2) << "\n";
+  }
+
+  stream << "  mean: " << mean().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 
   if (loss())
@@ -84,6 +105,12 @@ void AbsoluteOrientation3DStampedConstraint::print(std::ostream& stream) const
 
 ceres::CostFunction* AbsoluteOrientation3DStampedConstraint::costFunction() const
 {
+  if (has_extrinsic_)
+  {
+    return new ceres::AutoDiffCostFunction<NormalPriorOrientation3DWithExtrinsicCostFunctor, 3, 4, 3, 4>(
+        new NormalPriorOrientation3DWithExtrinsicCostFunctor(sqrt_information_, mean_));
+  }
+
   return new ceres::AutoDiffCostFunction<NormalPriorOrientation3DCostFunctor, 3, 4>(
       new NormalPriorOrientation3DCostFunctor(sqrt_information_, mean_));
 }

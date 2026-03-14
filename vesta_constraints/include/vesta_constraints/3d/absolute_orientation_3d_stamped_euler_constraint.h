@@ -39,6 +39,8 @@
 #include <vesta_core/fuse_macros.h>
 #include <vesta_core/serialization.h>
 #include <vesta_core/uuid.h>
+#include <vesta_variables/3d/extrinsic_3d_orientation.h>
+#include <vesta_variables/3d/extrinsic_3d_position.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 
 #include <boost/serialization/access.hpp>
@@ -93,6 +95,37 @@ public:
                                               const vesta_variables::Orientation3DStamped& orientation,
                                               const vesta_core::VectorXd& mean, const vesta_core::MatrixXd& covariance,
                                               const std::vector<Euler>& axes);
+
+  /**
+   * @brief Constructor with extrinsic calibration
+   *
+   * This constructor accepts an extrinsic transform. The orientation variable represents the body
+   * frame, and the extrinsic rotation is applied internally to compute the sensor-frame orientation
+   * before extracting Euler angles. The extrinsic translation is included for API consistency but
+   * does not affect orientation.
+   *
+   * @param[in] source          The name of the sensor or motion model that generated this constraint
+   * @param[in] orientation     The variable representing the body-frame orientation
+   * @param[in] ext_position    The extrinsic translation (body-to-sensor), unused in math
+   * @param[in] ext_orientation The extrinsic rotation (body-to-sensor)
+   * @param[in] mean            The measured/prior Euler orientations in the order specified in \p axes
+   * @param[in] covariance      The measurement/prior covariance
+   * @param[in] axes            Used to specify which Euler axes to include in the constraint
+   */
+  AbsoluteOrientation3DStampedEulerConstraint(const std::string& source,
+                                              const vesta_variables::Orientation3DStamped& orientation,
+                                              const vesta_variables::Extrinsic3DPosition& ext_position,
+                                              const vesta_variables::Extrinsic3DOrientation& ext_orientation,
+                                              const vesta_core::VectorXd& mean, const vesta_core::MatrixXd& covariance,
+                                              const std::vector<Euler>& axes);
+
+  /**
+   * @brief Returns whether this constraint uses an extrinsic calibration.
+   */
+  bool hasExtrinsic() const
+  {
+    return has_extrinsic_;
+  }
 
   /**
    * @brief Destructor
@@ -166,6 +199,7 @@ protected:
   vesta_core::VectorXd mean_;              //!< The measured/prior mean vector for this variable
   vesta_core::MatrixXd sqrt_information_;  //!< The square root information matrix
   std::vector<Euler> axes_;                //!< Which Euler angle axes we want to measure
+  bool has_extrinsic_{ false };            //!< Whether this constraint uses an extrinsic calibration
 
 private:
   // Allow Boost Serialization access to private methods
@@ -187,6 +221,7 @@ private:
     archive & mean_;
     archive & sqrt_information_;
     archive & axes_;
+    archive & has_extrinsic_;
   }
 };
 

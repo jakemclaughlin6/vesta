@@ -5,6 +5,8 @@
 #include <vesta_core/fuse_macros.h>
 #include <vesta_core/serialization.h>
 #include <vesta_core/uuid.h>
+#include <vesta_variables/3d/extrinsic_3d_orientation.h>
+#include <vesta_variables/3d/extrinsic_3d_position.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 #include <vesta_variables/vision/stereo_camera.h>
@@ -63,6 +65,39 @@ public:
                                       const std::vector<Eigen::Vector4d>& observations,
                                       const vesta_core::Matrix4d& covariance);
 
+  /**
+   * @brief Create a stereo nullspace projection constraint with extrinsic calibration.
+   *
+   * This constructor accepts an extrinsic transform T_body_sensor that maps points from sensor
+   * frame to body frame. The position and orientation variables represent the body frame, and
+   * the extrinsic is applied internally to compute the camera-frame pose.
+   *
+   * @param[in] source          The name of the sensor or motion model that generated this constraint
+   * @param[in] positions       The position variables for each observing body pose (N >= 2)
+   * @param[in] orientations    The orientation variables for each observing body pose
+   * @param[in] calibration     The stereo camera calibration (stored internally, not optimized)
+   * @param[in] observations    The stereo pixel observations (u_l, v_l, u_r, v_r) for each camera pose
+   * @param[in] covariance      The observation noise covariance (4x4, shared across all observations)
+   * @param[in] ext_position    The extrinsic translation (body-to-sensor)
+   * @param[in] ext_orientation The extrinsic rotation (body-to-sensor)
+   */
+  StereoNullspaceProjectionConstraint(const std::string& source,
+                                      const std::vector<vesta_variables::Position3DStamped>& positions,
+                                      const std::vector<vesta_variables::Orientation3DStamped>& orientations,
+                                      const vesta_variables::StereoCamera& calibration,
+                                      const std::vector<Eigen::Vector4d>& observations,
+                                      const vesta_core::Matrix4d& covariance,
+                                      const vesta_variables::Extrinsic3DPosition& ext_position,
+                                      const vesta_variables::Extrinsic3DOrientation& ext_orientation);
+
+  /**
+   * @brief Returns whether this constraint uses an extrinsic calibration.
+   */
+  bool hasExtrinsic() const
+  {
+    return has_extrinsic_;
+  }
+
   ~StereoNullspaceProjectionConstraint() override = default;
 
   /**
@@ -113,6 +148,7 @@ protected:
   std::vector<Eigen::Vector4d> observations_;
   vesta_core::Matrix4d sqrt_information_;
   Eigen::Matrix<double, 5, 1> calibration_;
+  bool has_extrinsic_{ false };  //!< Whether this constraint uses an extrinsic calibration
 
 private:
   // Delegating constructor that takes a pre-built UUID vector
@@ -130,6 +166,7 @@ private:
     archive & observations_;
     archive & sqrt_information_;
     archive & calibration_;
+    archive & has_extrinsic_;
   }
 };
 

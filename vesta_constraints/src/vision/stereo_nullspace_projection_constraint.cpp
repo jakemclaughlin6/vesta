@@ -56,6 +56,29 @@ StereoNullspaceProjectionConstraint::StereoNullspaceProjectionConstraint(
   assert(positions.size() >= 2);
 }
 
+// Public constructor with extrinsic calibration
+StereoNullspaceProjectionConstraint::StereoNullspaceProjectionConstraint(
+    const std::string& source, const std::vector<vesta_variables::Position3DStamped>& positions,
+    const std::vector<vesta_variables::Orientation3DStamped>& orientations,
+    const vesta_variables::StereoCamera& calibration, const std::vector<Eigen::Vector4d>& observations,
+    const vesta_core::Matrix4d& covariance, const vesta_variables::Extrinsic3DPosition& ext_position,
+    const vesta_variables::Extrinsic3DOrientation& ext_orientation)
+  : StereoNullspaceProjectionConstraint(source, [&]() {
+      auto uuids = buildVariableUuids(positions, orientations);
+      uuids.push_back(ext_position.uuid());
+      uuids.push_back(ext_orientation.uuid());
+      return uuids;
+    }(), observations, covariance,
+    (Eigen::Matrix<double, 5, 1>() << calibration.data()[0], calibration.data()[1],
+     calibration.data()[2], calibration.data()[3], calibration.data()[4])
+        .finished())
+{
+  assert(positions.size() == orientations.size());
+  assert(positions.size() == observations.size());
+  assert(positions.size() >= 2);
+  has_extrinsic_ = true;
+}
+
 void StereoNullspaceProjectionConstraint::print(std::ostream& stream) const
 {
   stream << type() << "\n"
@@ -73,6 +96,13 @@ void StereoNullspaceProjectionConstraint::print(std::ostream& stream) const
     stream << "    observation: " << observations_[i].transpose() << "\n";
   }
 
+  if (has_extrinsic_)
+  {
+    const size_t ext_base = 2 * numObservations();
+    stream << "  ext_position variable: " << variables().at(ext_base) << "\n"
+           << "  ext_orientation variable: " << variables().at(ext_base + 1) << "\n";
+  }
+
   if (loss())
   {
     stream << "  loss: ";
@@ -82,7 +112,7 @@ void StereoNullspaceProjectionConstraint::print(std::ostream& stream) const
 
 ceres::CostFunction* StereoNullspaceProjectionConstraint::costFunction() const
 {
-  return new StereoNullspaceProjectionCostFunction(observations_, sqrt_information_, calibration_);
+  return new StereoNullspaceProjectionCostFunction(observations_, sqrt_information_, calibration_, has_extrinsic_);
 }
 
 }  // namespace vesta_constraints

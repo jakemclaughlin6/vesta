@@ -34,6 +34,7 @@
 #include <vesta_constraints/3d/absolute_pose_3d_stamped_constraint.h>
 
 #include <vesta_constraints/3d/normal_prior_pose_3d_cost_functor.h>
+#include <vesta_constraints/3d/normal_prior_pose_3d_with_extrinsic_cost_functor.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <Eigen/Dense>
@@ -55,14 +56,35 @@ AbsolutePose3DStampedConstraint::AbsolutePose3DStampedConstraint(
 {
 }
 
+AbsolutePose3DStampedConstraint::AbsolutePose3DStampedConstraint(
+    const std::string& source, const vesta_variables::Position3DStamped& position,
+    const vesta_variables::Orientation3DStamped& orientation, const vesta_variables::Extrinsic3DPosition& ext_position,
+    const vesta_variables::Extrinsic3DOrientation& ext_orientation, const vesta_core::Vector7d& mean,
+    const vesta_core::Matrix6d& covariance)
+  : vesta_core::Constraint(source,
+                           { position.uuid(), orientation.uuid(), ext_position.uuid(), ext_orientation.uuid() })
+  ,  // NOLINT(whitespace/braces)
+  mean_(mean)
+  , sqrt_information_(covariance.inverse().llt().matrixU())
+  , has_extrinsic_(true)
+{
+}
+
 void AbsolutePose3DStampedConstraint::print(std::ostream& stream) const
 {
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
          << "  position variable: " << variables().at(0) << "\n"
-         << "  orientation variable: " << variables().at(1) << "\n"
-         << "  mean: " << mean().transpose() << "\n"
+         << "  orientation variable: " << variables().at(1) << "\n";
+
+  if (has_extrinsic_)
+  {
+    stream << "  ext_position variable: " << variables().at(2) << "\n"
+           << "  ext_orientation variable: " << variables().at(3) << "\n";
+  }
+
+  stream << "  mean: " << mean().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 
   if (loss())
@@ -74,6 +96,12 @@ void AbsolutePose3DStampedConstraint::print(std::ostream& stream) const
 
 ceres::CostFunction* AbsolutePose3DStampedConstraint::costFunction() const
 {
+  if (has_extrinsic_)
+  {
+    return new ceres::AutoDiffCostFunction<NormalPriorPose3DWithExtrinsicCostFunctor, 6, 3, 4, 3, 4>(
+        new NormalPriorPose3DWithExtrinsicCostFunctor(sqrt_information_, mean_));
+  }
+
   return new ceres::AutoDiffCostFunction<NormalPriorPose3DCostFunctor, 6, 3, 4>(
       new NormalPriorPose3DCostFunctor(sqrt_information_, mean_));
 }

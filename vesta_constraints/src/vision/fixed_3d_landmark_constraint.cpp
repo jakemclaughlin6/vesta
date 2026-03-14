@@ -37,6 +37,7 @@
 #include <vesta_constraints/vision/fixed_3d_landmark_constraint.h>
 
 #include <vesta_constraints/vision/fixed_3d_landmark_cost_functor.h>
+#include <vesta_constraints/vision/fixed_3d_landmark_with_extrinsic_cost_functor.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <Eigen/Dense>
@@ -86,6 +87,27 @@ Fixed3DLandmarkConstraint::Fixed3DLandmarkConstraint(
   assert(pts3d_.rows() == observations_.rows());
 }
 
+Fixed3DLandmarkConstraint::Fixed3DLandmarkConstraint(
+    const std::string& source, const vesta_variables::Position3DStamped& position,
+    const vesta_variables::Orientation3DStamped& orientation, const vesta_variables::PinholeCamera& calibration,
+    const vesta_core::MatrixXd& pts3d, const vesta_core::MatrixXd& observations,
+    const vesta_variables::Extrinsic3DPosition& ext_position,
+    const vesta_variables::Extrinsic3DOrientation& ext_orientation, const vesta_core::Vector7d& mean,
+    const vesta_core::Matrix6d& covariance)
+  : vesta_core::Constraint(source,
+                           { position.uuid(), orientation.uuid(), calibration.uuid(), ext_position.uuid(),
+                             ext_orientation.uuid() })
+  , pts3d_(pts3d)
+  , observations_(observations)
+  , mean_(mean)
+  , sqrt_information_(covariance.inverse().llt().matrixU())
+  , has_extrinsic_(true)
+{
+  assert(pts3d_.cols() == 3);
+  assert(observations_.cols() == 2);
+  assert(pts3d_.rows() == observations_.rows());
+}
+
 void Fixed3DLandmarkConstraint::print(std::ostream& stream) const
 {
   stream << type() << "\n"
@@ -93,7 +115,15 @@ void Fixed3DLandmarkConstraint::print(std::ostream& stream) const
          << "  uuid: " << uuid() << "\n"
          << "  position variable: " << variables().at(0) << "\n"
          << "  orientation variable: " << variables().at(1) << "\n"
-         << "  mean: " << mean().transpose() << "\n"
+         << "  calibration variable: " << variables().at(2) << "\n";
+
+  if (has_extrinsic_)
+  {
+    stream << "  ext_position variable: " << variables().at(3) << "\n"
+           << "  ext_orientation variable: " << variables().at(4) << "\n";
+  }
+
+  stream << "  mean: " << mean().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n"
          << "  observations: " << observations() << "\n";
 
@@ -106,6 +136,14 @@ void Fixed3DLandmarkConstraint::print(std::ostream& stream) const
 
 ceres::CostFunction* Fixed3DLandmarkConstraint::costFunction() const
 {
+  if (has_extrinsic_)
+  {
+    // 2 Residuals Per 3D point
+    return new ceres::AutoDiffCostFunction<Fixed3DLandmarkWithExtrinsicCostFunctor, ceres::DYNAMIC, 3, 4, 4, 3, 4>(
+        new Fixed3DLandmarkWithExtrinsicCostFunctor(sqrt_information_, mean_, observations_, pts3d_),
+        2 * pts3d_.rows());
+  }
+
   // 2 Residuals Per 3D point
   return new ceres::AutoDiffCostFunction<Fixed3DLandmarkCostFunctor, ceres::DYNAMIC, 3, 4, 4>(
       new Fixed3DLandmarkCostFunctor(sqrt_information_, mean_, observations_, pts3d_), 2 * pts3d_.rows());

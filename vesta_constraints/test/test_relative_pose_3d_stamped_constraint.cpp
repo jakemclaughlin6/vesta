@@ -37,19 +37,25 @@
 #include <vesta_core/eigen_gtest.h>
 #include <vesta_core/serialization.h>
 #include <vesta_core/uuid.h>
+#include <vesta_variables/3d/extrinsic_3d_orientation.h>
+#include <vesta_variables/3d/extrinsic_3d_position.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 
 #include <ceres/covariance.h>
+#include <ceres/cost_function.h>
 #include <ceres/problem.h>
 #include <ceres/solver.h>
 #include <gtest/gtest.h>
 
+#include <memory>
 #include <utility>
 #include <vector>
 
 using vesta_constraints::AbsolutePose3DStampedConstraint;
 using vesta_constraints::RelativePose3DStampedConstraint;
+using vesta_variables::Extrinsic3DOrientation;
+using vesta_variables::Extrinsic3DPosition;
 using vesta_variables::Orientation3DStamped;
 using vesta_variables::Position3DStamped;
 
@@ -308,6 +314,183 @@ TEST(RelativePose3DStampedConstraint, Serialization)
   EXPECT_EQ(expected.variables(), actual.variables());
   EXPECT_MATRIX_EQ(expected.delta(), actual.delta());
   EXPECT_MATRIX_EQ(expected.sqrtInformation(), actual.sqrtInformation());
+}
+
+TEST(RelativePose3DStampedConstraint, WithExtrinsic_HasExtrinsic)
+{
+  // Construct body pose variables
+  Position3DStamped position1(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("r5d4"));
+  Orientation3DStamped orientation1(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("r5d4"));
+  Position3DStamped position2(vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("r5d4"));
+  Orientation3DStamped orientation2(vesta_core::Timestamp(1235, 5678), vesta_core::uuid::generate("r5d4"));
+
+  // Construct extrinsic variables
+  Extrinsic3DPosition ext_position(0);
+  Extrinsic3DOrientation ext_orientation(0);
+
+  vesta_core::Vector7d delta;
+  delta << 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
+
+  vesta_core::Matrix6d cov = vesta_core::Matrix6d::Identity();
+
+  RelativePose3DStampedConstraint constraint("test", position1, orientation1, position2, orientation2, ext_position,
+                                             ext_orientation, delta, cov);
+
+  // Verify extrinsic flag
+  EXPECT_TRUE(constraint.hasExtrinsic());
+
+  // Verify variable count: 4 body + 2 extrinsic = 6
+  EXPECT_EQ(6u, constraint.variables().size());
+}
+
+TEST(RelativePose3DStampedConstraint, WithExtrinsic_IdentityExtrinsic)
+{
+  // Set up two body poses: pose1 at origin, pose2 at (1, 0, 0) with identity orientation
+  auto position1 = Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("test"));
+  position1->x() = 0.0;
+  position1->y() = 0.0;
+  position1->z() = 0.0;
+
+  auto orientation1 =
+      Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("test"));
+  orientation1->w() = 1.0;
+  orientation1->x() = 0.0;
+  orientation1->y() = 0.0;
+  orientation1->z() = 0.0;
+
+  auto position2 = Position3DStamped::make_shared(vesta_core::Timestamp(2, 0), vesta_core::uuid::generate("test"));
+  position2->x() = 1.0;
+  position2->y() = 0.0;
+  position2->z() = 0.0;
+
+  auto orientation2 =
+      Orientation3DStamped::make_shared(vesta_core::Timestamp(2, 0), vesta_core::uuid::generate("test"));
+  orientation2->w() = 1.0;
+  orientation2->x() = 0.0;
+  orientation2->y() = 0.0;
+  orientation2->z() = 0.0;
+
+  // Identity extrinsic: no translation, identity rotation
+  Extrinsic3DPosition ext_position(0);
+  ext_position.x() = 0.0;
+  ext_position.y() = 0.0;
+  ext_position.z() = 0.0;
+
+  Extrinsic3DOrientation ext_orientation(0);
+  ext_orientation.w() = 1.0;
+  ext_orientation.x() = 0.0;
+  ext_orientation.y() = 0.0;
+  ext_orientation.z() = 0.0;
+
+  // The relative delta in sensor frame: 1m forward, no rotation change
+  vesta_core::Vector7d delta;
+  delta << 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
+
+  vesta_core::Matrix6d cov = vesta_core::Matrix6d::Identity();
+
+  RelativePose3DStampedConstraint constraint("test", *position1, *orientation1, *position2, *orientation2, ext_position,
+                                             ext_orientation, delta, cov);
+
+  // Evaluate the cost function
+  std::unique_ptr<ceres::CostFunction> cost_function(constraint.costFunction());
+
+  // Parameter blocks: pos1(3), ori1(4), pos2(3), ori2(4), ext_pos(3), ext_ori(4)
+  std::vector<double*> parameter_blocks;
+  parameter_blocks.push_back(position1->data());
+  parameter_blocks.push_back(orientation1->data());
+  parameter_blocks.push_back(position2->data());
+  parameter_blocks.push_back(orientation2->data());
+  parameter_blocks.push_back(ext_position.data());
+  parameter_blocks.push_back(ext_orientation.data());
+
+  // Evaluate
+  std::vector<double> residuals(6, 0.0);
+  bool success = cost_function->Evaluate(parameter_blocks.data(), residuals.data(), nullptr);
+  EXPECT_TRUE(success);
+
+  // With identity extrinsic, result should match non-extrinsic case: residuals near zero
+  for (size_t i = 0; i < 6; ++i)
+  {
+    EXPECT_NEAR(0.0, residuals[i], 1e-10);
+  }
+}
+
+TEST(RelativePose3DStampedConstraint, WithExtrinsic_NonTrivialExtrinsic)
+{
+  // Body pose1 at origin with identity orientation
+  auto position1 = Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("test"));
+  position1->x() = 0.0;
+  position1->y() = 0.0;
+  position1->z() = 0.0;
+
+  auto orientation1 =
+      Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("test"));
+  orientation1->w() = 1.0;
+  orientation1->x() = 0.0;
+  orientation1->y() = 0.0;
+  orientation1->z() = 0.0;
+
+  // Body pose2 at (1, 0, 0) with identity orientation
+  auto position2 = Position3DStamped::make_shared(vesta_core::Timestamp(2, 0), vesta_core::uuid::generate("test"));
+  position2->x() = 1.0;
+  position2->y() = 0.0;
+  position2->z() = 0.0;
+
+  auto orientation2 =
+      Orientation3DStamped::make_shared(vesta_core::Timestamp(2, 0), vesta_core::uuid::generate("test"));
+  orientation2->w() = 1.0;
+  orientation2->x() = 0.0;
+  orientation2->y() = 0.0;
+  orientation2->z() = 0.0;
+
+  // Extrinsic: pure translation of (0, 0.5, 0) with identity rotation
+  // Sensor pose = body pose + R_body * t_body_sensor
+  // sensor1 = (0, 0, 0) + I * (0, 0.5, 0) = (0, 0.5, 0)
+  // sensor2 = (1, 0, 0) + I * (0, 0.5, 0) = (1, 0.5, 0)
+  Extrinsic3DPosition ext_position(0);
+  ext_position.x() = 0.0;
+  ext_position.y() = 0.5;
+  ext_position.z() = 0.0;
+
+  Extrinsic3DOrientation ext_orientation(0);
+  ext_orientation.w() = 1.0;
+  ext_orientation.x() = 0.0;
+  ext_orientation.y() = 0.0;
+  ext_orientation.z() = 0.0;
+
+  // The relative delta in sensor frame:
+  // delta_pos = R_sensor1^{-1} * (sensor2_pos - sensor1_pos) = I^{-1} * (1, 0, 0) = (1, 0, 0)
+  // delta_rot = identity (both orientations are identity)
+  vesta_core::Vector7d delta;
+  delta << 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
+
+  vesta_core::Matrix6d cov = vesta_core::Matrix6d::Identity();
+
+  RelativePose3DStampedConstraint constraint("test", *position1, *orientation1, *position2, *orientation2, ext_position,
+                                             ext_orientation, delta, cov);
+
+  // Evaluate the cost function
+  std::unique_ptr<ceres::CostFunction> cost_function(constraint.costFunction());
+
+  // Parameter blocks: pos1(3), ori1(4), pos2(3), ori2(4), ext_pos(3), ext_ori(4)
+  std::vector<double*> parameter_blocks;
+  parameter_blocks.push_back(position1->data());
+  parameter_blocks.push_back(orientation1->data());
+  parameter_blocks.push_back(position2->data());
+  parameter_blocks.push_back(orientation2->data());
+  parameter_blocks.push_back(ext_position.data());
+  parameter_blocks.push_back(ext_orientation.data());
+
+  // Evaluate
+  std::vector<double> residuals(6, 0.0);
+  bool success = cost_function->Evaluate(parameter_blocks.data(), residuals.data(), nullptr);
+  EXPECT_TRUE(success);
+
+  // Residuals should be near zero since the delta matches the sensor-frame relative pose
+  for (size_t i = 0; i < 6; ++i)
+  {
+    EXPECT_NEAR(0.0, residuals[i], 1e-10);
+  }
 }
 
 int main(int argc, char** argv)

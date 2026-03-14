@@ -39,20 +39,26 @@
 #include <vesta_core/eigen_gtest.h>
 #include <vesta_core/serialization.h>
 #include <vesta_core/uuid.h>
+#include <vesta_variables/3d/extrinsic_3d_orientation.h>
+#include <vesta_variables/3d/extrinsic_3d_position.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 #include <vesta_variables/vision/pinhole_camera_fixed.h>
 #include <vesta_variables/vision/point_3d_landmark.h>
 
+#include <ceres/cost_function.h>
 #include <ceres/covariance.h>
 #include <ceres/problem.h>
 #include <ceres/solver.h>
 #include <gtest/gtest.h>
 
+#include <memory>
 #include <utility>
 #include <vector>
 
 using vesta_constraints::ReprojectionErrorConstraint;
+using vesta_variables::Extrinsic3DOrientation;
+using vesta_variables::Extrinsic3DPosition;
 using vesta_variables::Orientation3DStamped;
 using vesta_variables::PinholeCameraFixed;
 using vesta_variables::Point3DLandmark;
@@ -321,6 +327,182 @@ TEST(ReprojectionErrorConstraint, Serialization)
   EXPECT_EQ(expected.variables(), actual.variables());
   EXPECT_MATRIX_EQ(expected.mean(), actual.mean());
   EXPECT_MATRIX_EQ(expected.sqrtInformation(), actual.sqrtInformation());
+}
+
+TEST(ReprojectionErrorConstraint, WithExtrinsic_HasExtrinsic)
+{
+  // Construct body pose, camera, and point variables
+  Position3DStamped position_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Orientation3DStamped orientation_variable(vesta_core::Timestamp(1234, 5678), vesta_core::uuid::generate("walle"));
+  Point3DLandmark point(0);
+  PinholeCameraFixed calibration_variable(0);
+
+  // Construct extrinsic variables
+  Extrinsic3DPosition ext_position(0);
+  Extrinsic3DOrientation ext_orientation(0);
+
+  vesta_core::Vector2d mean;
+  mean << 320.0, 240.0;
+
+  vesta_core::Matrix2d cov;
+  cov << 0.25, 0.00,  // NOLINT
+      0.00, 0.25;     // NOLINT
+
+  ReprojectionErrorConstraint constraint("test", position_variable, orientation_variable, calibration_variable, point,
+                                         ext_position, ext_orientation, mean, cov);
+
+  // Verify extrinsic flag
+  EXPECT_TRUE(constraint.hasExtrinsic());
+
+  // Verify variable count: 4 original + 2 extrinsic = 6
+  EXPECT_EQ(6u, constraint.variables().size());
+}
+
+TEST(ReprojectionErrorConstraint, WithExtrinsic_IdentityExtrinsic)
+{
+  // Place camera at origin looking down +Z axis (identity orientation in world-frame convention)
+  auto position_variable =
+      Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("test"));
+  position_variable->x() = 0.0;
+  position_variable->y() = 0.0;
+  position_variable->z() = 0.0;
+
+  auto orientation_variable =
+      Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("test"));
+  orientation_variable->w() = 1.0;
+  orientation_variable->x() = 0.0;
+  orientation_variable->y() = 0.0;
+  orientation_variable->z() = 0.0;
+
+  auto calibration_variable = PinholeCameraFixed::make_shared(0);
+  calibration_variable->fx() = 500.0;
+  calibration_variable->fy() = 500.0;
+  calibration_variable->cx() = 320.0;
+  calibration_variable->cy() = 240.0;
+
+  // 3D point at (0, 0, 5) — directly in front of camera
+  auto point_variable = Point3DLandmark::make_shared(0);
+  point_variable->x() = 0.0;
+  point_variable->y() = 0.0;
+  point_variable->z() = 5.0;
+
+  // Expected projection: u = 500*0/5 + 320 = 320, v = 500*0/5 + 240 = 240
+  vesta_core::Vector2d mean;
+  mean << 320.0, 240.0;
+
+  vesta_core::Matrix2d cov;
+  cov << 0.25, 0.00,  // NOLINT
+      0.00, 0.25;     // NOLINT
+
+  // Identity extrinsic
+  Extrinsic3DPosition ext_position(0);
+  ext_position.x() = 0.0;
+  ext_position.y() = 0.0;
+  ext_position.z() = 0.0;
+
+  Extrinsic3DOrientation ext_orientation(0);
+  ext_orientation.w() = 1.0;
+  ext_orientation.x() = 0.0;
+  ext_orientation.y() = 0.0;
+  ext_orientation.z() = 0.0;
+
+  ReprojectionErrorConstraint constraint("test", *position_variable, *orientation_variable, *calibration_variable,
+                                         *point_variable, ext_position, ext_orientation, mean, cov);
+
+  // Evaluate the cost function
+  std::unique_ptr<ceres::CostFunction> cost_function(constraint.costFunction());
+
+  // Parameter blocks: body_pos(3), body_ori(4), calibration(4), point(3), ext_pos(3), ext_ori(4)
+  std::vector<double*> parameter_blocks;
+  parameter_blocks.push_back(position_variable->data());
+  parameter_blocks.push_back(orientation_variable->data());
+  parameter_blocks.push_back(calibration_variable->data());
+  parameter_blocks.push_back(point_variable->data());
+  parameter_blocks.push_back(ext_position.data());
+  parameter_blocks.push_back(ext_orientation.data());
+
+  std::vector<double> residuals(2, 0.0);
+  bool success = cost_function->Evaluate(parameter_blocks.data(), residuals.data(), nullptr);
+  EXPECT_TRUE(success);
+
+  // With identity extrinsic, residuals should be near zero
+  EXPECT_NEAR(0.0, residuals[0], 1e-10);
+  EXPECT_NEAR(0.0, residuals[1], 1e-10);
+}
+
+TEST(ReprojectionErrorConstraint, WithExtrinsic_NonTrivialExtrinsic)
+{
+  // Body at origin with identity orientation
+  auto position_variable =
+      Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("test"));
+  position_variable->x() = 0.0;
+  position_variable->y() = 0.0;
+  position_variable->z() = 0.0;
+
+  auto orientation_variable =
+      Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("test"));
+  orientation_variable->w() = 1.0;
+  orientation_variable->x() = 0.0;
+  orientation_variable->y() = 0.0;
+  orientation_variable->z() = 0.0;
+
+  // Camera intrinsics: fx=500, fy=500, cx=320, cy=240
+  auto calibration_variable = PinholeCameraFixed::make_shared(0);
+  calibration_variable->fx() = 500.0;
+  calibration_variable->fy() = 500.0;
+  calibration_variable->cx() = 320.0;
+  calibration_variable->cy() = 240.0;
+
+  // Extrinsic: camera is offset 0.1m in x from body, identity rotation
+  // sensor_pos = body_pos + R_body * t_body_sensor = (0,0,0) + I*(0.1,0,0) = (0.1, 0, 0)
+  Extrinsic3DPosition ext_position(0);
+  ext_position.x() = 0.1;
+  ext_position.y() = 0.0;
+  ext_position.z() = 0.0;
+
+  Extrinsic3DOrientation ext_orientation(0);
+  ext_orientation.w() = 1.0;
+  ext_orientation.x() = 0.0;
+  ext_orientation.y() = 0.0;
+  ext_orientation.z() = 0.0;
+
+  // 3D point at (0.1, 0, 5) in world frame — directly in front of the camera
+  // p_cam = R_sensor^{-1} * (X - p_sensor) = I * ((0.1,0,5) - (0.1,0,0)) = (0, 0, 5)
+  auto point_variable = Point3DLandmark::make_shared(0);
+  point_variable->x() = 0.1;
+  point_variable->y() = 0.0;
+  point_variable->z() = 5.0;
+
+  // Expected projection: u = 500*0/5 + 320 = 320, v = 500*0/5 + 240 = 240 (center of image)
+  vesta_core::Vector2d mean;
+  mean << 320.0, 240.0;
+
+  vesta_core::Matrix2d cov;
+  cov << 0.25, 0.00,  // NOLINT
+      0.00, 0.25;     // NOLINT
+
+  ReprojectionErrorConstraint constraint("test", *position_variable, *orientation_variable, *calibration_variable,
+                                         *point_variable, ext_position, ext_orientation, mean, cov);
+
+  // Evaluate the cost function
+  std::unique_ptr<ceres::CostFunction> cost_function(constraint.costFunction());
+
+  // Parameter blocks: body_pos(3), body_ori(4), calibration(4), point(3), ext_pos(3), ext_ori(4)
+  std::vector<double*> parameter_blocks;
+  parameter_blocks.push_back(position_variable->data());
+  parameter_blocks.push_back(orientation_variable->data());
+  parameter_blocks.push_back(calibration_variable->data());
+  parameter_blocks.push_back(point_variable->data());
+  parameter_blocks.push_back(ext_position.data());
+  parameter_blocks.push_back(ext_orientation.data());
+
+  std::vector<double> residuals(2, 0.0);
+  bool success = cost_function->Evaluate(parameter_blocks.data(), residuals.data(), nullptr);
+  EXPECT_TRUE(success);
+
+  // Residuals should be near zero since point projects to center of image
+  EXPECT_NEAR(0.0, residuals[0], 1e-10);
+  EXPECT_NEAR(0.0, residuals[1], 1e-10);
 }
 
 int main(int argc, char** argv)

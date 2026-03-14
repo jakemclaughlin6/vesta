@@ -34,6 +34,7 @@
 #include <vesta_constraints/3d/relative_orientation_3d_stamped_constraint.h>
 
 #include <vesta_constraints/3d/normal_delta_orientation_3d_cost_functor.h>
+#include <vesta_constraints/3d/normal_delta_orientation_3d_with_extrinsic_cost_functor.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <Eigen/Geometry>
@@ -63,6 +64,21 @@ RelativeOrientation3DStampedConstraint::RelativeOrientation3DStampedConstraint(
 {
 }
 
+RelativeOrientation3DStampedConstraint::RelativeOrientation3DStampedConstraint(
+    const std::string& source, const vesta_variables::Orientation3DStamped& orientation1,
+    const vesta_variables::Orientation3DStamped& orientation2,
+    const vesta_variables::Extrinsic3DPosition& ext_position,
+    const vesta_variables::Extrinsic3DOrientation& ext_orientation, const vesta_core::Vector4d& delta,
+    const vesta_core::Matrix3d& covariance)
+  : vesta_core::Constraint(source,
+                           { orientation1.uuid(), orientation2.uuid(), ext_position.uuid(), ext_orientation.uuid() })
+  ,  // NOLINT(whitespace/braces)
+  delta_(delta)
+  , sqrt_information_(covariance.inverse().llt().matrixU())
+  , has_extrinsic_(true)
+{
+}
+
 vesta_core::Matrix3d RelativeOrientation3DStampedConstraint::covariance() const
 {
   return (sqrt_information_.transpose() * sqrt_information_).inverse();
@@ -74,8 +90,15 @@ void RelativeOrientation3DStampedConstraint::print(std::ostream& stream) const
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
          << "  orientation variable1: " << variables().at(0) << "\n"
-         << "  orientation variable2: " << variables().at(1) << "\n"
-         << "  delta: " << delta().transpose() << "\n"
+         << "  orientation variable2: " << variables().at(1) << "\n";
+
+  if (has_extrinsic_)
+  {
+    stream << "  ext_position variable: " << variables().at(2) << "\n"
+           << "  ext_orientation variable: " << variables().at(3) << "\n";
+  }
+
+  stream << "  delta: " << delta().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 
   if (loss())
@@ -87,6 +110,12 @@ void RelativeOrientation3DStampedConstraint::print(std::ostream& stream) const
 
 ceres::CostFunction* RelativeOrientation3DStampedConstraint::costFunction() const
 {
+  if (has_extrinsic_)
+  {
+    return new ceres::AutoDiffCostFunction<NormalDeltaOrientation3DWithExtrinsicCostFunctor, 3, 4, 4, 3, 4>(
+        new NormalDeltaOrientation3DWithExtrinsicCostFunctor(sqrt_information_, delta_));
+  }
+
   return new ceres::AutoDiffCostFunction<NormalDeltaOrientation3DCostFunctor, 3, 4, 4>(
       new NormalDeltaOrientation3DCostFunctor(sqrt_information_, delta_));
 }

@@ -7,6 +7,8 @@
 #include <vesta_core/serialization.h>
 #include <vesta_core/uuid.h>
 #include <vesta_variables/3d/acceleration_bias_3d_stamped.h>
+#include <vesta_variables/3d/extrinsic_3d_orientation.h>
+#include <vesta_variables/3d/extrinsic_3d_position.h>
 #include <vesta_variables/3d/gyroscope_bias_3d_stamped.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
@@ -87,6 +89,55 @@ public:
       const vesta_variables::AccelerationBias3DStamped& accel_bias2, const ImuPreintegrator& preintegrator,
       const Eigen::Vector3d& linearization_bg, const Eigen::Vector3d& linearization_ba,
       const Eigen::Vector3d& gravity = kGravityWorld, double info_weight = 1.0);
+
+  /**
+   * @brief Create a constraint from preintegrated IMU measurements with extrinsic calibration
+   *
+   * This constructor accepts an extrinsic transform T_body_sensor that maps points from the IMU
+   * sensor frame to the body frame. The orientation and position variables represent the body frame,
+   * and the extrinsic is applied internally to compute sensor-frame poses for the preintegration
+   * residual. Velocity and biases are not transformed by the extrinsic.
+   *
+   * @param[in] source          The name of the sensor or motion model that generated this constraint
+   * @param[in] orientation1    The body-frame orientation variable at the first state
+   * @param[in] position1       The body-frame position variable at the first state
+   * @param[in] velocity1       The linear velocity variable at the first state
+   * @param[in] gyro_bias1      The gyroscope bias variable at the first state
+   * @param[in] accel_bias1     The accelerometer bias variable at the first state
+   * @param[in] orientation2    The body-frame orientation variable at the second state
+   * @param[in] position2       The body-frame position variable at the second state
+   * @param[in] velocity2       The linear velocity variable at the second state
+   * @param[in] gyro_bias2      The gyroscope bias variable at the second state
+   * @param[in] accel_bias2     The accelerometer bias variable at the second state
+   * @param[in] ext_position    The extrinsic translation (body-to-sensor)
+   * @param[in] ext_orientation The extrinsic rotation (body-to-sensor)
+   * @param[in] preintegrator   The IMU preintegrator containing preintegrated measurements
+   * @param[in] linearization_bg The gyroscope bias at the preintegration linearization point
+   * @param[in] linearization_ba The accelerometer bias at the preintegration linearization point
+   * @param[in] gravity         The gravity vector in world frame (default: [0, 0, -9.80665])
+   * @param[in] info_weight     Scaling factor for the information matrix (default: 1.0)
+   */
+  RelativeImuState3DStampedConstraint(
+      const std::string& source, const vesta_variables::Orientation3DStamped& orientation1,
+      const vesta_variables::Position3DStamped& position1, const vesta_variables::VelocityLinear3DStamped& velocity1,
+      const vesta_variables::GyroscopeBias3DStamped& gyro_bias1,
+      const vesta_variables::AccelerationBias3DStamped& accel_bias1,
+      const vesta_variables::Orientation3DStamped& orientation2, const vesta_variables::Position3DStamped& position2,
+      const vesta_variables::VelocityLinear3DStamped& velocity2,
+      const vesta_variables::GyroscopeBias3DStamped& gyro_bias2,
+      const vesta_variables::AccelerationBias3DStamped& accel_bias2,
+      const vesta_variables::Extrinsic3DPosition& ext_position,
+      const vesta_variables::Extrinsic3DOrientation& ext_orientation, const ImuPreintegrator& preintegrator,
+      const Eigen::Vector3d& linearization_bg, const Eigen::Vector3d& linearization_ba,
+      const Eigen::Vector3d& gravity = kGravityWorld, double info_weight = 1.0);
+
+  /**
+   * @brief Returns whether this constraint uses an extrinsic calibration.
+   */
+  bool hasExtrinsic() const
+  {
+    return has_extrinsic_;
+  }
 
   /**
    * @brief Destructor
@@ -184,7 +235,8 @@ protected:
   Eigen::Matrix3d dv_dbg_{ Eigen::Matrix3d::Zero() };  //!< Jacobian of preintegrated velocity w.r.t.
                                                        //!< gyro bias
   Eigen::Matrix3d dv_dba_{ Eigen::Matrix3d::Zero() };  //!< Jacobian of preintegrated velocity w.r.t.
-                                                       //!< accel bias
+                                                      //!< accel bias
+  bool has_extrinsic_{ false };                       //!< Whether this constraint uses an extrinsic calibration
 
 private:
   // Allow Boost Serialization access to private methods
@@ -221,6 +273,7 @@ private:
     archive & dp_dba_;
     archive & dv_dbg_;
     archive & dv_dba_;
+    archive & has_extrinsic_;
   }
 };
 

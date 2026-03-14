@@ -34,6 +34,7 @@
 #include <vesta_constraints/3d/absolute_orientation_3d_stamped_euler_constraint.h>
 
 #include <vesta_constraints/3d/normal_prior_orientation_3d_euler_cost_functor.h>
+#include <vesta_constraints/3d/normal_prior_orientation_3d_euler_with_extrinsic_cost_functor.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <Eigen/Dense>
@@ -59,6 +60,23 @@ AbsoluteOrientation3DStampedEulerConstraint::AbsoluteOrientation3DStampedEulerCo
   assert(mean.rows() == static_cast<int>(axes.size()));
 }
 
+AbsoluteOrientation3DStampedEulerConstraint::AbsoluteOrientation3DStampedEulerConstraint(
+    const std::string& source, const vesta_variables::Orientation3DStamped& orientation,
+    const vesta_variables::Extrinsic3DPosition& ext_position,
+    const vesta_variables::Extrinsic3DOrientation& ext_orientation, const vesta_core::VectorXd& mean,
+    const vesta_core::MatrixXd& covariance, const std::vector<Euler>& axes)
+  : vesta_core::Constraint(source, { orientation.uuid(), ext_position.uuid(), ext_orientation.uuid() })
+  ,  // NOLINT(whitespace/braces)
+  mean_(mean)
+  , sqrt_information_(covariance.inverse().llt().matrixU())
+  , axes_(axes)
+  , has_extrinsic_(true)
+{
+  assert(covariance.rows() == static_cast<int>(axes.size()));
+  assert(covariance.cols() == static_cast<int>(axes.size()));
+  assert(mean.rows() == static_cast<int>(axes.size()));
+}
+
 vesta_core::MatrixXd AbsoluteOrientation3DStampedEulerConstraint::covariance() const
 {
   return (sqrt_information_.transpose() * sqrt_information_).inverse();
@@ -69,8 +87,15 @@ void AbsoluteOrientation3DStampedEulerConstraint::print(std::ostream& stream) co
   stream << type() << "\n"
          << "  source: " << source() << "\n"
          << "  uuid: " << uuid() << "\n"
-         << "  orientation variable: " << variables().at(0) << "\n"
-         << "  mean: " << mean().transpose() << "\n"
+         << "  orientation variable: " << variables().at(0) << "\n";
+
+  if (has_extrinsic_)
+  {
+    stream << "  ext_position variable: " << variables().at(1) << "\n"
+           << "  ext_orientation variable: " << variables().at(2) << "\n";
+  }
+
+  stream << "  mean: " << mean().transpose() << "\n"
          << "  sqrt_info: " << sqrtInformation() << "\n";
 
   if (loss())
@@ -82,6 +107,13 @@ void AbsoluteOrientation3DStampedEulerConstraint::print(std::ostream& stream) co
 
 ceres::CostFunction* AbsoluteOrientation3DStampedEulerConstraint::costFunction() const
 {
+  if (has_extrinsic_)
+  {
+    return new ceres::AutoDiffCostFunction<NormalPriorOrientation3DEulerWithExtrinsicCostFunctor, ceres::DYNAMIC, 4, 3,
+                                           4>(
+        new NormalPriorOrientation3DEulerWithExtrinsicCostFunctor(sqrt_information_, mean_, axes_), axes_.size());
+  }
+
   return new ceres::AutoDiffCostFunction<NormalPriorOrientation3DEulerCostFunctor, ceres::DYNAMIC, 4>(
       new NormalPriorOrientation3DEulerCostFunctor(sqrt_information_, mean_, axes_), axes_.size());
 }

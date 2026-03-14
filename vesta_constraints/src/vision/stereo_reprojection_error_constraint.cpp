@@ -33,6 +33,7 @@
  */
 #include <vesta_constraints/vision/stereo_reprojection_error_constraint.h>
 #include <vesta_constraints/vision/stereo_reprojection_error_cost_functor.h>
+#include <vesta_constraints/vision/stereo_reprojection_error_with_extrinsic_cost_functor.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <Eigen/Dense>
@@ -54,6 +55,21 @@ StereoReprojectionErrorConstraint::StereoReprojectionErrorConstraint(
 {
 }
 
+StereoReprojectionErrorConstraint::StereoReprojectionErrorConstraint(
+    const std::string& source, const vesta_variables::Position3DStamped& position,
+    const vesta_variables::Orientation3DStamped& orientation, const vesta_variables::StereoCamera& calibration,
+    const vesta_variables::Point3DLandmark& point, const vesta_variables::Extrinsic3DPosition& ext_position,
+    const vesta_variables::Extrinsic3DOrientation& ext_orientation, const vesta_core::Vector4d& mean,
+    const vesta_core::Matrix4d& covariance)
+  : vesta_core::Constraint(source,
+                           { position.uuid(), orientation.uuid(), calibration.uuid(), point.uuid(),
+                             ext_position.uuid(), ext_orientation.uuid() })
+  , mean_(mean)
+  , sqrt_information_(covariance.inverse().llt().matrixU())
+  , has_extrinsic_(true)
+{
+}
+
 void StereoReprojectionErrorConstraint::print(std::ostream& stream) const
 {
   stream << type() << "\n"
@@ -62,8 +78,15 @@ void StereoReprojectionErrorConstraint::print(std::ostream& stream) const
          << "  position variable: " << variables().at(0) << "\n"
          << "  orientation variable: " << variables().at(1) << "\n"
          << "  calibration variable: " << variables().at(2) << "\n"
-         << "  point variable: " << variables().at(3) << "\n"
-         << "  mean: " << mean().transpose() << "\n"
+         << "  point variable: " << variables().at(3) << "\n";
+
+  if (has_extrinsic_)
+  {
+    stream << "  ext_position variable: " << variables().at(4) << "\n"
+           << "  ext_orientation variable: " << variables().at(5) << "\n";
+  }
+
+  stream << "  mean: " << mean().transpose() << "\n"
          << "  sqrt_info:\n"
          << sqrtInformation() << "\n";
 
@@ -76,6 +99,12 @@ void StereoReprojectionErrorConstraint::print(std::ostream& stream) const
 
 ceres::CostFunction* StereoReprojectionErrorConstraint::costFunction() const
 {
+  if (has_extrinsic_)
+  {
+    return new ceres::AutoDiffCostFunction<StereoReprojectionErrorWithExtrinsicCostFunctor, 4, 3, 4, 5, 3, 3, 4>(
+        new StereoReprojectionErrorWithExtrinsicCostFunctor(sqrt_information_, mean_));
+  }
+
   return new ceres::AutoDiffCostFunction<StereoReprojectionErrorCostFunctor, 4, 3, 4, 5, 3>(
       new StereoReprojectionErrorCostFunctor(sqrt_information_, mean_));
 }

@@ -39,6 +39,8 @@
 #include <vesta_core/fuse_macros.h>
 #include <vesta_core/serialization.h>
 #include <vesta_core/uuid.h>
+#include <vesta_variables/3d/extrinsic_3d_orientation.h>
+#include <vesta_variables/3d/extrinsic_3d_position.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 
 #include <Eigen/Geometry>
@@ -101,6 +103,37 @@ public:
                                          const vesta_variables::Orientation3DStamped& orientation1,
                                          const vesta_variables::Orientation3DStamped& orientation2,
                                          const Eigen::Quaterniond& delta, const vesta_core::Matrix3d& covariance);
+
+  /**
+   * @brief Constructor with extrinsic calibration
+   *
+   * This constructor accepts an extrinsic transform. The orientation variables represent the body
+   * frame, and the extrinsic rotation is applied internally to compute the sensor-frame orientations
+   * before computing the relative orientation residual. The extrinsic translation is included for
+   * API consistency but does not affect orientation.
+   *
+   * @param[in] source          The name of the sensor or motion model that generated this constraint
+   * @param[in] orientation1    The variable representing the first body-frame orientation
+   * @param[in] orientation2    The variable representing the second body-frame orientation
+   * @param[in] ext_position    The extrinsic translation (body-to-sensor), unused in math
+   * @param[in] ext_orientation The extrinsic rotation (body-to-sensor)
+   * @param[in] delta           The measured orientation change in the sensor frame (4x1: w, x, y, z)
+   * @param[in] covariance      The measurement covariance (3x3 matrix: qx, qy, qz)
+   */
+  RelativeOrientation3DStampedConstraint(const std::string& source,
+                                         const vesta_variables::Orientation3DStamped& orientation1,
+                                         const vesta_variables::Orientation3DStamped& orientation2,
+                                         const vesta_variables::Extrinsic3DPosition& ext_position,
+                                         const vesta_variables::Extrinsic3DOrientation& ext_orientation,
+                                         const vesta_core::Vector4d& delta, const vesta_core::Matrix3d& covariance);
+
+  /**
+   * @brief Returns whether this constraint uses an extrinsic calibration.
+   */
+  bool hasExtrinsic() const
+  {
+    return has_extrinsic_;
+  }
 
   /**
    * @brief Destructor
@@ -174,6 +207,7 @@ protected:
 
   vesta_core::Vector4d delta_;             //!< The measured/prior mean vector for this variable
   vesta_core::Matrix3d sqrt_information_;  //!< The square root information matrix
+  bool has_extrinsic_{ false };            //!< Whether this constraint uses an extrinsic calibration
 
 private:
   // Allow Boost Serialization access to private methods
@@ -194,6 +228,7 @@ private:
     archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & delta_;
     archive & sqrt_information_;
+    archive & has_extrinsic_;
   }
 };
 

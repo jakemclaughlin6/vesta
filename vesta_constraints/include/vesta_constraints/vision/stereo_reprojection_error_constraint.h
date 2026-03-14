@@ -39,6 +39,8 @@
 #include <vesta_core/fuse_macros.h>
 #include <vesta_core/serialization.h>
 #include <vesta_core/uuid.h>
+#include <vesta_variables/3d/extrinsic_3d_orientation.h>
+#include <vesta_variables/3d/extrinsic_3d_position.h>
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 #include <vesta_variables/vision/point_3d_landmark.h>
@@ -93,10 +95,43 @@ public:
    * @param[in] covariance    The observation covariance (4x4 matrix)
    */
   StereoReprojectionErrorConstraint(const std::string& source, const vesta_variables::Position3DStamped& position,
-                                    const vesta_variables::Orientation3DStamped& orientation,
-                                    const vesta_variables::StereoCamera& calibration,
-                                    const vesta_variables::Point3DLandmark& point, const vesta_core::Vector4d& mean,
-                                    const vesta_core::Matrix4d& covariance);
+                                     const vesta_variables::Orientation3DStamped& orientation,
+                                     const vesta_variables::StereoCamera& calibration,
+                                     const vesta_variables::Point3DLandmark& point, const vesta_core::Vector4d& mean,
+                                     const vesta_core::Matrix4d& covariance);
+
+  /**
+   * @brief Create a constraint with extrinsic calibration
+   *
+   * This constructor accepts an extrinsic transform T_body_sensor that maps points from sensor
+   * frame to body frame. The position and orientation variables represent the body frame, and
+   * the extrinsic is applied internally to compute the camera-frame pose.
+   *
+   * @param[in] source          The name of the sensor or motion model
+   * @param[in] position        The variable representing the body-frame position
+   * @param[in] orientation     The variable representing the body-frame orientation
+   * @param[in] calibration     The stereo camera calibration parameters
+   * @param[in] point           The 3D landmark point variable
+   * @param[in] ext_position    The extrinsic translation (body-to-sensor)
+   * @param[in] ext_orientation The extrinsic rotation (body-to-sensor)
+   * @param[in] mean            The measured stereo observation (4x1 vector: u_left, v_left, u_right, v_right)
+   * @param[in] covariance      The observation covariance (4x4 matrix)
+   */
+  StereoReprojectionErrorConstraint(const std::string& source, const vesta_variables::Position3DStamped& position,
+                                     const vesta_variables::Orientation3DStamped& orientation,
+                                     const vesta_variables::StereoCamera& calibration,
+                                     const vesta_variables::Point3DLandmark& point,
+                                     const vesta_variables::Extrinsic3DPosition& ext_position,
+                                     const vesta_variables::Extrinsic3DOrientation& ext_orientation,
+                                     const vesta_core::Vector4d& mean, const vesta_core::Matrix4d& covariance);
+
+  /**
+   * @brief Returns whether this constraint uses an extrinsic calibration.
+   */
+  bool hasExtrinsic() const
+  {
+    return has_extrinsic_;
+  }
 
   /**
    * @brief Destructor
@@ -157,6 +192,7 @@ public:
 protected:
   vesta_core::Vector4d mean_;              //!< The 4D stereo observations (in pixel space)
   vesta_core::Matrix4d sqrt_information_;  //!< The square root information matrix
+  bool has_extrinsic_{ false };            //!< Whether this constraint uses an extrinsic calibration
 
 private:
   // Allow Boost Serialization access to private methods
@@ -177,6 +213,7 @@ private:
     archive& boost::serialization::base_object<vesta_core::Constraint>(*this);
     archive & mean_;
     archive & sqrt_information_;
+    archive & has_extrinsic_;
   }
 };
 

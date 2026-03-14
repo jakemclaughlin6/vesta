@@ -56,6 +56,27 @@ NullspaceProjectionConstraint::NullspaceProjectionConstraint(
   assert(positions.size() >= 2);
 }
 
+// Public constructor with extrinsic calibration
+NullspaceProjectionConstraint::NullspaceProjectionConstraint(
+    const std::string& source, const std::vector<vesta_variables::Position3DStamped>& positions,
+    const std::vector<vesta_variables::Orientation3DStamped>& orientations,
+    const vesta_variables::PinholeCamera& calibration, const std::vector<Eigen::Vector2d>& observations,
+    const vesta_core::Matrix2d& covariance, const vesta_variables::Extrinsic3DPosition& ext_position,
+    const vesta_variables::Extrinsic3DOrientation& ext_orientation)
+  : NullspaceProjectionConstraint(source, [&]() {
+      auto uuids = buildVariableUuids(positions, orientations);
+      uuids.push_back(ext_position.uuid());
+      uuids.push_back(ext_orientation.uuid());
+      return uuids;
+    }(), observations, covariance,
+    Eigen::Vector4d(calibration.data()[0], calibration.data()[1], calibration.data()[2], calibration.data()[3]))
+{
+  assert(positions.size() == orientations.size());
+  assert(positions.size() == observations.size());
+  assert(positions.size() >= 2);
+  has_extrinsic_ = true;
+}
+
 void NullspaceProjectionConstraint::print(std::ostream& stream) const
 {
   stream << type() << "\n"
@@ -73,6 +94,13 @@ void NullspaceProjectionConstraint::print(std::ostream& stream) const
     stream << "    observation: " << observations_[i].transpose() << "\n";
   }
 
+  if (has_extrinsic_)
+  {
+    const size_t ext_base = 2 * numObservations();
+    stream << "  ext_position variable: " << variables().at(ext_base) << "\n"
+           << "  ext_orientation variable: " << variables().at(ext_base + 1) << "\n";
+  }
+
   if (loss())
   {
     stream << "  loss: ";
@@ -82,7 +110,7 @@ void NullspaceProjectionConstraint::print(std::ostream& stream) const
 
 ceres::CostFunction* NullspaceProjectionConstraint::costFunction() const
 {
-  return new NullspaceProjectionCostFunction(observations_, sqrt_information_, calibration_);
+  return new NullspaceProjectionCostFunction(observations_, sqrt_information_, calibration_, has_extrinsic_);
 }
 
 }  // namespace vesta_constraints
