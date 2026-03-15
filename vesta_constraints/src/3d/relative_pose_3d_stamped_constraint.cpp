@@ -59,13 +59,11 @@ RelativePose3DStampedConstraint::RelativePose3DStampedConstraint(
 RelativePose3DStampedConstraint::RelativePose3DStampedConstraint(
     const std::string& source, const vesta_variables::Position3DStamped& position1,
     const vesta_variables::Orientation3DStamped& orientation1, const vesta_variables::Position3DStamped& position2,
-    const vesta_variables::Orientation3DStamped& orientation2,
-    const vesta_variables::Extrinsic3DPosition& ext_position,
+    const vesta_variables::Orientation3DStamped& orientation2, const vesta_variables::Extrinsic3DPosition& ext_position,
     const vesta_variables::Extrinsic3DOrientation& ext_orientation, const vesta_core::Vector7d& delta,
     const vesta_core::Matrix6d& covariance)
-  : vesta_core::Constraint(source,
-                           { position1.uuid(), orientation1.uuid(), position2.uuid(), orientation2.uuid(),
-                             ext_position.uuid(), ext_orientation.uuid() })
+  : vesta_core::Constraint(source, { position1.uuid(), orientation1.uuid(), position2.uuid(), orientation2.uuid(),
+                                     ext_position.uuid(), ext_orientation.uuid() })
   ,  // NOLINT(whitespace/braces)
   delta_(delta)
   , sqrt_information_(covariance.inverse().llt().matrixU())

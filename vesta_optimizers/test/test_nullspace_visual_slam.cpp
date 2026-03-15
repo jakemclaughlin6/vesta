@@ -206,7 +206,8 @@ static void addPosePrior(vesta_core::Transaction& txn, const vesta_variables::Po
   vesta_core::Vector7d prior_mean;
   prior_mean << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
   vesta_core::Matrix6d prior_cov = vesta_core::Matrix6d::Identity() * cov_scale;
-  auto prior = vesta_constraints::AbsolutePose3DStampedConstraint::make_shared("prior", pos, ori, prior_mean, prior_cov);
+  auto prior =
+      vesta_constraints::AbsolutePose3DStampedConstraint::make_shared("prior", pos, ori, prior_mean, prior_cov);
   txn.addConstraint(prior);
 }
 
@@ -750,8 +751,8 @@ TEST(NullspaceVisualSlamTest, NullspaceVisualSlam_StereoFixedLag)
         }
 
         Eigen::Vector4d obs;
-        obs << obs_gt[0] + pixel_noise_dist(rng), obs_gt[1] + pixel_noise_dist(rng),
-            obs_gt[2] + pixel_noise_dist(rng), obs_gt[3] + pixel_noise_dist(rng);
+        obs << obs_gt[0] + pixel_noise_dist(rng), obs_gt[1] + pixel_noise_dist(rng), obs_gt[2] + pixel_noise_dist(rng),
+            obs_gt[3] + pixel_noise_dist(rng);
         obs_positions.push_back(*positions[k]);
         obs_orientations.push_back(*orientations[k]);
         observations.push_back(obs);
@@ -870,8 +871,8 @@ TEST(NullspaceVisualSlamTest, NullspaceVisualSlam_MarginalizeQR)
         continue;
       }
       Eigen::Vector4d obs;
-      obs << obs_gt[0] + pixel_noise_dist(rng), obs_gt[1] + pixel_noise_dist(rng),
-          obs_gt[2] + pixel_noise_dist(rng), obs_gt[3] + pixel_noise_dist(rng);
+      obs << obs_gt[0] + pixel_noise_dist(rng), obs_gt[1] + pixel_noise_dist(rng), obs_gt[2] + pixel_noise_dist(rng),
+          obs_gt[3] + pixel_noise_dist(rng);
       obs_positions.push_back(*positions[i]);
       obs_orientations.push_back(*orientations[i]);
       observations.push_back(obs);
@@ -917,8 +918,7 @@ TEST(NullspaceVisualSlamTest, NullspaceVisualSlam_MarginalizeQR)
 
   for (size_t i = 1; i < kNumCameras; ++i)
   {
-    const auto& pos =
-        dynamic_cast<const vesta_variables::Position3DStamped&>(graph.getVariable(positions[i]->uuid()));
+    const auto& pos = dynamic_cast<const vesta_variables::Position3DStamped&>(graph.getVariable(positions[i]->uuid()));
     EXPECT_NEAR(pos.x(), kCamPositions[i].x(), 0.15) << "Camera " << i << " x";
     EXPECT_NEAR(pos.y(), kCamPositions[i].y(), 0.15) << "Camera " << i << " y";
     EXPECT_NEAR(pos.z(), kCamPositions[i].z(), 0.15) << "Camera " << i << " z";
@@ -964,8 +964,7 @@ TEST(NullspaceVisualSlamTest, NullspaceVisualSlam_MarginalizeComparison)
       ori->x() = local_pos_noise(local_rng) * 0.01;
       ori->y() = local_pos_noise(local_rng) * 0.01;
       ori->z() = local_pos_noise(local_rng) * 0.01;
-      double norm =
-          std::sqrt(ori->w() * ori->w() + ori->x() * ori->x() + ori->y() * ori->y() + ori->z() * ori->z());
+      double norm = std::sqrt(ori->w() * ori->w() + ori->x() * ori->x() + ori->y() * ori->y() + ori->z() * ori->z());
       ori->w() /= norm;
       ori->x() /= norm;
       ori->y() /= norm;
@@ -982,8 +981,8 @@ TEST(NullspaceVisualSlamTest, NullspaceVisualSlam_MarginalizeComparison)
       vesta_core::Vector7d prior_mean;
       prior_mean << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
       vesta_core::Matrix6d prior_cov = vesta_core::Matrix6d::Identity() * 1e-4;
-      g.addConstraint(vesta_constraints::AbsolutePose3DStampedConstraint::make_shared(
-          "prior", *pos_vec[0], *ori_vec[0], prior_mean, prior_cov));
+      g.addConstraint(vesta_constraints::AbsolutePose3DStampedConstraint::make_shared("prior", *pos_vec[0], *ori_vec[0],
+                                                                                      prior_mean, prior_cov));
     }
 
     // Odometry
@@ -1074,12 +1073,9 @@ TEST(NullspaceVisualSlamTest, NullspaceVisualSlam_MarginalizeComparison)
   {
     auto pos_uuid = vesta_variables::Position3DStamped(vesta_core::Timestamp(i, 0), cam_device_id).uuid();
 
-    const auto& pos_qr =
-        dynamic_cast<const vesta_variables::Position3DStamped&>(graph_qr.getVariable(pos_uuid));
-    const auto& pos_schur =
-        dynamic_cast<const vesta_variables::Position3DStamped&>(graph_schur.getVariable(pos_uuid));
-    const auto& pos_bd =
-        dynamic_cast<const vesta_variables::Position3DStamped&>(graph_bd.getVariable(pos_uuid));
+    const auto& pos_qr = dynamic_cast<const vesta_variables::Position3DStamped&>(graph_qr.getVariable(pos_uuid));
+    const auto& pos_schur = dynamic_cast<const vesta_variables::Position3DStamped&>(graph_schur.getVariable(pos_uuid));
+    const auto& pos_bd = dynamic_cast<const vesta_variables::Position3DStamped&>(graph_bd.getVariable(pos_uuid));
 
     // QR vs Schur: should be nearly identical (Schur delegates to QR for pose-only)
     EXPECT_NEAR(pos_qr.x(), pos_schur.x(), 1e-10) << "QR vs Schur Camera " << i << " x";
@@ -1128,18 +1124,18 @@ TEST(NullspaceVisualSlamTest, NullspaceVisualSlam_IncrementalMarginalize)
 
   // More landmarks for better constraint coverage
   std::vector<Eigen::Vector3d> landmarks = {
-    { 1.0, 1.0, 5.0 },   { 2.0, -1.0, 6.0 },  { 3.0, 0.5, 7.0 },   { -1.0, 2.0, 8.0 },
-    { 0.0, -1.5, 5.5 },  { 4.0, 1.0, 6.5 },   { 2.5, -0.5, 9.0 },  { 1.5, 1.5, 10.0 },
-    { 5.0, 0.5, 6.0 },   { 6.0, -0.5, 7.0 },  { 3.5, 1.0, 5.5 },   { 4.5, -1.0, 8.5 },
+    { 1.0, 1.0, 5.0 },  { 2.0, -1.0, 6.0 }, { 3.0, 0.5, 7.0 },  { -1.0, 2.0, 8.0 },
+    { 0.0, -1.5, 5.5 }, { 4.0, 1.0, 6.5 },  { 2.5, -0.5, 9.0 }, { 1.5, 1.5, 10.0 },
+    { 5.0, 0.5, 6.0 },  { 6.0, -0.5, 7.0 }, { 3.5, 1.0, 5.5 },  { 4.5, -1.0, 8.5 },
   };
   const size_t num_landmarks = landmarks.size();
 
   const auto cam_device_id = vesta_core::uuid::generate("cam");
   auto calibration = makeStereoCalibration();
 
-  auto buildExtGraph = [&]() -> std::pair<vesta_graphs::HashGraph,
-                                          std::pair<std::vector<vesta_variables::Position3DStamped::SharedPtr>,
-                                                    std::vector<vesta_variables::Orientation3DStamped::SharedPtr>>> {
+  auto buildExtGraph = [&]()
+      -> std::pair<vesta_graphs::HashGraph, std::pair<std::vector<vesta_variables::Position3DStamped::SharedPtr>,
+                                                      std::vector<vesta_variables::Orientation3DStamped::SharedPtr>>> {
     std::mt19937 local_rng(99);
     std::normal_distribution<double> local_pos_noise(0.0, 0.05);
     std::normal_distribution<double> local_pixel_noise(0.0, 1.0);
@@ -1161,8 +1157,7 @@ TEST(NullspaceVisualSlamTest, NullspaceVisualSlam_IncrementalMarginalize)
       ori->x() = local_pos_noise(local_rng) * 0.01;
       ori->y() = local_pos_noise(local_rng) * 0.01;
       ori->z() = local_pos_noise(local_rng) * 0.01;
-      double norm =
-          std::sqrt(ori->w() * ori->w() + ori->x() * ori->x() + ori->y() * ori->y() + ori->z() * ori->z());
+      double norm = std::sqrt(ori->w() * ori->w() + ori->x() * ori->x() + ori->y() * ori->y() + ori->z() * ori->z());
       ori->w() /= norm;
       ori->x() /= norm;
       ori->y() /= norm;
@@ -1179,8 +1174,8 @@ TEST(NullspaceVisualSlamTest, NullspaceVisualSlam_IncrementalMarginalize)
       vesta_core::Vector7d prior_mean;
       prior_mean << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
       vesta_core::Matrix6d prior_cov = vesta_core::Matrix6d::Identity() * 1e-4;
-      g.addConstraint(vesta_constraints::AbsolutePose3DStampedConstraint::make_shared(
-          "prior", *pos_vec[0], *ori_vec[0], prior_mean, prior_cov));
+      g.addConstraint(vesta_constraints::AbsolutePose3DStampedConstraint::make_shared("prior", *pos_vec[0], *ori_vec[0],
+                                                                                      prior_mean, prior_cov));
     }
 
     // Odometry
@@ -1210,8 +1205,8 @@ TEST(NullspaceVisualSlamTest, NullspaceVisualSlam_IncrementalMarginalize)
           continue;
         }
         Eigen::Vector4d obs_gt;
-        obs_gt << kFx * p.x() / p.z() + kCx, kFy * p.y() / p.z() + kCy,
-            kFx * (p.x() - kBaseline) / p.z() + kCx, kFy * p.y() / p.z() + kCy;
+        obs_gt << kFx * p.x() / p.z() + kCx, kFy * p.y() / p.z() + kCy, kFx * (p.x() - kBaseline) / p.z() + kCx,
+            kFy * p.y() / p.z() + kCy;
 
         Eigen::Vector4d obs;
         obs << obs_gt[0] + local_pixel_noise(local_rng), obs_gt[1] + local_pixel_noise(local_rng),
@@ -1271,12 +1266,10 @@ TEST(NullspaceVisualSlamTest, NullspaceVisualSlam_IncrementalMarginalize)
   size_t first_remaining = kExtNumCameras - kWindowSize;
   for (size_t i = first_remaining; i < kExtNumCameras; ++i)
   {
-    const auto& pq =
-        dynamic_cast<const vesta_variables::Position3DStamped&>(graph_qr.getVariable(pos_qr[i]->uuid()));
+    const auto& pq = dynamic_cast<const vesta_variables::Position3DStamped&>(graph_qr.getVariable(pos_qr[i]->uuid()));
     const auto& ps =
         dynamic_cast<const vesta_variables::Position3DStamped&>(graph_schur.getVariable(pos_schur[i]->uuid()));
-    const auto& pb =
-        dynamic_cast<const vesta_variables::Position3DStamped&>(graph_bd.getVariable(pos_bd[i]->uuid()));
+    const auto& pb = dynamic_cast<const vesta_variables::Position3DStamped&>(graph_bd.getVariable(pos_bd[i]->uuid()));
 
     // QR vs Schur: identical (no non-stamped variables for Schur to use)
     EXPECT_NEAR(pq.x(), ps.x(), 0.05) << "Camera " << i << " x";

@@ -77,8 +77,8 @@ public:
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
    */
   template <typename T>
-  bool operator()(const T* const body_orientation, const T* const /* ext_position */,
-                  const T* const ext_orientation, T* residuals) const
+  bool operator()(const T* const body_orientation, const T* const /* ext_position */, const T* const ext_orientation,
+                  T* residuals) const
   {
     // Compute sensor orientation: q_sensor = q_body * q_ext
     T sensor_orientation[4];

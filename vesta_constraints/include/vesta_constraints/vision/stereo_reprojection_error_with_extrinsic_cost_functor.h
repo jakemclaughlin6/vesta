@@ -82,8 +82,7 @@ public:
    */
   template <typename T>
   bool operator()(const T* const body_position, const T* const body_orientation, const T* const calibration,
-                  const T* const point, const T* const ext_position, const T* const ext_orientation,
-                  T* residual) const;
+                  const T* const point, const T* const ext_position, const T* const ext_orientation, T* residual) const;
 
 private:
   vesta_core::Matrix4d A_;
@@ -98,10 +97,10 @@ StereoReprojectionErrorWithExtrinsicCostFunctor::StereoReprojectionErrorWithExtr
 
 template <typename T>
 bool StereoReprojectionErrorWithExtrinsicCostFunctor::operator()(const T* const body_position,
-                                                                  const T* const body_orientation,
-                                                                  const T* const calibration, const T* const point,
-                                                                  const T* const ext_position,
-                                                                  const T* const ext_orientation, T* residual) const
+                                                                 const T* const body_orientation,
+                                                                 const T* const calibration, const T* const point,
+                                                                 const T* const ext_position,
+                                                                 const T* const ext_orientation, T* residual) const
 {
   // Compute sensor-frame pose from body-frame pose + extrinsic
   T sensor_position[3];

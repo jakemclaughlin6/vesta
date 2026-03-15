@@ -63,15 +63,18 @@ StereoNullspaceProjectionConstraint::StereoNullspaceProjectionConstraint(
     const vesta_variables::StereoCamera& calibration, const std::vector<Eigen::Vector4d>& observations,
     const vesta_core::Matrix4d& covariance, const vesta_variables::Extrinsic3DPosition& ext_position,
     const vesta_variables::Extrinsic3DOrientation& ext_orientation)
-  : StereoNullspaceProjectionConstraint(source, [&]() {
-      auto uuids = buildVariableUuids(positions, orientations);
-      uuids.push_back(ext_position.uuid());
-      uuids.push_back(ext_orientation.uuid());
-      return uuids;
-    }(), observations, covariance,
-    (Eigen::Matrix<double, 5, 1>() << calibration.data()[0], calibration.data()[1],
-     calibration.data()[2], calibration.data()[3], calibration.data()[4])
-        .finished())
+  : StereoNullspaceProjectionConstraint(
+        source,
+        [&]() {
+          auto uuids = buildVariableUuids(positions, orientations);
+          uuids.push_back(ext_position.uuid());
+          uuids.push_back(ext_orientation.uuid());
+          return uuids;
+        }(),
+        observations, covariance,
+        (Eigen::Matrix<double, 5, 1>() << calibration.data()[0], calibration.data()[1], calibration.data()[2],
+         calibration.data()[3], calibration.data()[4])
+            .finished())
 {
   assert(positions.size() == orientations.size());
   assert(positions.size() == observations.size());

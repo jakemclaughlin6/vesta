@@ -91,12 +91,9 @@ NormalDeltaPose3DWithExtrinsicCostFunctor::NormalDeltaPose3DWithExtrinsicCostFun
 }
 
 template <typename T>
-bool NormalDeltaPose3DWithExtrinsicCostFunctor::operator()(const T* const body_position1,
-                                                            const T* const body_orientation1,
-                                                            const T* const body_position2,
-                                                            const T* const body_orientation2,
-                                                            const T* const ext_position,
-                                                            const T* const ext_orientation, T* residual) const
+bool NormalDeltaPose3DWithExtrinsicCostFunctor::operator()(
+    const T* const body_position1, const T* const body_orientation1, const T* const body_position2,
+    const T* const body_orientation2, const T* const ext_position, const T* const ext_orientation, T* residual) const
 {
   // Compute sensor-frame poses from body-frame poses + extrinsic
   T sensor_position1[3];
@@ -113,7 +110,7 @@ bool NormalDeltaPose3DWithExtrinsicCostFunctor::operator()(const T* const body_p
   T orientation1_inverse[4] = { sensor_orientation1[0], -sensor_orientation1[1], -sensor_orientation1[2],
                                 -sensor_orientation1[3] };
   T position_delta[3] = { sensor_position2[0] - sensor_position1[0], sensor_position2[1] - sensor_position1[1],
-                           sensor_position2[2] - sensor_position1[2] };
+                          sensor_position2[2] - sensor_position1[2] };
   T position_delta_rotated[3];
   ceres::QuaternionRotatePoint(orientation1_inverse, position_delta, position_delta_rotated);
 

@@ -114,12 +114,9 @@ Fixed3DLandmarkSimpleCovarianceWithExtrinsicCostFunctor::Fixed3DLandmarkSimpleCo
 }
 
 template <typename T>
-bool Fixed3DLandmarkSimpleCovarianceWithExtrinsicCostFunctor::operator()(const T* const body_position,
-                                                                          const T* const body_orientation,
-                                                                          const T* const calibration,
-                                                                          const T* const ext_position,
-                                                                          const T* const ext_orientation,
-                                                                          T* residual) const
+bool Fixed3DLandmarkSimpleCovarianceWithExtrinsicCostFunctor::operator()(
+    const T* const body_position, const T* const body_orientation, const T* const calibration,
+    const T* const ext_position, const T* const ext_orientation, T* residual) const
 {
   // Compute sensor-frame pose from body-frame pose + extrinsic
   T sensor_position[3];

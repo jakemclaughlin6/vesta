@@ -56,8 +56,7 @@ public:
    */
   StereoNullspaceProjectionCostFunction(std::vector<Eigen::Vector4d> observations,
                                         const vesta_core::Matrix4d& sqrt_information,
-                                        const Eigen::Matrix<double, 5, 1>& calibration,
-                                        bool has_extrinsic = false)
+                                        const Eigen::Matrix<double, 5, 1>& calibration, bool has_extrinsic = false)
     : observations_(std::move(observations))
     , sqrt_information_(sqrt_information)
     , calibration_(calibration)

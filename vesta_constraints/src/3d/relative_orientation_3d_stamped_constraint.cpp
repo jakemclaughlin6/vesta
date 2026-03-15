@@ -66,8 +66,7 @@ RelativeOrientation3DStampedConstraint::RelativeOrientation3DStampedConstraint(
 
 RelativeOrientation3DStampedConstraint::RelativeOrientation3DStampedConstraint(
     const std::string& source, const vesta_variables::Orientation3DStamped& orientation1,
-    const vesta_variables::Orientation3DStamped& orientation2,
-    const vesta_variables::Extrinsic3DPosition& ext_position,
+    const vesta_variables::Orientation3DStamped& orientation2, const vesta_variables::Extrinsic3DPosition& ext_position,
     const vesta_variables::Extrinsic3DOrientation& ext_orientation, const vesta_core::Vector4d& delta,
     const vesta_core::Matrix3d& covariance)
   : vesta_core::Constraint(source,

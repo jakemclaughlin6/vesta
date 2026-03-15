@@ -235,8 +235,8 @@ protected:
   Eigen::Matrix3d dv_dbg_{ Eigen::Matrix3d::Zero() };  //!< Jacobian of preintegrated velocity w.r.t.
                                                        //!< gyro bias
   Eigen::Matrix3d dv_dba_{ Eigen::Matrix3d::Zero() };  //!< Jacobian of preintegrated velocity w.r.t.
-                                                      //!< accel bias
-  bool has_extrinsic_{ false };                       //!< Whether this constraint uses an extrinsic calibration
+                                                       //!< accel bias
+  bool has_extrinsic_{ false };                        //!< Whether this constraint uses an extrinsic calibration
 
 private:
   // Allow Boost Serialization access to private methods

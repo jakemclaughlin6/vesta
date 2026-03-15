@@ -89,9 +89,9 @@ private:
 };
 
 Fixed3DLandmarkWithExtrinsicCostFunctor::Fixed3DLandmarkWithExtrinsicCostFunctor(const vesta_core::MatrixXd& A,
-                                                                                  const vesta_core::Vector7d& b,
-                                                                                  const vesta_core::MatrixXd& obs,
-                                                                                  const vesta_core::MatrixXd& pts3d)
+                                                                                 const vesta_core::Vector7d& b,
+                                                                                 const vesta_core::MatrixXd& obs,
+                                                                                 const vesta_core::MatrixXd& pts3d)
   : A_(A), b_(b), obs_(obs), pts3d_(pts3d.transpose())  // Transpose from Nx3 to 3xN to make math easier.
 {
   assert(pts3d_.rows() == 3);  // Check if we have 3xN
@@ -112,10 +112,9 @@ Fixed3DLandmarkWithExtrinsicCostFunctor::Fixed3DLandmarkWithExtrinsicCostFunctor
 }
 
 template <typename T>
-bool Fixed3DLandmarkWithExtrinsicCostFunctor::operator()(const T* const body_position,
-                                                          const T* const body_orientation,
-                                                          const T* const calibration, const T* const ext_position,
-                                                          const T* const ext_orientation, T* residual) const
+bool Fixed3DLandmarkWithExtrinsicCostFunctor::operator()(const T* const body_position, const T* const body_orientation,
+                                                         const T* const calibration, const T* const ext_position,
+                                                         const T* const ext_orientation, T* residual) const
 {
   // Compute sensor-frame pose from body-frame pose + extrinsic
   T sensor_position[3];

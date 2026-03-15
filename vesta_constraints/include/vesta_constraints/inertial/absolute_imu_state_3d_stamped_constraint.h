@@ -72,8 +72,8 @@ public:
                                       const vesta_variables::VelocityLinear3DStamped& velocity,
                                       const vesta_variables::GyroscopeBias3DStamped& gyro_bias,
                                       const vesta_variables::AccelerationBias3DStamped& accel_bias,
-                                       const Eigen::Matrix<double, 16, 1>& mean,
-                                       const Eigen::Matrix<double, 15, 15>& covariance);
+                                      const Eigen::Matrix<double, 16, 1>& mean,
+                                      const Eigen::Matrix<double, 15, 15>& covariance);
 
   /**
    * @brief Create a constraint with extrinsic calibration using a measurement/prior of the full 3D IMU state
@@ -96,15 +96,15 @@ public:
    * @param[in] covariance      The measurement/prior covariance (15x15 in error-state order)
    */
   AbsoluteImuState3DStampedConstraint(const std::string& source,
-                                       const vesta_variables::Orientation3DStamped& orientation,
-                                       const vesta_variables::Position3DStamped& position,
-                                       const vesta_variables::VelocityLinear3DStamped& velocity,
-                                       const vesta_variables::GyroscopeBias3DStamped& gyro_bias,
-                                       const vesta_variables::AccelerationBias3DStamped& accel_bias,
-                                       const vesta_variables::Extrinsic3DPosition& ext_position,
-                                       const vesta_variables::Extrinsic3DOrientation& ext_orientation,
-                                       const Eigen::Matrix<double, 16, 1>& mean,
-                                       const Eigen::Matrix<double, 15, 15>& covariance);
+                                      const vesta_variables::Orientation3DStamped& orientation,
+                                      const vesta_variables::Position3DStamped& position,
+                                      const vesta_variables::VelocityLinear3DStamped& velocity,
+                                      const vesta_variables::GyroscopeBias3DStamped& gyro_bias,
+                                      const vesta_variables::AccelerationBias3DStamped& accel_bias,
+                                      const vesta_variables::Extrinsic3DPosition& ext_position,
+                                      const vesta_variables::Extrinsic3DOrientation& ext_orientation,
+                                      const Eigen::Matrix<double, 16, 1>& mean,
+                                      const Eigen::Matrix<double, 15, 15>& covariance);
 
   /**
    * @brief Returns whether this constraint uses an extrinsic calibration.

@@ -361,8 +361,8 @@ TEST(ReprojectionErrorConstraint, WithExtrinsic_HasExtrinsic)
 TEST(ReprojectionErrorConstraint, WithExtrinsic_IdentityExtrinsic)
 {
   // Place camera at origin looking down +Z axis (identity orientation in world-frame convention)
-  auto position_variable =
-      Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("test"));
+  auto position_variable = Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("tes"
+                                                                                                                  "t"));
   position_variable->x() = 0.0;
   position_variable->y() = 0.0;
   position_variable->z() = 0.0;
@@ -433,8 +433,8 @@ TEST(ReprojectionErrorConstraint, WithExtrinsic_IdentityExtrinsic)
 TEST(ReprojectionErrorConstraint, WithExtrinsic_NonTrivialExtrinsic)
 {
   // Body at origin with identity orientation
-  auto position_variable =
-      Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("test"));
+  auto position_variable = Position3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("tes"
+                                                                                                                  "t"));
   position_variable->x() = 0.0;
   position_variable->y() = 0.0;
   position_variable->z() = 0.0;

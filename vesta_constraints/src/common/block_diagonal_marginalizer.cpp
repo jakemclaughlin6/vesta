@@ -104,9 +104,9 @@ detail::LinearTerm createSingleVariableTerm(unsigned int var_idx, const vesta_co
 
 }  // namespace
 
-vesta_core::Transaction BlockDiagonalMarginalizer::marginalize(const std::string& source,
-                                                                const std::vector<vesta_core::UUID>& marginalized_variables,
-                                                                const vesta_core::Graph& graph)
+vesta_core::Transaction BlockDiagonalMarginalizer::marginalize(
+    const std::string& source, const std::vector<vesta_core::UUID>& marginalized_variables,
+    const vesta_core::Graph& graph)
 {
   // Classify marginalized variables as non-stamped vs stamped
   std::vector<vesta_core::UUID> non_stamped_vars;

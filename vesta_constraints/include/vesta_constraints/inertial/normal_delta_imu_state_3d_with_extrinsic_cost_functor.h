@@ -51,12 +51,10 @@ public:
   NormalDeltaImuState3DWithExtrinsicCostFunctor(const Eigen::Matrix<double, 15, 15>& sqrt_information,
                                                 const Eigen::Quaterniond& delta_q, const Eigen::Vector3d& delta_p,
                                                 const Eigen::Vector3d& delta_v, double dt,
-                                                const Eigen::Vector3d& gravity,
-                                                const Eigen::Vector3d& linearization_bg,
-                                                const Eigen::Vector3d& linearization_ba,
-                                                const Eigen::Matrix3d& dq_dbg, const Eigen::Matrix3d& dp_dbg,
-                                                const Eigen::Matrix3d& dp_dba, const Eigen::Matrix3d& dv_dbg,
-                                                const Eigen::Matrix3d& dv_dba);
+                                                const Eigen::Vector3d& gravity, const Eigen::Vector3d& linearization_bg,
+                                                const Eigen::Vector3d& linearization_ba, const Eigen::Matrix3d& dq_dbg,
+                                                const Eigen::Matrix3d& dp_dbg, const Eigen::Matrix3d& dp_dba,
+                                                const Eigen::Matrix3d& dv_dbg, const Eigen::Matrix3d& dv_dba);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
@@ -114,11 +112,13 @@ inline NormalDeltaImuState3DWithExtrinsicCostFunctor::NormalDeltaImuState3DWithE
 }
 
 template <typename T>
-bool NormalDeltaImuState3DWithExtrinsicCostFunctor::operator()(
-    const T* const orientation1, const T* const position1, const T* const velocity1, const T* const gyro_bias1,
-    const T* const accel_bias1, const T* const orientation2, const T* const position2, const T* const velocity2,
-    const T* const gyro_bias2, const T* const accel_bias2, const T* const ext_position, const T* const ext_orientation,
-    T* residual) const
+bool NormalDeltaImuState3DWithExtrinsicCostFunctor::operator()(const T* const orientation1, const T* const position1,
+                                                               const T* const velocity1, const T* const gyro_bias1,
+                                                               const T* const accel_bias1, const T* const orientation2,
+                                                               const T* const position2, const T* const velocity2,
+                                                               const T* const gyro_bias2, const T* const accel_bias2,
+                                                               const T* const ext_position,
+                                                               const T* const ext_orientation, T* residual) const
 {
   // Compute sensor-frame poses from body-frame poses + extrinsic
   T sensor_position1[3];

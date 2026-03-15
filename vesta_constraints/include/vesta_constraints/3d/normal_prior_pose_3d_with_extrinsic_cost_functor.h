@@ -90,9 +90,8 @@ NormalPriorPose3DWithExtrinsicCostFunctor::NormalPriorPose3DWithExtrinsicCostFun
 
 template <typename T>
 bool NormalPriorPose3DWithExtrinsicCostFunctor::operator()(const T* const body_position,
-                                                            const T* const body_orientation,
-                                                            const T* const ext_position,
-                                                            const T* const ext_orientation, T* residual) const
+                                                           const T* const body_orientation, const T* const ext_position,
+                                                           const T* const ext_orientation, T* residual) const
 {
   // Compute sensor-frame pose from body-frame pose + extrinsic
   T sensor_position[3];

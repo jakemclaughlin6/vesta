@@ -94,9 +94,8 @@ Fixed3DLandmarkConstraint::Fixed3DLandmarkConstraint(
     const vesta_variables::Extrinsic3DPosition& ext_position,
     const vesta_variables::Extrinsic3DOrientation& ext_orientation, const vesta_core::Vector7d& mean,
     const vesta_core::Matrix6d& covariance)
-  : vesta_core::Constraint(source,
-                           { position.uuid(), orientation.uuid(), calibration.uuid(), ext_position.uuid(),
-                             ext_orientation.uuid() })
+  : vesta_core::Constraint(source, { position.uuid(), orientation.uuid(), calibration.uuid(), ext_position.uuid(),
+                                     ext_orientation.uuid() })
   , pts3d_(pts3d)
   , observations_(observations)
   , mean_(mean)

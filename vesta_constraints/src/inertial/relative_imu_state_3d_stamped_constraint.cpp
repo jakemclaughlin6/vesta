@@ -119,10 +119,9 @@ ceres::CostFunction* RelativeImuState3DStampedConstraint::costFunction() const
   if (has_extrinsic_)
   {
     return new ceres::AutoDiffCostFunction<NormalDeltaImuState3DWithExtrinsicCostFunctor, 15, 4, 3, 3, 3, 3, 4, 3, 3, 3,
-                                           3, 3, 4>(
-        new NormalDeltaImuState3DWithExtrinsicCostFunctor(sqrt_information_, delta_q_, delta_p_, delta_v_, dt_, gravity_,
-                                                         linearization_bg_, linearization_ba_, dq_dbg_, dp_dbg_,
-                                                         dp_dba_, dv_dbg_, dv_dba_));
+                                           3, 3, 4>(new NormalDeltaImuState3DWithExtrinsicCostFunctor(
+        sqrt_information_, delta_q_, delta_p_, delta_v_, dt_, gravity_, linearization_bg_, linearization_ba_, dq_dbg_,
+        dp_dbg_, dp_dba_, dv_dbg_, dv_dba_));
   }
 
   return new ceres::AutoDiffCostFunction<NormalDeltaImuState3DCostFunctor, 15, 4, 3, 3, 3, 3, 4, 3, 3, 3, 3>(

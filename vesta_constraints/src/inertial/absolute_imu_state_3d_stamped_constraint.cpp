@@ -36,8 +36,7 @@ AbsoluteImuState3DStampedConstraint::AbsoluteImuState3DStampedConstraint(
     const Eigen::Matrix<double, 15, 15>& covariance)
   : vesta_core::Constraint(source, { orientation.uuid(), position.uuid(),
                                      velocity.uuid(),  // NOLINT(whitespace/braces)
-                                     gyro_bias.uuid(), accel_bias.uuid(), ext_position.uuid(),
-                                     ext_orientation.uuid() })
+                                     gyro_bias.uuid(), accel_bias.uuid(), ext_position.uuid(), ext_orientation.uuid() })
   , mean_(mean)
   , sqrt_information_(covariance.inverse().llt().matrixU())
   , has_extrinsic_(true)

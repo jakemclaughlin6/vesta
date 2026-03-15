@@ -82,9 +82,10 @@ inline NormalPriorImuState3DWithExtrinsicCostFunctor::NormalPriorImuState3DWithE
 }
 
 template <typename T>
-bool NormalPriorImuState3DWithExtrinsicCostFunctor::operator()(
-    const T* const orientation, const T* const position, const T* const velocity, const T* const gyro_bias,
-    const T* const accel_bias, const T* const ext_position, const T* const ext_orientation, T* residual) const
+bool NormalPriorImuState3DWithExtrinsicCostFunctor::operator()(const T* const orientation, const T* const position,
+                                                               const T* const velocity, const T* const gyro_bias,
+                                                               const T* const accel_bias, const T* const ext_position,
+                                                               const T* const ext_orientation, T* residual) const
 {
   // Compute sensor-frame pose from body-frame pose + extrinsic
   T sensor_position[3];

@@ -95,10 +95,10 @@ public:
    * @param[in] covariance    The observation covariance (4x4 matrix)
    */
   StereoReprojectionErrorConstraint(const std::string& source, const vesta_variables::Position3DStamped& position,
-                                     const vesta_variables::Orientation3DStamped& orientation,
-                                     const vesta_variables::StereoCamera& calibration,
-                                     const vesta_variables::Point3DLandmark& point, const vesta_core::Vector4d& mean,
-                                     const vesta_core::Matrix4d& covariance);
+                                    const vesta_variables::Orientation3DStamped& orientation,
+                                    const vesta_variables::StereoCamera& calibration,
+                                    const vesta_variables::Point3DLandmark& point, const vesta_core::Vector4d& mean,
+                                    const vesta_core::Matrix4d& covariance);
 
   /**
    * @brief Create a constraint with extrinsic calibration
@@ -118,12 +118,12 @@ public:
    * @param[in] covariance      The observation covariance (4x4 matrix)
    */
   StereoReprojectionErrorConstraint(const std::string& source, const vesta_variables::Position3DStamped& position,
-                                     const vesta_variables::Orientation3DStamped& orientation,
-                                     const vesta_variables::StereoCamera& calibration,
-                                     const vesta_variables::Point3DLandmark& point,
-                                     const vesta_variables::Extrinsic3DPosition& ext_position,
-                                     const vesta_variables::Extrinsic3DOrientation& ext_orientation,
-                                     const vesta_core::Vector4d& mean, const vesta_core::Matrix4d& covariance);
+                                    const vesta_variables::Orientation3DStamped& orientation,
+                                    const vesta_variables::StereoCamera& calibration,
+                                    const vesta_variables::Point3DLandmark& point,
+                                    const vesta_variables::Extrinsic3DPosition& ext_position,
+                                    const vesta_variables::Extrinsic3DOrientation& ext_orientation,
+                                    const vesta_core::Vector4d& mean, const vesta_core::Matrix4d& covariance);
 
   /**
    * @brief Returns whether this constraint uses an extrinsic calibration.

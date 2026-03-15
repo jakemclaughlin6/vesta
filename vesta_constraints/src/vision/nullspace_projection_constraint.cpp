@@ -63,13 +63,16 @@ NullspaceProjectionConstraint::NullspaceProjectionConstraint(
     const vesta_variables::PinholeCamera& calibration, const std::vector<Eigen::Vector2d>& observations,
     const vesta_core::Matrix2d& covariance, const vesta_variables::Extrinsic3DPosition& ext_position,
     const vesta_variables::Extrinsic3DOrientation& ext_orientation)
-  : NullspaceProjectionConstraint(source, [&]() {
-      auto uuids = buildVariableUuids(positions, orientations);
-      uuids.push_back(ext_position.uuid());
-      uuids.push_back(ext_orientation.uuid());
-      return uuids;
-    }(), observations, covariance,
-    Eigen::Vector4d(calibration.data()[0], calibration.data()[1], calibration.data()[2], calibration.data()[3]))
+  : NullspaceProjectionConstraint(
+        source,
+        [&]() {
+          auto uuids = buildVariableUuids(positions, orientations);
+          uuids.push_back(ext_position.uuid());
+          uuids.push_back(ext_orientation.uuid());
+          return uuids;
+        }(),
+        observations, covariance,
+        Eigen::Vector4d(calibration.data()[0], calibration.data()[1], calibration.data()[2], calibration.data()[3]))
 {
   assert(positions.size() == orientations.size());
   assert(positions.size() == observations.size());

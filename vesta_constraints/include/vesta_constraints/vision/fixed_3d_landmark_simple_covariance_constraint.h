@@ -162,12 +162,10 @@ public:
                                             const vesta_variables::Position3DStamped& position,
                                             const vesta_variables::Orientation3DStamped& orientation,
                                             const vesta_variables::PinholeCamera& calibration,
-                                            const vesta_core::MatrixXd& pts3d,
-                                            const vesta_core::MatrixXd& observations,
+                                            const vesta_core::MatrixXd& pts3d, const vesta_core::MatrixXd& observations,
                                             const vesta_variables::Extrinsic3DPosition& ext_position,
                                             const vesta_variables::Extrinsic3DOrientation& ext_orientation,
-                                            const vesta_core::Vector7d& mean,
-                                            const vesta_core::Matrix2d& covariance);
+                                            const vesta_core::Vector7d& mean, const vesta_core::Matrix2d& covariance);
 
   /**
    * @brief Returns whether this constraint uses an extrinsic calibration.

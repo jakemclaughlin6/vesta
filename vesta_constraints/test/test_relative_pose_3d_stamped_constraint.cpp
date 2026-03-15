@@ -42,8 +42,8 @@
 #include <vesta_variables/3d/orientation_3d_stamped.h>
 #include <vesta_variables/3d/position_3d_stamped.h>
 
-#include <ceres/covariance.h>
 #include <ceres/cost_function.h>
+#include <ceres/covariance.h>
 #include <ceres/problem.h>
 #include <ceres/solver.h>
 #include <gtest/gtest.h>
@@ -351,8 +351,8 @@ TEST(RelativePose3DStampedConstraint, WithExtrinsic_IdentityExtrinsic)
   position1->y() = 0.0;
   position1->z() = 0.0;
 
-  auto orientation1 =
-      Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("test"));
+  auto orientation1 = Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("tes"
+                                                                                                                "t"));
   orientation1->w() = 1.0;
   orientation1->x() = 0.0;
   orientation1->y() = 0.0;
@@ -363,8 +363,8 @@ TEST(RelativePose3DStampedConstraint, WithExtrinsic_IdentityExtrinsic)
   position2->y() = 0.0;
   position2->z() = 0.0;
 
-  auto orientation2 =
-      Orientation3DStamped::make_shared(vesta_core::Timestamp(2, 0), vesta_core::uuid::generate("test"));
+  auto orientation2 = Orientation3DStamped::make_shared(vesta_core::Timestamp(2, 0), vesta_core::uuid::generate("tes"
+                                                                                                                "t"));
   orientation2->w() = 1.0;
   orientation2->x() = 0.0;
   orientation2->y() = 0.0;
@@ -423,8 +423,8 @@ TEST(RelativePose3DStampedConstraint, WithExtrinsic_NonTrivialExtrinsic)
   position1->y() = 0.0;
   position1->z() = 0.0;
 
-  auto orientation1 =
-      Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("test"));
+  auto orientation1 = Orientation3DStamped::make_shared(vesta_core::Timestamp(1, 0), vesta_core::uuid::generate("tes"
+                                                                                                                "t"));
   orientation1->w() = 1.0;
   orientation1->x() = 0.0;
   orientation1->y() = 0.0;
@@ -436,8 +436,8 @@ TEST(RelativePose3DStampedConstraint, WithExtrinsic_NonTrivialExtrinsic)
   position2->y() = 0.0;
   position2->z() = 0.0;
 
-  auto orientation2 =
-      Orientation3DStamped::make_shared(vesta_core::Timestamp(2, 0), vesta_core::uuid::generate("test"));
+  auto orientation2 = Orientation3DStamped::make_shared(vesta_core::Timestamp(2, 0), vesta_core::uuid::generate("tes"
+                                                                                                                "t"));
   orientation2->w() = 1.0;
   orientation2->x() = 0.0;
   orientation2->y() = 0.0;

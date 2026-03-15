@@ -61,8 +61,7 @@ AbsolutePose3DStampedConstraint::AbsolutePose3DStampedConstraint(
     const vesta_variables::Orientation3DStamped& orientation, const vesta_variables::Extrinsic3DPosition& ext_position,
     const vesta_variables::Extrinsic3DOrientation& ext_orientation, const vesta_core::Vector7d& mean,
     const vesta_core::Matrix6d& covariance)
-  : vesta_core::Constraint(source,
-                           { position.uuid(), orientation.uuid(), ext_position.uuid(), ext_orientation.uuid() })
+  : vesta_core::Constraint(source, { position.uuid(), orientation.uuid(), ext_position.uuid(), ext_orientation.uuid() })
   ,  // NOLINT(whitespace/braces)
   mean_(mean)
   , sqrt_information_(covariance.inverse().llt().matrixU())

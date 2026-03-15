@@ -34,8 +34,8 @@
 #include <vesta_optimizers/fixed_lag_smoother.h>
 
 #include <glog/logging.h>
-#include <vesta_constraints/common/marginalize_variables.h>
 #include <vesta_constraints/common/block_diagonal_marginalizer.h>
+#include <vesta_constraints/common/marginalize_variables.h>
 #include <vesta_core/graph.h>
 #include <vesta_core/transaction.h>
 #include <vesta_core/uuid.h>

@@ -286,8 +286,8 @@ TEST(MarginalizerComparison, LandmarkOnly_Accuracy)
         dynamic_cast<const vesta_variables::Point3DLandmark&>(result_qr.graph.getVariable(vslam.landmarks[j]->uuid()));
     const auto& lm_schur = dynamic_cast<const vesta_variables::Point3DLandmark&>(
         result_schur.graph.getVariable(vslam.landmarks[j]->uuid()));
-    const auto& lm_bd = dynamic_cast<const vesta_variables::Point3DLandmark&>(
-        result_bd.graph.getVariable(vslam.landmarks[j]->uuid()));
+    const auto& lm_bd =
+        dynamic_cast<const vesta_variables::Point3DLandmark&>(result_bd.graph.getVariable(vslam.landmarks[j]->uuid()));
 
     EXPECT_NEAR(lm_qr.x(), lm_schur.x(), 1e-6) << "Landmark " << j << " x";
     EXPECT_NEAR(lm_qr.y(), lm_schur.y(), 1e-6) << "Landmark " << j << " y";
@@ -360,8 +360,8 @@ TEST(MarginalizerComparison, Mixed_Accuracy)
         dynamic_cast<const vesta_variables::Point3DLandmark&>(result_qr.graph.getVariable(vslam.landmarks[j]->uuid()));
     const auto& lm_schur = dynamic_cast<const vesta_variables::Point3DLandmark&>(
         result_schur.graph.getVariable(vslam.landmarks[j]->uuid()));
-    const auto& lm_bd = dynamic_cast<const vesta_variables::Point3DLandmark&>(
-        result_bd.graph.getVariable(vslam.landmarks[j]->uuid()));
+    const auto& lm_bd =
+        dynamic_cast<const vesta_variables::Point3DLandmark&>(result_bd.graph.getVariable(vslam.landmarks[j]->uuid()));
 
     EXPECT_NEAR(lm_qr.x(), lm_schur.x(), 1e-4) << "Landmark " << j << " x";
     EXPECT_NEAR(lm_qr.y(), lm_schur.y(), 1e-4) << "Landmark " << j << " y";

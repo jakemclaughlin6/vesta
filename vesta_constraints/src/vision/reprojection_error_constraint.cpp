@@ -66,9 +66,8 @@ ReprojectionErrorConstraint::ReprojectionErrorConstraint(
     const vesta_variables::Point3DLandmark& point, const vesta_variables::Extrinsic3DPosition& ext_position,
     const vesta_variables::Extrinsic3DOrientation& ext_orientation, const vesta_core::Vector2d& mean,
     const vesta_core::Matrix2d& covariance)
-  : vesta_core::Constraint(source,
-                           { position.uuid(), orientation.uuid(), calibration.uuid(), point.uuid(),
-                             ext_position.uuid(), ext_orientation.uuid() })
+  : vesta_core::Constraint(source, { position.uuid(), orientation.uuid(), calibration.uuid(), point.uuid(),
+                                     ext_position.uuid(), ext_orientation.uuid() })
   , mean_(mean)
   , sqrt_information_(covariance.inverse().llt().matrixU())
   , has_extrinsic_(true)
