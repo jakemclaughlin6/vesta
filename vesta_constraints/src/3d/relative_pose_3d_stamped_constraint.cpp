@@ -33,8 +33,8 @@
  */
 #include <vesta_constraints/3d/relative_pose_3d_stamped_constraint.h>
 
-#include <vesta_constraints/3d/normal_delta_pose_3d_cost_functor.h>
-#include <vesta_constraints/3d/normal_delta_pose_3d_with_extrinsic_cost_functor.h>
+#include <vesta_constraints/3d/cost_functions/normal_delta_pose_3d_cost_functor.h>
+#include <vesta_constraints/3d/cost_functions/normal_delta_pose_3d_with_extrinsic_cost_functor.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <boost/serialization/export.hpp>

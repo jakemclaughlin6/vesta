@@ -36,8 +36,8 @@
  */
 #include <vesta_constraints/vision/fixed_3d_landmark_constraint.h>
 
-#include <vesta_constraints/vision/fixed_3d_landmark_cost_functor.h>
-#include <vesta_constraints/vision/fixed_3d_landmark_with_extrinsic_cost_functor.h>
+#include <vesta_constraints/vision/cost_functions/fixed_3d_landmark_cost_functor.h>
+#include <vesta_constraints/vision/cost_functions/fixed_3d_landmark_with_extrinsic_cost_functor.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <Eigen/Dense>

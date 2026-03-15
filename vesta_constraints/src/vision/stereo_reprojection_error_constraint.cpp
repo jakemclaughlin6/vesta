@@ -32,8 +32,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <vesta_constraints/vision/stereo_reprojection_error_constraint.h>
-#include <vesta_constraints/vision/stereo_reprojection_error_cost_functor.h>
-#include <vesta_constraints/vision/stereo_reprojection_error_with_extrinsic_cost_functor.h>
+#include <vesta_constraints/vision/cost_functions/stereo_reprojection_error_cost_functor.h>
+#include <vesta_constraints/vision/cost_functions/stereo_reprojection_error_with_extrinsic_cost_functor.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <Eigen/Dense>

@@ -11,7 +11,7 @@ Headers are included using the subfolder structure:
 #include <vesta_constraints/3d/relative_pose_3d_stamped_constraint.h>
 #include <vesta_constraints/vision/reprojection_error_constraint.h>
 #include <vesta_constraints/inertial/imu_preintegration.h>
-#include <vesta_constraints/motion/unicycle_2d_state_cost_functor.h>
+#include <vesta_constraints/motion/cost_functions/unicycle_2d_state_cost_functor.h>
 #include <vesta_constraints/common/marginal_constraint.h>
 ```
 

@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 #include <vesta_constraints/2d/normal_delta_pose_2d.h>
-#include <vesta_constraints/2d/normal_delta_pose_2d_cost_functor.h>
+#include <vesta_constraints/2d/cost_functions/normal_delta_pose_2d_cost_functor.h>
 
 #include <benchmark/benchmark.h>
 

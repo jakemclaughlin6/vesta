@@ -1,7 +1,7 @@
 #include <vesta_constraints/inertial/absolute_imu_state_3d_stamped_constraint.h>
 
-#include <vesta_constraints/inertial/normal_prior_imu_state_3d_cost_functor.h>
-#include <vesta_constraints/inertial/normal_prior_imu_state_3d_with_extrinsic_cost_functor.h>
+#include <vesta_constraints/inertial/cost_functions/normal_prior_imu_state_3d_cost_functor.h>
+#include <vesta_constraints/inertial/cost_functions/normal_prior_imu_state_3d_with_extrinsic_cost_functor.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <Eigen/Dense>

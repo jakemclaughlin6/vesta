@@ -35,7 +35,7 @@
  */
 
 #include <vesta_constraints/3d/extrinsic_pose_3d.h>
-#include <vesta_constraints/3d/normal_prior_orientation_3d_cost_functor.h>
+#include <vesta_constraints/3d/cost_functions/normal_prior_orientation_3d_cost_functor.h>
 #include <vesta_core/eigen.h>
 #include <vesta_core/fuse_macros.h>
 

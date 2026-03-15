@@ -34,7 +34,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <vesta_constraints/3d/normal_delta_orientation_3d_cost_functor.h>
+#include <vesta_constraints/3d/cost_functions/normal_delta_orientation_3d_cost_functor.h>
 #include <vesta_core/eigen.h>
 #include <vesta_core/fuse_macros.h>
 #include <vesta_core/util.h>

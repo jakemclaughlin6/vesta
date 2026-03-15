@@ -1,5 +1,5 @@
 #include <vesta_constraints/vision/stereo_nullspace_projection_constraint.h>
-#include <vesta_constraints/vision/stereo_nullspace_projection_cost_function.h>
+#include <vesta_constraints/vision/cost_functions/stereo_nullspace_projection_cost_function.h>
 
 #include <boost/serialization/export.hpp>
 

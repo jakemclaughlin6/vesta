@@ -37,7 +37,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <vesta_constraints/3d/normal_prior_orientation_3d_cost_functor.h>
+#include <vesta_constraints/3d/cost_functions/normal_prior_orientation_3d_cost_functor.h>
 #include <vesta_core/eigen.h>
 #include <vesta_core/fuse_macros.h>
 #include <vesta_core/util.h>
@@ -75,7 +75,7 @@ namespace vesta_constraints
  * the matrix A is the square root information matrix (the inverse of the
  * covariance).
  */
-class Fixed3DLandmarkSimpleCovarianceCostFunctor
+class Fixed3DLandmarkCostFunctor
 {
 public:
   VESTA_MAKE_ALIGNED_OPERATOR_NEW();
@@ -92,8 +92,8 @@ public:
    *
    * @param[in] marker_size The size of the marker (in meters).
    **/
-  Fixed3DLandmarkSimpleCovarianceCostFunctor(const vesta_core::MatrixXd& A, const vesta_core::Vector7d& b,
-                                             const vesta_core::MatrixXd& obs, const vesta_core::Vector1d& marker_size);
+  Fixed3DLandmarkCostFunctor(const vesta_core::MatrixXd& A, const vesta_core::Vector7d& b,
+                             const vesta_core::MatrixXd& obs, const vesta_core::Vector1d& marker_size);
 
   /**
    * @brief Construct a cost function instance
@@ -108,8 +108,8 @@ public:
    * @param[in] pts3d The 3D points in marker coordinate frame (Nx3 in order x,
    *y, z).
    **/
-  Fixed3DLandmarkSimpleCovarianceCostFunctor(const vesta_core::MatrixXd& A, const vesta_core::Vector7d& b,
-                                             const vesta_core::MatrixXd& obs, const vesta_core::MatrixXd& pts3d);
+  Fixed3DLandmarkCostFunctor(const vesta_core::MatrixXd& A, const vesta_core::Vector7d& b,
+                             const vesta_core::MatrixXd& obs, const vesta_core::MatrixXd& pts3d);
 
   /**
    * @brief Evaluate the cost function. Used by the Ceres optimization engine.
@@ -124,9 +124,9 @@ private:
   vesta_core::MatrixXd pts3d_;
 };
 
-Fixed3DLandmarkSimpleCovarianceCostFunctor::Fixed3DLandmarkSimpleCovarianceCostFunctor(
-    const vesta_core::MatrixXd& A, const vesta_core::Vector7d& b, const vesta_core::MatrixXd& obs,
-    const vesta_core::MatrixXd& pts3d)
+Fixed3DLandmarkCostFunctor::Fixed3DLandmarkCostFunctor(const vesta_core::MatrixXd& A, const vesta_core::Vector7d& b,
+                                                       const vesta_core::MatrixXd& obs,
+                                                       const vesta_core::MatrixXd& pts3d)
   : A_(A), b_(b), obs_(obs), pts3d_(pts3d.transpose())  // Transpose from Nx3 to 3xN to make math easier.
 {
   assert(pts3d_.rows() == 3);  // Check if we have 3xN
@@ -151,8 +151,8 @@ Fixed3DLandmarkSimpleCovarianceCostFunctor::Fixed3DLandmarkSimpleCovarianceCostF
 }
 
 template <typename T>
-bool Fixed3DLandmarkSimpleCovarianceCostFunctor::operator()(const T* const position, const T* const orientation,
-                                                            const T* const calibration, T* residual) const
+bool Fixed3DLandmarkCostFunctor::operator()(const T* const position, const T* const orientation,
+                                            const T* const calibration, T* residual) const
 {
   // Create Calibration Matrix K
   Eigen::Matrix<T, 4, 4, Eigen::RowMajor> K;
@@ -182,10 +182,31 @@ bool Fixed3DLandmarkSimpleCovarianceCostFunctor::operator()(const T* const posit
 
   auto d = (obs_.cast<T>() - xp.block(0, 0, xp.rows(), 2));
 
+  T fx = calibration[0];
+  T fy = calibration[1];
   for (uint i = 0; i < pts3d_.cols(); i++)
   {
-    // Weight Residuals, in this case, we assume a flat error on the pixels
-    auto r = A_ * d.row(i).transpose();
+    // Get the covariance weighting to point losses from a pose uncertainty
+    // From https://arxiv.org/pdf/2103.15980.pdf , equation A.7:
+    // dh( e A p )  =   dh(p')  *  d(e A p)
+    //     d(e)          d(p')       d(e)
+    // where e is a small increment around the SE(3) manifold of A, A is a pose,
+    // p is a point, h is the projection function, and p' = Ap = g, the jacobian
+    // is thus 2x6: J = [ (fx/gz)      (0)    (-fx * gx / gz^2)  (-fx * gx gy /
+    // gz^2)    fx(1+gx^2/gz^2)     -fx gy/gz] [     0      (fy/gz)) (-fy * gy /
+    // gz^2)     -fy(1+gy^2/gz^2)    (fy * gx gy / gz^2)  fy gx/gz]
+    T gx = pts3d_.cast<T>().col(i)[0];
+    T gy = pts3d_.cast<T>().col(i)[1];
+    T gz = pts3d_.cast<T>().col(i)[2];
+    T gz2 = gz * gz;
+    T gxyz = (gx * gy) / gz2;
+    Eigen::Matrix<T, 2, 6, Eigen::RowMajor> J;
+    J << fx / gz, T(0), -fx * (gx / gz2), -fx * gxyz, fx * (T(1) + (gx * gx) / gz2), -fx * gy / gz, T(0), fy / gz,
+        -fy * (gy / gz2), -fy * (T(1) + (gy * gy) / gz2), fy * gxyz, fy * gx / gz;
+    Eigen::Matrix<T, 2, 2, Eigen::RowMajor> A = J * A_ * J.transpose();
+
+    // Weight Residuals
+    auto r = A * d.row(i).transpose();
     residual[i * 2] = r[0];
     residual[i * 2 + 1] = r[1];
   }

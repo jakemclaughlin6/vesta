@@ -31,7 +31,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-#include <vesta_constraints/common/marginal_cost_function.h>
+#include <vesta_constraints/common/cost_functions/marginal_cost_function.h>
 
 #include <vesta_core/eigen.h>
 #include <vesta_core/manifold.h>

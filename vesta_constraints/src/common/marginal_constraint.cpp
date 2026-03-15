@@ -33,7 +33,7 @@
  */
 #include <vesta_constraints/common/marginal_constraint.h>
 
-#include <vesta_constraints/common/marginal_cost_function.h>
+#include <vesta_constraints/common/cost_functions/marginal_cost_function.h>
 #include <vesta_core/constraint.h>
 
 #include <Eigen/Core>

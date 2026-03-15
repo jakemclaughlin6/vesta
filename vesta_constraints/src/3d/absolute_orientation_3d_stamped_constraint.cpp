@@ -33,8 +33,8 @@
  */
 #include <vesta_constraints/3d/absolute_orientation_3d_stamped_constraint.h>
 
-#include <vesta_constraints/3d/normal_prior_orientation_3d_cost_functor.h>
-#include <vesta_constraints/3d/normal_prior_orientation_3d_with_extrinsic_cost_functor.h>
+#include <vesta_constraints/3d/cost_functions/normal_prior_orientation_3d_cost_functor.h>
+#include <vesta_constraints/3d/cost_functions/normal_prior_orientation_3d_with_extrinsic_cost_functor.h>
 
 #include <ceres/autodiff_cost_function.h>
 #include <Eigen/Geometry>
