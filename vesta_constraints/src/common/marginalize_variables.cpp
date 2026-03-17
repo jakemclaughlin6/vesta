@@ -37,15 +37,22 @@
 #include <vesta_constraints/common/uuid_ordering.h>
 #include <vesta_constraints/common/variable_constraints.h>
 #include <vesta_core/uuid.h>
+#include <vesta_core/variable.h>
+#include <vesta_variables/common/stamped.h>
 
+#include <glog/logging.h>
 #include <suitesparse/ccolamd.h>
+#include <Eigen/Cholesky>
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <Eigen/Eigenvalues>
 #include <boost/iterator/transform_iterator.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <iterator>
 #include <numeric>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -489,6 +496,348 @@ MarginalConstraint::SharedPtr createMarginalConstraint(const std::string& source
       source, boost::make_transform_iterator(linear_term.variables.begin(), index_to_variable),
       boost::make_transform_iterator(linear_term.variables.end(), index_to_variable), linear_term.A.begin(),
       linear_term.A.end(), linear_term.b);
+}
+
+ClassifiedVariables classifyVariables(const std::vector<vesta_core::UUID>& marginalized_variables,
+                                      const vesta_core::Graph& graph)
+{
+  ClassifiedVariables result;
+  for (const auto& uuid : marginalized_variables)
+  {
+    const auto& variable = graph.getVariable(uuid);
+    if (dynamic_cast<const vesta_variables::Stamped*>(&variable) != nullptr)
+    {
+      result.stamped.push_back(uuid);
+    }
+    else
+    {
+      result.non_stamped.push_back(uuid);
+    }
+  }
+  return result;
+}
+
+UuidOrdering buildSchurEliminationOrder(const std::vector<vesta_core::UUID>& non_stamped_vars,
+                                        const std::vector<vesta_core::UUID>& stamped_vars)
+{
+  auto variable_order = UuidOrdering();
+  for (const auto& uuid : non_stamped_vars)
+  {
+    variable_order.push_back(uuid);
+  }
+  for (const auto& uuid : stamped_vars)
+  {
+    variable_order.push_back(uuid);
+  }
+  return variable_order;
+}
+
+LinearizationResult linearizeAndBucket(const std::string& source,
+                                       const std::vector<vesta_core::UUID>& marginalized_variables,
+                                       size_t num_marginalized, const vesta_core::Graph& graph,
+                                       UuidOrdering variable_order, bool use_fej)
+{
+  LinearizationResult result;
+  result.variable_order = std::move(variable_order);
+
+  for (const auto& uuid : marginalized_variables)
+  {
+    result.transaction.removeVariable(uuid);
+  }
+
+  auto used_constraints = std::unordered_set<vesta_core::UUID, vesta_core::uuid::hash>();
+  result.linear_terms.resize(result.variable_order.size());
+
+  for (size_t i = 0ul; i < num_marginalized; ++i)
+  {
+    const auto constraints = graph.getConnectedConstraints(result.variable_order[i]);
+    for (const auto& constraint : constraints)
+    {
+      if (used_constraints.find(constraint.uuid()) == used_constraints.end())
+      {
+        used_constraints.insert(constraint.uuid());
+        for (const auto& variable_uuid : constraint.variables())
+        {
+          result.variable_order.push_back(variable_uuid);
+        }
+        auto lt = linearize(constraint, graph, result.variable_order, use_fej);
+        auto min_var = *std::min_element(lt.variables.begin(), lt.variables.end());
+        result.linear_terms[min_var].push_back(std::move(lt));
+        result.transaction.removeConstraint(constraint.uuid());
+      }
+    }
+  }
+
+  result.linear_terms.resize(result.variable_order.size());
+  return result;
+}
+
+std::vector<LinearTerm> collectSchurTerms(std::vector<std::vector<LinearTerm>>& linear_terms, size_t num_non_stamped)
+{
+  std::vector<LinearTerm> schur_terms;
+  for (size_t i = 0; i < num_non_stamped; ++i)
+  {
+    for (auto& lt : linear_terms[i])
+    {
+      schur_terms.push_back(std::move(lt));
+    }
+    linear_terms[i].clear();
+  }
+  return schur_terms;
+}
+
+std::optional<SchurResult> computeSchurComplement(const std::vector<LinearTerm>& schur_terms, size_t num_non_stamped,
+                                                  const vesta_core::Graph& graph, const UuidOrdering& variable_order)
+{
+  // Determine tangent sizes for all variables appearing in Schur terms
+  std::unordered_map<unsigned int, int> var_tangent_sizes;
+  for (const auto& lt : schur_terms)
+  {
+    for (size_t j = 0; j < lt.variables.size(); ++j)
+    {
+      auto var_idx = lt.variables[j];
+      if (var_tangent_sizes.find(var_idx) == var_tangent_sizes.end())
+      {
+        var_tangent_sizes[var_idx] = lt.A[j].cols();
+      }
+    }
+  }
+
+  // Separate non-stamped and other variable indices
+  std::vector<unsigned int> nonstamped_indices;
+  std::vector<unsigned int> other_indices;
+  for (const auto& [var_idx, _] : var_tangent_sizes)
+  {
+    if (var_idx < num_non_stamped)
+    {
+      nonstamped_indices.push_back(var_idx);
+    }
+    else if (!graph.getVariable(variable_order[var_idx]).holdConstant())
+    {
+      other_indices.push_back(var_idx);
+    }
+  }
+  std::sort(nonstamped_indices.begin(), nonstamped_indices.end());
+  std::sort(other_indices.begin(), other_indices.end());
+
+  // Compute offsets for non-stamped variables
+  std::unordered_map<unsigned int, int> ns_sizes;
+  for (auto idx : nonstamped_indices)
+  {
+    ns_sizes[idx] = var_tangent_sizes[idx];
+  }
+
+  // Compute offsets for other variables
+  std::unordered_map<unsigned int, int> other_offsets;
+  int total_other_dim = 0;
+  for (auto idx : other_indices)
+  {
+    other_offsets[idx] = total_other_dim;
+    total_other_dim += var_tangent_sizes[idx];
+  }
+
+  if (total_other_dim == 0)
+  {
+    return std::nullopt;
+  }
+
+  // Build H_oo and eta_o
+  vesta_core::MatrixXd H_oo = vesta_core::MatrixXd::Zero(total_other_dim, total_other_dim);
+  vesta_core::VectorXd eta_o = vesta_core::VectorXd::Zero(total_other_dim);
+
+  struct NonStampedData
+  {
+    vesta_core::MatrixXd h_kk;
+    vesta_core::MatrixXd h_ko;
+    vesta_core::VectorXd eta_k;
+  };
+  std::unordered_map<unsigned int, NonStampedData> ns_data;
+  for (auto idx : nonstamped_indices)
+  {
+    int dk = ns_sizes[idx];
+    ns_data[idx] = { vesta_core::MatrixXd::Zero(dk, dk), vesta_core::MatrixXd::Zero(dk, total_other_dim),
+                     vesta_core::VectorXd::Zero(dk) };
+  }
+
+  // Accumulate information matrix contributions
+  for (const auto& lt : schur_terms)
+  {
+    for (size_t i = 0; i < lt.variables.size(); ++i)
+    {
+      auto vi = lt.variables[i];
+      bool vi_ns = (vi < num_non_stamped);
+
+      vesta_core::VectorXd atb = lt.A[i].transpose() * lt.b;
+      if (vi_ns)
+      {
+        ns_data[vi].eta_k += atb;
+      }
+      else
+      {
+        auto it = other_offsets.find(vi);
+        if (it != other_offsets.end())
+        {
+          eta_o.segment(it->second, atb.size()) += atb;
+        }
+      }
+
+      for (size_t j = 0; j < lt.variables.size(); ++j)
+      {
+        auto vj = lt.variables[j];
+        bool vj_ns = (vj < num_non_stamped);
+
+        vesta_core::MatrixXd block = lt.A[i].transpose() * lt.A[j];
+
+        if (vi_ns && vj_ns)
+        {
+          if (vi == vj)
+          {
+            ns_data[vi].h_kk += block;
+          }
+        }
+        else if (vi_ns && !vj_ns)
+        {
+          auto it = other_offsets.find(vj);
+          if (it != other_offsets.end())
+          {
+            ns_data[vi].h_ko.block(0, it->second, block.rows(), block.cols()) += block;
+          }
+        }
+        else if (!vi_ns && !vj_ns)
+        {
+          auto it_i = other_offsets.find(vi);
+          auto it_j = other_offsets.find(vj);
+          if (it_i != other_offsets.end() && it_j != other_offsets.end())
+          {
+            H_oo.block(it_i->second, it_j->second, block.rows(), block.cols()) += block;
+          }
+        }
+      }
+    }
+  }
+
+  // Apply block Schur complement for each non-stamped variable
+  for (auto idx : nonstamped_indices)
+  {
+    auto& data = ns_data[idx];
+    auto llt = data.h_kk.llt();
+    if (llt.info() != Eigen::Success)
+    {
+      LOG(WARNING) << "computeSchurComplement: Cholesky of H_kk failed for variable " << variable_order[idx]
+                   << ". Skipping.";
+      continue;
+    }
+    vesta_core::MatrixXd Z = llt.solve(data.h_ko);
+    H_oo -= data.h_ko.transpose() * Z;
+    eta_o -= data.h_ko.transpose() * llt.solve(data.eta_k);
+  }
+
+  // Symmetrize H_oo
+  H_oo = (H_oo + H_oo.transpose()) * 0.5;
+
+  SchurResult result;
+  result.H_oo = std::move(H_oo);
+  result.eta_o = std::move(eta_o);
+  result.other_indices = std::move(other_indices);
+  result.other_offsets = std::move(other_offsets);
+  result.var_tangent_sizes = std::move(var_tangent_sizes);
+  result.total_other_dim = total_other_dim;
+  return result;
+}
+
+void marginalizeStampedVariables(std::vector<std::vector<LinearTerm>>& linear_terms, size_t num_non_stamped,
+                                 size_t num_marginalized)
+{
+  for (size_t i = num_non_stamped; i < num_marginalized; ++i)
+  {
+    auto linear_marginal = marginalizeNext(linear_terms[i]);
+    if (!linear_marginal.variables.empty())
+    {
+      auto lowest = linear_marginal.variables.front();
+      linear_terms[lowest].push_back(std::move(linear_marginal));
+    }
+  }
+}
+
+void emitRemainingConstraints(const std::string& source, const std::vector<std::vector<LinearTerm>>& linear_terms,
+                              size_t start_index, const vesta_core::Graph& graph, const UuidOrdering& variable_order,
+                              vesta_core::Transaction& transaction)
+{
+  for (size_t i = start_index; i < linear_terms.size(); ++i)
+  {
+    for (const auto& linear_term : linear_terms[i])
+    {
+      auto marginal_constraint = createMarginalConstraint(source, linear_term, graph, variable_order);
+      transaction.addConstraint(std::move(marginal_constraint));
+    }
+  }
+}
+
+LinearTerm createSingleVariableTerm(unsigned int var_idx, const vesta_core::MatrixXd& H_ii,
+                                    const vesta_core::VectorXd& eta_i)
+{
+  constexpr double EIGENVALUE_REL_THRESHOLD = 1e-10;
+  constexpr double EIGENVALUE_ABS_THRESHOLD = 1e-14;
+
+  Eigen::SelfAdjointEigenSolver<vesta_core::MatrixXd> eig(H_ii);
+  if (eig.info() != Eigen::Success)
+  {
+    return {};
+  }
+
+  const auto& eigenvalues = eig.eigenvalues();
+  const auto& eigenvectors = eig.eigenvectors();
+
+  double max_eigenvalue = eigenvalues.maxCoeff();
+  double threshold = max_eigenvalue * EIGENVALUE_REL_THRESHOLD;
+  if (threshold < EIGENVALUE_ABS_THRESHOLD)
+  {
+    threshold = EIGENVALUE_ABS_THRESHOLD;
+  }
+
+  int rank = 0;
+  for (int k = 0; k < eigenvalues.size(); ++k)
+  {
+    if (eigenvalues(k) > threshold)
+    {
+      ++rank;
+    }
+  }
+
+  if (rank == 0)
+  {
+    return {};
+  }
+
+  // Build J = sqrt(D_pos) * V_pos^T (rank x dim)
+  vesta_core::MatrixXd J(rank, H_ii.cols());
+  int row = 0;
+  for (int k = 0; k < eigenvalues.size(); ++k)
+  {
+    if (eigenvalues(k) > threshold)
+    {
+      J.row(row) = std::sqrt(eigenvalues(k)) * eigenvectors.col(k).transpose();
+      ++row;
+    }
+  }
+
+  // Recover b: b = D^{-1/2} V^T eta_i
+  vesta_core::VectorXd b(rank);
+  row = 0;
+  for (int k = 0; k < eigenvalues.size(); ++k)
+  {
+    if (eigenvalues(k) > threshold)
+    {
+      b(row) = eigenvectors.col(k).dot(eta_i) / std::sqrt(eigenvalues(k));
+      ++row;
+    }
+  }
+
+  LinearTerm term;
+  term.variables = { var_idx };
+  term.A = { J };
+  term.b = b;
+  return term;
 }
 
 }  // namespace detail

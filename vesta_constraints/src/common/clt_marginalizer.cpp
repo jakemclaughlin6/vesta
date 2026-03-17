@@ -1,25 +1,18 @@
 #include <vesta_constraints/common/clt_marginalizer.h>
-#include <vesta_constraints/common/marginal_constraint.h>
 #include <vesta_constraints/common/marginalize_variables.h>
 #include <vesta_constraints/common/qr_marginalizer.h>
-#include <vesta_constraints/common/uuid_ordering.h>
 #include <vesta_core/eigen.h>
 #include <vesta_core/graph.h>
-#include <vesta_core/uuid.h>
-#include <vesta_core/variable.h>
-#include <vesta_variables/common/stamped.h>
 
 #include <glog/logging.h>
 #include <Eigen/Cholesky>
 #include <Eigen/Eigenvalues>
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
 #include <limits>
 #include <numeric>
 #include <string>
-#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -108,71 +101,6 @@ double computeEigenvalueThreshold(double max_eigenvalue)
     threshold = EIGENVALUE_ABS_THRESHOLD;
   }
   return threshold;
-}
-
-/**
- * @brief Extract a single-variable LinearTerm from an information matrix diagonal block
- *
- * Given H_ii (diagonal block of info matrix for variable i) and eta_i (info vector segment),
- * eigendecompose H_ii and produce a LinearTerm with J and b such that J^T J = H_ii and J^T b = eta_i.
- */
-detail::LinearTerm createSingleVariableTerm(unsigned int var_idx, const vesta_core::MatrixXd& H_ii,
-                                            const vesta_core::VectorXd& eta_i)
-{
-  Eigen::SelfAdjointEigenSolver<vesta_core::MatrixXd> eig(H_ii);
-  if (eig.info() != Eigen::Success)
-  {
-    return {};
-  }
-
-  const auto& eigenvalues = eig.eigenvalues();
-  const auto& eigenvectors = eig.eigenvectors();
-
-  double threshold = computeEigenvalueThreshold(eigenvalues.maxCoeff());
-
-  int rank = 0;
-  for (int k = 0; k < eigenvalues.size(); ++k)
-  {
-    if (eigenvalues(k) > threshold)
-    {
-      ++rank;
-    }
-  }
-
-  if (rank == 0)
-  {
-    return {};
-  }
-
-  // Build J = sqrt(D_pos) * V_pos^T (rank x dim)
-  vesta_core::MatrixXd J(rank, H_ii.cols());
-  int row = 0;
-  for (int k = 0; k < eigenvalues.size(); ++k)
-  {
-    if (eigenvalues(k) > threshold)
-    {
-      J.row(row) = std::sqrt(eigenvalues(k)) * eigenvectors.col(k).transpose();
-      ++row;
-    }
-  }
-
-  // Recover b: b = D^{-1/2} V^T eta_i
-  vesta_core::VectorXd b(rank);
-  row = 0;
-  for (int k = 0; k < eigenvalues.size(); ++k)
-  {
-    if (eigenvalues(k) > threshold)
-    {
-      b(row) = eigenvectors.col(k).dot(eta_i) / std::sqrt(eigenvalues(k));
-      ++row;
-    }
-  }
-
-  detail::LinearTerm term;
-  term.variables = { var_idx };
-  term.A = { J };
-  term.b = b;
-  return term;
 }
 
 /**
@@ -646,233 +574,41 @@ vesta_core::Transaction CltMarginalizer::marginalize(
     const std::string& source, const std::vector<vesta_core::UUID>& marginalized_variables,
     const vesta_core::Graph& graph)
 {
-  // Classify marginalized variables as non-stamped vs stamped
-  std::vector<vesta_core::UUID> non_stamped_vars;
-  std::vector<vesta_core::UUID> stamped_vars;
-  for (const auto& uuid : marginalized_variables)
-  {
-    const auto& variable = graph.getVariable(uuid);
-    if (dynamic_cast<const vesta_variables::Stamped*>(&variable) != nullptr)
-    {
-      stamped_vars.push_back(uuid);
-    }
-    else
-    {
-      non_stamped_vars.push_back(uuid);
-    }
-  }
+  // 1. Classify variables
+  auto classified = detail::classifyVariables(marginalized_variables, graph);
 
-  // If no non-stamped variables, delegate entirely to QR
-  if (non_stamped_vars.empty())
+  // 2. If no non-stamped, delegate to QR
+  if (classified.non_stamped.empty())
   {
     return QRMarginalizer(use_fej_).marginalize(source, marginalized_variables, graph);
   }
 
-  const size_t num_non_stamped = non_stamped_vars.size();
-  const size_t num_stamped = stamped_vars.size();
-  const size_t num_marginalized = num_non_stamped + num_stamped;
+  // 3. Setup
+  const size_t num_non_stamped = classified.non_stamped.size();
+  const size_t num_marginalized = marginalized_variables.size();
+  auto variable_order = detail::buildSchurEliminationOrder(classified.non_stamped, classified.stamped);
 
-  // Build elimination order: non-stamped first (0..K-1), then stamped (K..M-1)
-  auto variable_order = UuidOrdering();
-  for (const auto& uuid : non_stamped_vars)
-  {
-    variable_order.push_back(uuid);
-  }
-  for (const auto& uuid : stamped_vars)
-  {
-    variable_order.push_back(uuid);
-  }
+  // 4. Linearize and bucket
+  auto lin_result = detail::linearizeAndBucket(source, marginalized_variables, num_marginalized, graph,
+                                               std::move(variable_order), use_fej_);
 
-  vesta_core::Transaction transaction;
+  // 5. Collect Schur terms
+  auto schur_terms = detail::collectSchurTerms(lin_result.linear_terms, num_non_stamped);
 
-  // Mark all marginalized variables for removal
-  for (const auto& uuid : marginalized_variables)
-  {
-    transaction.removeVariable(uuid);
-  }
-
-  // Linearize all involved constraints and bucket by lowest-ordered variable
-  auto used_constraints = std::unordered_set<vesta_core::UUID, vesta_core::uuid::hash>();
-  std::vector<std::vector<detail::LinearTerm>> linear_terms(variable_order.size());
-
-  for (size_t i = 0ul; i < num_marginalized; ++i)
-  {
-    const auto constraints = graph.getConnectedConstraints(variable_order[i]);
-    for (const auto& constraint : constraints)
-    {
-      if (used_constraints.find(constraint.uuid()) == used_constraints.end())
-      {
-        used_constraints.insert(constraint.uuid());
-        for (const auto& variable_uuid : constraint.variables())
-        {
-          variable_order.push_back(variable_uuid);
-        }
-        auto lt = detail::linearize(constraint, graph, variable_order, use_fej_);
-        auto min_var = *std::min_element(lt.variables.begin(), lt.variables.end());
-        linear_terms[min_var].push_back(std::move(lt));
-        transaction.removeConstraint(constraint.uuid());
-      }
-    }
-  }
-
-  // Expand to include connected variables
-  linear_terms.resize(variable_order.size());
-
-  // Collect all LinearTerms from non-stamped variable buckets (indices 0..K-1)
-  std::vector<detail::LinearTerm> schur_terms;
-  for (size_t i = 0; i < num_non_stamped; ++i)
-  {
-    for (auto& lt : linear_terms[i])
-    {
-      schur_terms.push_back(std::move(lt));
-    }
-    linear_terms[i].clear();
-  }
-
+  // 6. Compute Schur complement
   if (!schur_terms.empty())
   {
-    // Determine tangent sizes for all variables appearing in Schur terms
-    std::unordered_map<unsigned int, int> var_tangent_sizes;
-    for (const auto& lt : schur_terms)
+    auto schur_result =
+        detail::computeSchurComplement(schur_terms, num_non_stamped, graph, lin_result.variable_order);
+
+    if (schur_result)
     {
-      for (size_t j = 0; j < lt.variables.size(); ++j)
-      {
-        auto var_idx = lt.variables[j];
-        if (var_tangent_sizes.find(var_idx) == var_tangent_sizes.end())
-        {
-          var_tangent_sizes[var_idx] = lt.A[j].cols();
-        }
-      }
-    }
-
-    // Separate non-stamped and other variable indices
-    std::vector<unsigned int> nonstamped_indices;
-    std::vector<unsigned int> other_indices;
-    for (const auto& [var_idx, _] : var_tangent_sizes)
-    {
-      if (var_idx < num_non_stamped)
-      {
-        nonstamped_indices.push_back(var_idx);
-      }
-      else if (!graph.getVariable(variable_order[var_idx]).holdConstant())
-      {
-        other_indices.push_back(var_idx);
-      }
-    }
-    std::sort(nonstamped_indices.begin(), nonstamped_indices.end());
-    std::sort(other_indices.begin(), other_indices.end());
-
-    // Compute offsets for non-stamped variables
-    std::unordered_map<unsigned int, int> ns_sizes;
-    for (auto idx : nonstamped_indices)
-    {
-      ns_sizes[idx] = var_tangent_sizes[idx];
-    }
-
-    // Compute offsets for other variables (for H_oo)
-    std::unordered_map<unsigned int, int> other_offsets;
-    int total_other_dim = 0;
-    for (auto idx : other_indices)
-    {
-      other_offsets[idx] = total_other_dim;
-      total_other_dim += var_tangent_sizes[idx];
-    }
-
-    if (total_other_dim > 0)
-    {
-      // Build H_oo and eta_o
-      vesta_core::MatrixXd H_oo = vesta_core::MatrixXd::Zero(total_other_dim, total_other_dim);
-      vesta_core::VectorXd eta_o = vesta_core::VectorXd::Zero(total_other_dim);
-
-      struct NonStampedData
-      {
-        vesta_core::MatrixXd h_kk;
-        vesta_core::MatrixXd h_ko;
-        vesta_core::VectorXd eta_k;
-      };
-      std::unordered_map<unsigned int, NonStampedData> ns_data;
-      for (auto idx : nonstamped_indices)
-      {
-        int dk = ns_sizes[idx];
-        ns_data[idx] = { vesta_core::MatrixXd::Zero(dk, dk), vesta_core::MatrixXd::Zero(dk, total_other_dim),
-                         vesta_core::VectorXd::Zero(dk) };
-      }
-
-      // Accumulate info matrix contributions
-      for (const auto& lt : schur_terms)
-      {
-        for (size_t i = 0; i < lt.variables.size(); ++i)
-        {
-          auto vi = lt.variables[i];
-          bool vi_ns = (vi < num_non_stamped);
-
-          vesta_core::VectorXd atb = lt.A[i].transpose() * lt.b;
-          if (vi_ns)
-          {
-            ns_data[vi].eta_k += atb;
-          }
-          else
-          {
-            auto it = other_offsets.find(vi);
-            if (it != other_offsets.end())
-            {
-              eta_o.segment(it->second, atb.size()) += atb;
-            }
-          }
-
-          for (size_t j = 0; j < lt.variables.size(); ++j)
-          {
-            auto vj = lt.variables[j];
-            bool vj_ns = (vj < num_non_stamped);
-
-            vesta_core::MatrixXd block = lt.A[i].transpose() * lt.A[j];
-
-            if (vi_ns && vj_ns)
-            {
-              if (vi == vj)
-              {
-                ns_data[vi].h_kk += block;
-              }
-            }
-            else if (vi_ns && !vj_ns)
-            {
-              auto it = other_offsets.find(vj);
-              if (it != other_offsets.end())
-              {
-                ns_data[vi].h_ko.block(0, it->second, block.rows(), block.cols()) += block;
-              }
-            }
-            else if (!vi_ns && !vj_ns)
-            {
-              auto it_i = other_offsets.find(vi);
-              auto it_j = other_offsets.find(vj);
-              if (it_i != other_offsets.end() && it_j != other_offsets.end())
-              {
-                H_oo.block(it_i->second, it_j->second, block.rows(), block.cols()) += block;
-              }
-            }
-          }
-        }
-      }
-
-      // Apply block Schur complement for each non-stamped variable
-      for (auto idx : nonstamped_indices)
-      {
-        auto& data = ns_data[idx];
-        auto llt = data.h_kk.llt();
-        if (llt.info() != Eigen::Success)
-        {
-          LOG(WARNING) << "CltMarginalizer: Cholesky of H_kk failed for variable "
-                       << variable_order[idx] << ". Skipping.";
-          continue;
-        }
-        vesta_core::MatrixXd Z = llt.solve(data.h_ko);
-        H_oo -= data.h_ko.transpose() * Z;
-        eta_o -= data.h_ko.transpose() * llt.solve(data.eta_k);
-      }
-
-      // Symmetrize H_oo
-      H_oo = (H_oo + H_oo.transpose()) * 0.5;
+      auto& H_oo = schur_result->H_oo;
+      auto& eta_o = schur_result->eta_o;
+      const auto& other_indices = schur_result->other_indices;
+      const auto& other_offsets = schur_result->other_offsets;
+      const auto& var_tangent_sizes = schur_result->var_tangent_sizes;
+      int total_other_dim = schur_result->total_other_dim;
 
       // ---- Nonlinear graph sparsification begins here ----
 
@@ -882,22 +618,22 @@ vesta_core::Transaction CltMarginalizer::marginalize(
       auto emitBlockDiagonalPriors = [&](const std::vector<unsigned int>& indices) {
         for (auto idx : indices)
         {
-          int off = other_offsets[idx];
-          int dim = var_tangent_sizes[idx];
+          int off = other_offsets.at(idx);
+          int dim = var_tangent_sizes.at(idx);
           vesta_core::MatrixXd H_ii = H_oo.block(off, off, dim, dim);
           vesta_core::VectorXd eta_i = eta_o.segment(off, dim);
 
-          auto single_term = createSingleVariableTerm(idx, H_ii, eta_i);
+          auto single_term = detail::createSingleVariableTerm(idx, H_ii, eta_i);
           if (!single_term.variables.empty())
           {
             if (idx >= num_marginalized)
             {
-              auto mc = detail::createMarginalConstraint(source, single_term, graph, variable_order);
-              transaction.addConstraint(std::move(mc));
+              auto mc = detail::createMarginalConstraint(source, single_term, graph, lin_result.variable_order);
+              lin_result.transaction.addConstraint(std::move(mc));
             }
             else
             {
-              linear_terms[idx].push_back(std::move(single_term));
+              lin_result.linear_terms[idx].push_back(std::move(single_term));
             }
           }
         }
@@ -1011,12 +747,12 @@ vesta_core::Transaction CltMarginalizer::marginalize(
 
             for (int a = 0; a < num_remaining; ++a)
             {
-              int off_a = other_offsets[other_indices[a]];
-              int dim_a = var_tangent_sizes[other_indices[a]];
+              int off_a = other_offsets.at(other_indices[a]);
+              int dim_a = var_tangent_sizes.at(other_indices[a]);
               for (int b = a + 1; b < num_remaining; ++b)
               {
-                int off_b = other_offsets[other_indices[b]];
-                int dim_b = var_tangent_sizes[other_indices[b]];
+                int off_b = other_offsets.at(other_indices[b]);
+                int dim_b = var_tangent_sizes.at(other_indices[b]);
 
                 double mi = computeMutualInformation(sigma_orig, off_a, dim_a, off_b, dim_b);
                 // Edges with zero MI are excluded. This may produce a disconnected CLT if some variable pairs are
@@ -1069,10 +805,10 @@ vesta_core::Transaction CltMarginalizer::marginalize(
                 const auto& edge = selected_edges[e];
                 int idx_a = edge.var_a;
                 int idx_b = edge.var_b;
-                int off_a = other_offsets[other_indices[idx_a]];
-                int dim_a = var_tangent_sizes[other_indices[idx_a]];
-                int off_b = other_offsets[other_indices[idx_b]];
-                int dim_b = var_tangent_sizes[other_indices[idx_b]];
+                int off_a = other_offsets.at(other_indices[idx_a]);
+                int dim_a = var_tangent_sizes.at(other_indices[idx_a]);
+                int off_b = other_offsets.at(other_indices[idx_b]);
+                int dim_b = var_tangent_sizes.at(other_indices[idx_b]);
 
                 int meas_dim = std::min(dim_a, dim_b);
                 if (dim_a != dim_b)
@@ -1166,8 +902,8 @@ vesta_core::Transaction CltMarginalizer::marginalize(
                 detail::LinearTerm pairwise_term;
                 pairwise_term.variables = { idx_a, idx_b };
 
-                int dim_a = var_tangent_sizes[idx_a];
-                int dim_b = var_tangent_sizes[idx_b];
+                int dim_a = var_tangent_sizes.at(idx_a);
+                int dim_b = var_tangent_sizes.at(idx_b);
 
                 // Build A blocks, padding with zeros if tangent dims differ from meas_dim
                 vesta_core::MatrixXd A_a = vesta_core::MatrixXd::Zero(meas_dim, dim_a);
@@ -1182,14 +918,15 @@ vesta_core::Transaction CltMarginalizer::marginalize(
                 // Only emit to transaction if both variables are remaining (not marginalized stamped)
                 if (idx_a >= num_marginalized && idx_b >= num_marginalized)
                 {
-                  auto mc = detail::createMarginalConstraint(source, pairwise_term, graph, variable_order);
-                  transaction.addConstraint(std::move(mc));
+                  auto mc = detail::createMarginalConstraint(source, pairwise_term, graph,
+                                                             lin_result.variable_order);
+                  lin_result.transaction.addConstraint(std::move(mc));
                 }
                 else
                 {
                   // One or both variables are stamped marginalized; place in linear_terms for QR phase
                   auto min_var = std::min(idx_a, idx_b);
-                  linear_terms[min_var].push_back(std::move(pairwise_term));
+                  lin_result.linear_terms[min_var].push_back(std::move(pairwise_term));
                 }
               }
 
@@ -1199,22 +936,23 @@ vesta_core::Transaction CltMarginalizer::marginalize(
                 if (connected_vars.find(v) == connected_vars.end())
                 {
                   unsigned int idx = other_indices[v];
-                  int off = other_offsets[idx];
-                  int dim = var_tangent_sizes[idx];
+                  int off = other_offsets.at(idx);
+                  int dim = var_tangent_sizes.at(idx);
                   vesta_core::MatrixXd H_ii = H_oo.block(off, off, dim, dim);
                   vesta_core::VectorXd eta_i = eta_o.segment(off, dim);
 
-                  auto single_term = createSingleVariableTerm(idx, H_ii, eta_i);
+                  auto single_term = detail::createSingleVariableTerm(idx, H_ii, eta_i);
                   if (!single_term.variables.empty())
                   {
                     if (idx >= num_marginalized)
                     {
-                      auto mc = detail::createMarginalConstraint(source, single_term, graph, variable_order);
-                      transaction.addConstraint(std::move(mc));
+                      auto mc = detail::createMarginalConstraint(source, single_term, graph,
+                                                                 lin_result.variable_order);
+                      lin_result.transaction.addConstraint(std::move(mc));
                     }
                     else
                     {
-                      linear_terms[idx].push_back(std::move(single_term));
+                      lin_result.linear_terms[idx].push_back(std::move(single_term));
                     }
                   }
                 }
@@ -1226,28 +964,14 @@ vesta_core::Transaction CltMarginalizer::marginalize(
     }
   }
 
-  // QR phase for stamped variables (indices K..M-1)
-  for (size_t i = num_non_stamped; i < num_marginalized; ++i)
-  {
-    auto linear_marginal = detail::marginalizeNext(linear_terms[i]);
-    if (!linear_marginal.variables.empty())
-    {
-      auto lowest = linear_marginal.variables.front();
-      linear_terms[lowest].push_back(std::move(linear_marginal));
-    }
-  }
+  // 7. QR phase for stamped variables
+  detail::marginalizeStampedVariables(lin_result.linear_terms, num_non_stamped, num_marginalized);
 
-  // Create MarginalConstraints from remaining buckets
-  for (size_t i = num_marginalized; i < linear_terms.size(); ++i)
-  {
-    for (const auto& linear_term : linear_terms[i])
-    {
-      auto marginal_constraint = detail::createMarginalConstraint(source, linear_term, graph, variable_order);
-      transaction.addConstraint(std::move(marginal_constraint));
-    }
-  }
+  // 8. Emit remaining constraints
+  detail::emitRemainingConstraints(source, lin_result.linear_terms, num_marginalized, graph,
+                                   lin_result.variable_order, lin_result.transaction);
 
-  return transaction;
+  return std::move(lin_result.transaction);
 }
 
 }  // namespace vesta_constraints
