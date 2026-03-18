@@ -26,9 +26,6 @@ namespace vesta_constraints
  * For each factor with Jacobian J_i evaluated at the linearization point, the information matrix is
  * recovered in closed form as H_i = ({J_i * Sigma * J_i^T}_i)^{-1}, where Sigma = H_oo^{-1}.
  *
- * Unlike CLT which uses virtual measurements [-I, I] between variable pairs, NFR uses the actual
- * Jacobian structure of relative and absolute factors, producing a better approximation of the
- * original dense distribution.
  */
 class NfrMarginalizer : public Marginalizer
 {
