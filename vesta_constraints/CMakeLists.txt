@@ -7,6 +7,7 @@ add_library(vesta_constraints
   src/common/marginal_cost_function.cpp
   src/common/marginalize_variables.cpp
   src/common/clt_marginalizer.cpp
+  src/common/nfr_marginalizer.cpp
   src/common/qr_marginalizer.cpp
   src/common/schur_marginalizer.cpp
   src/common/normal_delta.cpp
