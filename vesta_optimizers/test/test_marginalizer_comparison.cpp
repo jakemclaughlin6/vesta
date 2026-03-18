@@ -36,7 +36,6 @@
 #include <vesta_constraints/3d/relative_pose_3d_stamped_constraint.h>
 #include <vesta_constraints/common/block_diagonal_marginalizer.h>
 #include <vesta_constraints/common/marginalizer.h>
-#include <vesta_constraints/common/clt_marginalizer.h>
 #include <vesta_constraints/common/nfr_marginalizer.h>
 #include <vesta_constraints/common/qr_marginalizer.h>
 #include <vesta_constraints/common/schur_marginalizer.h>
@@ -254,7 +253,7 @@ DensityStats computeDensityStats(const vesta_graphs::HashGraph& original_graph,
 }
 
 void printDensityComparison(const std::string& label, const DensityStats& qr, const DensityStats& schur,
-                            const DensityStats& bd, const DensityStats& clt, const DensityStats& nfr)
+                            const DensityStats& bd, const DensityStats& nfr)
 {
   std::cout << "\n=== " << label << " — Marginal Prior Density ==="
             << "\n  Method        | Constraints | Var Refs | Unique Edges | Avg Vars/Constraint"
@@ -267,9 +266,6 @@ void printDensityComparison(const std::string& label, const DensityStats& qr, co
             << "\n  BlockDiag     |" << std::setw(12) << bd.num_marginal_constraints << " |" << std::setw(9)
             << bd.num_variable_connections << " |" << std::setw(13) << bd.num_unique_edges << " |" << std::setw(20)
             << bd.avg_vars_per_constraint
-            << "\n  CLT           |" << std::setw(12) << clt.num_marginal_constraints << " |" << std::setw(9)
-            << clt.num_variable_connections << " |" << std::setw(13) << clt.num_unique_edges << " |" << std::setw(20)
-            << clt.avg_vars_per_constraint
             << "\n  NFR           |" << std::setw(12) << nfr.num_marginal_constraints << " |" << std::setw(9)
             << nfr.num_variable_connections << " |" << std::setw(13) << nfr.num_unique_edges << " |" << std::setw(20)
             << nfr.avg_vars_per_constraint << "\n"
@@ -329,19 +325,16 @@ TEST(MarginalizerComparison, LandmarkOnly_Accuracy)
   vesta_constraints::QRMarginalizer qr(false);
   vesta_constraints::SchurMarginalizer schur(false);
   vesta_constraints::BlockDiagonalMarginalizer bd(false);
-  vesta_constraints::CltMarginalizer clt(vesta_constraints::SparsityMode::Tree);
   vesta_constraints::NfrMarginalizer nfr(false);
 
   auto result_qr = runMarginalization(vslam.graph, to_marginalize, qr);
   auto result_schur = runMarginalization(vslam.graph, to_marginalize, schur);
   auto result_bd = runMarginalization(vslam.graph, to_marginalize, bd);
-  auto result_clt = runMarginalization(vslam.graph, to_marginalize, clt);
   auto result_nfr = runMarginalization(vslam.graph, to_marginalize, nfr);
 
   ASSERT_TRUE(result_qr.summary.IsSolutionUsable());
   ASSERT_TRUE(result_schur.summary.IsSolutionUsable());
   ASSERT_TRUE(result_bd.summary.IsSolutionUsable());
-  ASSERT_TRUE(result_clt.summary.IsSolutionUsable());
   ASSERT_TRUE(result_nfr.summary.IsSolutionUsable());
 
   for (size_t i = 0; i < 5; ++i)
@@ -352,8 +345,6 @@ TEST(MarginalizerComparison, LandmarkOnly_Accuracy)
         result_schur.graph.getVariable(vslam.positions[i]->uuid()));
     const auto& pos_bd = dynamic_cast<const vesta_variables::Position3DStamped&>(
         result_bd.graph.getVariable(vslam.positions[i]->uuid()));
-    const auto& pos_clt = dynamic_cast<const vesta_variables::Position3DStamped&>(
-        result_clt.graph.getVariable(vslam.positions[i]->uuid()));
     const auto& pos_nfr = dynamic_cast<const vesta_variables::Position3DStamped&>(
         result_nfr.graph.getVariable(vslam.positions[i]->uuid()));
 
@@ -362,19 +353,15 @@ TEST(MarginalizerComparison, LandmarkOnly_Accuracy)
     EXPECT_NEAR(pos_qr.z(), pos_schur.z(), 1e-6) << "Camera " << i << " z";
 
     // BlockDiagonal drops cross-correlations, so looser tolerance
-    EXPECT_NEAR(pos_qr.x(), pos_bd.x(), 0.5) << "BD Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_bd.y(), 0.5) << "BD Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_bd.z(), 0.5) << "BD Camera " << i << " z";
+    EXPECT_NEAR(pos_qr.x(), pos_bd.x(), 0.01) << "BD Camera " << i << " x";
+    EXPECT_NEAR(pos_qr.y(), pos_bd.y(), 0.01) << "BD Camera " << i << " y";
+    EXPECT_NEAR(pos_qr.z(), pos_bd.z(), 0.01) << "BD Camera " << i << " z";
 
-    // CLT sparsifies the dense result, so looser tolerance
-    EXPECT_NEAR(pos_qr.x(), pos_clt.x(), 0.5) << "CLT Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_clt.y(), 0.5) << "CLT Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_clt.z(), 0.5) << "CLT Camera " << i << " z";
 
     // NFR sparsifies the dense result, so looser tolerance
-    EXPECT_NEAR(pos_qr.x(), pos_nfr.x(), 0.5) << "NFR Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_nfr.y(), 0.5) << "NFR Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_nfr.z(), 0.5) << "NFR Camera " << i << " z";
+    EXPECT_NEAR(pos_qr.x(), pos_nfr.x(), 0.01) << "NFR Camera " << i << " x";
+    EXPECT_NEAR(pos_qr.y(), pos_nfr.y(), 0.01) << "NFR Camera " << i << " y";
+    EXPECT_NEAR(pos_qr.z(), pos_nfr.z(), 0.01) << "NFR Camera " << i << " z";
   }
 
   for (size_t j = 3; j < 8; ++j)
@@ -385,8 +372,6 @@ TEST(MarginalizerComparison, LandmarkOnly_Accuracy)
         result_schur.graph.getVariable(vslam.landmarks[j]->uuid()));
     const auto& lm_bd =
         dynamic_cast<const vesta_variables::Point3DLandmark&>(result_bd.graph.getVariable(vslam.landmarks[j]->uuid()));
-    const auto& lm_clt = dynamic_cast<const vesta_variables::Point3DLandmark&>(
-        result_clt.graph.getVariable(vslam.landmarks[j]->uuid()));
     const auto& lm_nfr = dynamic_cast<const vesta_variables::Point3DLandmark&>(
         result_nfr.graph.getVariable(vslam.landmarks[j]->uuid()));
 
@@ -394,17 +379,14 @@ TEST(MarginalizerComparison, LandmarkOnly_Accuracy)
     EXPECT_NEAR(lm_qr.y(), lm_schur.y(), 1e-6) << "Landmark " << j << " y";
     EXPECT_NEAR(lm_qr.z(), lm_schur.z(), 1e-6) << "Landmark " << j << " z";
 
-    EXPECT_NEAR(lm_qr.x(), lm_bd.x(), 0.5) << "BD Landmark " << j << " x";
-    EXPECT_NEAR(lm_qr.y(), lm_bd.y(), 0.5) << "BD Landmark " << j << " y";
-    EXPECT_NEAR(lm_qr.z(), lm_bd.z(), 0.5) << "BD Landmark " << j << " z";
+    EXPECT_NEAR(lm_qr.x(), lm_bd.x(), 0.01) << "BD Landmark " << j << " x";
+    EXPECT_NEAR(lm_qr.y(), lm_bd.y(), 0.01) << "BD Landmark " << j << " y";
+    EXPECT_NEAR(lm_qr.z(), lm_bd.z(), 0.01) << "BD Landmark " << j << " z";
 
-    EXPECT_NEAR(lm_qr.x(), lm_clt.x(), 0.5) << "CLT Landmark " << j << " x";
-    EXPECT_NEAR(lm_qr.y(), lm_clt.y(), 0.5) << "CLT Landmark " << j << " y";
-    EXPECT_NEAR(lm_qr.z(), lm_clt.z(), 0.5) << "CLT Landmark " << j << " z";
 
-    EXPECT_NEAR(lm_qr.x(), lm_nfr.x(), 0.5) << "NFR Landmark " << j << " x";
-    EXPECT_NEAR(lm_qr.y(), lm_nfr.y(), 0.5) << "NFR Landmark " << j << " y";
-    EXPECT_NEAR(lm_qr.z(), lm_nfr.z(), 0.5) << "NFR Landmark " << j << " z";
+    EXPECT_NEAR(lm_qr.x(), lm_nfr.x(), 0.03) << "NFR Landmark " << j << " x";
+    EXPECT_NEAR(lm_qr.y(), lm_nfr.y(), 0.03) << "NFR Landmark " << j << " y";
+    EXPECT_NEAR(lm_qr.z(), lm_nfr.z(), 0.03) << "NFR Landmark " << j << " z";
   }
 
   EXPECT_NEAR(result_qr.summary.final_cost, result_schur.summary.final_cost, 1e-6);
@@ -413,21 +395,17 @@ TEST(MarginalizerComparison, LandmarkOnly_Accuracy)
             << "\n  QR    marginalize: " << result_qr.marginalize_us << " us"
             << "\n  Schur marginalize: " << result_schur.marginalize_us << " us"
             << "\n  BD    marginalize: " << result_bd.marginalize_us << " us"
-            << "\n  CLT   marginalize: " << result_clt.marginalize_us << " us"
             << "\n  NFR   marginalize: " << result_nfr.marginalize_us << " us"
             << "\n  QR    final cost:  " << result_qr.summary.final_cost
             << "\n  Schur final cost:  " << result_schur.summary.final_cost
             << "\n  BD    final cost:  " << result_bd.summary.final_cost
-            << "\n  CLT   final cost:  " << result_clt.summary.final_cost
             << "\n  NFR   final cost:  " << result_nfr.summary.final_cost << "\n"
             << std::endl;
 
   auto density_qr = computeDensityStats(vslam.graph, result_qr.graph);
   auto density_schur = computeDensityStats(vslam.graph, result_schur.graph);
   auto density_bd = computeDensityStats(vslam.graph, result_bd.graph);
-  auto density_clt = computeDensityStats(vslam.graph, result_clt.graph);
   auto density_nfr = computeDensityStats(vslam.graph, result_nfr.graph);
-  printDensityComparison("Landmark-Only", density_qr, density_schur, density_bd, density_clt, density_nfr);
 }
 
 // ---------------------------------------------------------------------------
@@ -447,19 +425,16 @@ TEST(MarginalizerComparison, Mixed_Accuracy)
   vesta_constraints::QRMarginalizer qr(false);
   vesta_constraints::SchurMarginalizer schur(false);
   vesta_constraints::BlockDiagonalMarginalizer bd(false);
-  vesta_constraints::CltMarginalizer clt(vesta_constraints::SparsityMode::Tree);
   vesta_constraints::NfrMarginalizer nfr(false);
 
   auto result_qr = runMarginalization(vslam.graph, to_marginalize, qr);
   auto result_schur = runMarginalization(vslam.graph, to_marginalize, schur);
   auto result_bd = runMarginalization(vslam.graph, to_marginalize, bd);
-  auto result_clt = runMarginalization(vslam.graph, to_marginalize, clt);
   auto result_nfr = runMarginalization(vslam.graph, to_marginalize, nfr);
 
   ASSERT_TRUE(result_qr.summary.IsSolutionUsable());
   ASSERT_TRUE(result_schur.summary.IsSolutionUsable());
   ASSERT_TRUE(result_bd.summary.IsSolutionUsable());
-  ASSERT_TRUE(result_clt.summary.IsSolutionUsable());
   ASSERT_TRUE(result_nfr.summary.IsSolutionUsable());
 
   for (size_t i = 1; i < 6; ++i)
@@ -470,8 +445,6 @@ TEST(MarginalizerComparison, Mixed_Accuracy)
         result_schur.graph.getVariable(vslam.positions[i]->uuid()));
     const auto& pos_bd = dynamic_cast<const vesta_variables::Position3DStamped&>(
         result_bd.graph.getVariable(vslam.positions[i]->uuid()));
-    const auto& pos_clt = dynamic_cast<const vesta_variables::Position3DStamped&>(
-        result_clt.graph.getVariable(vslam.positions[i]->uuid()));
     const auto& pos_nfr = dynamic_cast<const vesta_variables::Position3DStamped&>(
         result_nfr.graph.getVariable(vslam.positions[i]->uuid()));
 
@@ -479,17 +452,14 @@ TEST(MarginalizerComparison, Mixed_Accuracy)
     EXPECT_NEAR(pos_qr.y(), pos_schur.y(), 1e-4) << "Camera " << i << " y";
     EXPECT_NEAR(pos_qr.z(), pos_schur.z(), 1e-4) << "Camera " << i << " z";
 
-    EXPECT_NEAR(pos_qr.x(), pos_bd.x(), 0.5) << "BD Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_bd.y(), 0.5) << "BD Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_bd.z(), 0.5) << "BD Camera " << i << " z";
+    EXPECT_NEAR(pos_qr.x(), pos_bd.x(), 0.01) << "BD Camera " << i << " x";
+    EXPECT_NEAR(pos_qr.y(), pos_bd.y(), 0.01) << "BD Camera " << i << " y";
+    EXPECT_NEAR(pos_qr.z(), pos_bd.z(), 0.01) << "BD Camera " << i << " z";
 
-    EXPECT_NEAR(pos_qr.x(), pos_clt.x(), 0.5) << "CLT Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_clt.y(), 0.5) << "CLT Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_clt.z(), 0.5) << "CLT Camera " << i << " z";
 
-    EXPECT_NEAR(pos_qr.x(), pos_nfr.x(), 0.5) << "NFR Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_nfr.y(), 0.5) << "NFR Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_nfr.z(), 0.5) << "NFR Camera " << i << " z";
+    EXPECT_NEAR(pos_qr.x(), pos_nfr.x(), 0.01) << "NFR Camera " << i << " x";
+    EXPECT_NEAR(pos_qr.y(), pos_nfr.y(), 0.01) << "NFR Camera " << i << " y";
+    EXPECT_NEAR(pos_qr.z(), pos_nfr.z(), 0.01) << "NFR Camera " << i << " z";
   }
 
   for (size_t j = 2; j < 10; ++j)
@@ -500,8 +470,6 @@ TEST(MarginalizerComparison, Mixed_Accuracy)
         result_schur.graph.getVariable(vslam.landmarks[j]->uuid()));
     const auto& lm_bd =
         dynamic_cast<const vesta_variables::Point3DLandmark&>(result_bd.graph.getVariable(vslam.landmarks[j]->uuid()));
-    const auto& lm_clt = dynamic_cast<const vesta_variables::Point3DLandmark&>(
-        result_clt.graph.getVariable(vslam.landmarks[j]->uuid()));
     const auto& lm_nfr = dynamic_cast<const vesta_variables::Point3DLandmark&>(
         result_nfr.graph.getVariable(vslam.landmarks[j]->uuid()));
 
@@ -509,17 +477,14 @@ TEST(MarginalizerComparison, Mixed_Accuracy)
     EXPECT_NEAR(lm_qr.y(), lm_schur.y(), 1e-4) << "Landmark " << j << " y";
     EXPECT_NEAR(lm_qr.z(), lm_schur.z(), 1e-4) << "Landmark " << j << " z";
 
-    EXPECT_NEAR(lm_qr.x(), lm_bd.x(), 0.5) << "BD Landmark " << j << " x";
-    EXPECT_NEAR(lm_qr.y(), lm_bd.y(), 0.5) << "BD Landmark " << j << " y";
-    EXPECT_NEAR(lm_qr.z(), lm_bd.z(), 0.5) << "BD Landmark " << j << " z";
+    EXPECT_NEAR(lm_qr.x(), lm_bd.x(), 0.01) << "BD Landmark " << j << " x";
+    EXPECT_NEAR(lm_qr.y(), lm_bd.y(), 0.01) << "BD Landmark " << j << " y";
+    EXPECT_NEAR(lm_qr.z(), lm_bd.z(), 0.01) << "BD Landmark " << j << " z";
 
-    EXPECT_NEAR(lm_qr.x(), lm_clt.x(), 0.5) << "CLT Landmark " << j << " x";
-    EXPECT_NEAR(lm_qr.y(), lm_clt.y(), 0.5) << "CLT Landmark " << j << " y";
-    EXPECT_NEAR(lm_qr.z(), lm_clt.z(), 0.5) << "CLT Landmark " << j << " z";
 
-    EXPECT_NEAR(lm_qr.x(), lm_nfr.x(), 0.5) << "NFR Landmark " << j << " x";
-    EXPECT_NEAR(lm_qr.y(), lm_nfr.y(), 0.5) << "NFR Landmark " << j << " y";
-    EXPECT_NEAR(lm_qr.z(), lm_nfr.z(), 0.5) << "NFR Landmark " << j << " z";
+    EXPECT_NEAR(lm_qr.x(), lm_nfr.x(), 0.03) << "NFR Landmark " << j << " x";
+    EXPECT_NEAR(lm_qr.y(), lm_nfr.y(), 0.03) << "NFR Landmark " << j << " y";
+    EXPECT_NEAR(lm_qr.z(), lm_nfr.z(), 0.03) << "NFR Landmark " << j << " z";
   }
 
   EXPECT_NEAR(result_qr.summary.final_cost, result_schur.summary.final_cost, 1e-4);
@@ -528,21 +493,17 @@ TEST(MarginalizerComparison, Mixed_Accuracy)
             << "\n  QR    marginalize: " << result_qr.marginalize_us << " us"
             << "\n  Schur marginalize: " << result_schur.marginalize_us << " us"
             << "\n  BD    marginalize: " << result_bd.marginalize_us << " us"
-            << "\n  CLT   marginalize: " << result_clt.marginalize_us << " us"
             << "\n  NFR   marginalize: " << result_nfr.marginalize_us << " us"
             << "\n  QR    final cost:  " << result_qr.summary.final_cost
             << "\n  Schur final cost:  " << result_schur.summary.final_cost
             << "\n  BD    final cost:  " << result_bd.summary.final_cost
-            << "\n  CLT   final cost:  " << result_clt.summary.final_cost
             << "\n  NFR   final cost:  " << result_nfr.summary.final_cost << "\n"
             << std::endl;
 
   auto density_qr = computeDensityStats(vslam.graph, result_qr.graph);
   auto density_schur = computeDensityStats(vslam.graph, result_schur.graph);
   auto density_bd = computeDensityStats(vslam.graph, result_bd.graph);
-  auto density_clt = computeDensityStats(vslam.graph, result_clt.graph);
   auto density_nfr = computeDensityStats(vslam.graph, result_nfr.graph);
-  printDensityComparison("Mixed (Pose + Landmark)", density_qr, density_schur, density_bd, density_clt, density_nfr);
 }
 
 // ---------------------------------------------------------------------------
@@ -561,19 +522,16 @@ TEST(MarginalizerComparison, PoseOnly_Accuracy)
   vesta_constraints::QRMarginalizer qr(false);
   vesta_constraints::SchurMarginalizer schur(false);
   vesta_constraints::BlockDiagonalMarginalizer bd(false);
-  vesta_constraints::CltMarginalizer clt(vesta_constraints::SparsityMode::Tree);
   vesta_constraints::NfrMarginalizer nfr(false);
 
   auto result_qr = runMarginalization(vslam.graph, to_marginalize, qr);
   auto result_schur = runMarginalization(vslam.graph, to_marginalize, schur);
   auto result_bd = runMarginalization(vslam.graph, to_marginalize, bd);
-  auto result_clt = runMarginalization(vslam.graph, to_marginalize, clt);
   auto result_nfr = runMarginalization(vslam.graph, to_marginalize, nfr);
 
   ASSERT_TRUE(result_qr.summary.IsSolutionUsable());
   ASSERT_TRUE(result_schur.summary.IsSolutionUsable());
   ASSERT_TRUE(result_bd.summary.IsSolutionUsable());
-  ASSERT_TRUE(result_clt.summary.IsSolutionUsable());
   ASSERT_TRUE(result_nfr.summary.IsSolutionUsable());
 
   for (size_t i = 1; i < 5; ++i)
@@ -584,8 +542,6 @@ TEST(MarginalizerComparison, PoseOnly_Accuracy)
         result_schur.graph.getVariable(vslam.positions[i]->uuid()));
     const auto& pos_bd = dynamic_cast<const vesta_variables::Position3DStamped&>(
         result_bd.graph.getVariable(vslam.positions[i]->uuid()));
-    const auto& pos_clt = dynamic_cast<const vesta_variables::Position3DStamped&>(
-        result_clt.graph.getVariable(vslam.positions[i]->uuid()));
     const auto& pos_nfr = dynamic_cast<const vesta_variables::Position3DStamped&>(
         result_nfr.graph.getVariable(vslam.positions[i]->uuid()));
 
@@ -593,17 +549,14 @@ TEST(MarginalizerComparison, PoseOnly_Accuracy)
     EXPECT_NEAR(pos_qr.y(), pos_schur.y(), 1e-10) << "Camera " << i << " y";
     EXPECT_NEAR(pos_qr.z(), pos_schur.z(), 1e-10) << "Camera " << i << " z";
 
-    EXPECT_NEAR(pos_qr.x(), pos_bd.x(), 0.5) << "BD Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_bd.y(), 0.5) << "BD Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_bd.z(), 0.5) << "BD Camera " << i << " z";
+    EXPECT_NEAR(pos_qr.x(), pos_bd.x(), 0.01) << "BD Camera " << i << " x";
+    EXPECT_NEAR(pos_qr.y(), pos_bd.y(), 0.01) << "BD Camera " << i << " y";
+    EXPECT_NEAR(pos_qr.z(), pos_bd.z(), 0.01) << "BD Camera " << i << " z";
 
-    EXPECT_NEAR(pos_qr.x(), pos_clt.x(), 0.5) << "CLT Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_clt.y(), 0.5) << "CLT Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_clt.z(), 0.5) << "CLT Camera " << i << " z";
 
-    EXPECT_NEAR(pos_qr.x(), pos_nfr.x(), 0.5) << "NFR Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_nfr.y(), 0.5) << "NFR Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_nfr.z(), 0.5) << "NFR Camera " << i << " z";
+    EXPECT_NEAR(pos_qr.x(), pos_nfr.x(), 0.01) << "NFR Camera " << i << " x";
+    EXPECT_NEAR(pos_qr.y(), pos_nfr.y(), 0.01) << "NFR Camera " << i << " y";
+    EXPECT_NEAR(pos_qr.z(), pos_nfr.z(), 0.01) << "NFR Camera " << i << " z";
   }
 
   EXPECT_NEAR(result_qr.summary.final_cost, result_schur.summary.final_cost, 1e-10);
@@ -644,9 +597,7 @@ TEST(MarginalizerComparison, Runtime_ManyLandmarks)
     bd.marginalize("test", to_marginalize, g);
   }
   {
-    vesta_constraints::CltMarginalizer clt(vesta_constraints::SparsityMode::Tree);
     auto g = vslam.graph;
-    clt.marginalize("test", to_marginalize, g);
   }
   {
     vesta_constraints::NfrMarginalizer nfr(false);
@@ -690,16 +641,11 @@ TEST(MarginalizerComparison, Runtime_ManyLandmarks)
     bd_total_us += static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count());
   }
 
-  // Benchmark CLT
-  double clt_total_us = 0.0;
   for (int t = 0; t < kNumTrials; ++t)
   {
-    vesta_constraints::CltMarginalizer clt(vesta_constraints::SparsityMode::Tree);
     auto g = vslam.graph;
     auto t0 = std::chrono::high_resolution_clock::now();
-    clt.marginalize("test", to_marginalize, g);
     auto t1 = std::chrono::high_resolution_clock::now();
-    clt_total_us += static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count());
   }
 
   // Benchmark NFR
@@ -718,11 +664,9 @@ TEST(MarginalizerComparison, Runtime_ManyLandmarks)
             << "\n  QR    avg: " << qr_total_us / kNumTrials << " us"
             << "\n  Schur avg: " << schur_total_us / kNumTrials << " us"
             << "\n  BD    avg: " << bd_total_us / kNumTrials << " us"
-            << "\n  CLT   avg: " << clt_total_us / kNumTrials << " us"
             << "\n  NFR   avg: " << nfr_total_us / kNumTrials << " us"
             << "\n  Schur speedup vs QR: " << qr_total_us / schur_total_us << "x"
             << "\n  BD    speedup vs QR: " << qr_total_us / bd_total_us << "x"
-            << "\n  CLT   speedup vs QR: " << qr_total_us / clt_total_us << "x"
             << "\n  NFR   speedup vs QR: " << qr_total_us / nfr_total_us << "x\n"
             << std::endl;
 
@@ -730,19 +674,16 @@ TEST(MarginalizerComparison, Runtime_ManyLandmarks)
   vesta_constraints::QRMarginalizer qr(false);
   vesta_constraints::SchurMarginalizer schur(false);
   vesta_constraints::BlockDiagonalMarginalizer bd(false);
-  vesta_constraints::CltMarginalizer clt(vesta_constraints::SparsityMode::Tree);
   vesta_constraints::NfrMarginalizer nfr(false);
 
   auto result_qr = runMarginalization(vslam.graph, to_marginalize, qr);
   auto result_schur = runMarginalization(vslam.graph, to_marginalize, schur);
   auto result_bd = runMarginalization(vslam.graph, to_marginalize, bd);
-  auto result_clt = runMarginalization(vslam.graph, to_marginalize, clt);
   auto result_nfr = runMarginalization(vslam.graph, to_marginalize, nfr);
 
   ASSERT_TRUE(result_qr.summary.IsSolutionUsable());
   ASSERT_TRUE(result_schur.summary.IsSolutionUsable());
   ASSERT_TRUE(result_bd.summary.IsSolutionUsable());
-  ASSERT_TRUE(result_clt.summary.IsSolutionUsable());
   ASSERT_TRUE(result_nfr.summary.IsSolutionUsable());
 
   for (size_t i = 0; i < kNumCameras; ++i)
@@ -753,36 +694,29 @@ TEST(MarginalizerComparison, Runtime_ManyLandmarks)
         result_schur.graph.getVariable(vslam.positions[i]->uuid()));
     const auto& pos_bd = dynamic_cast<const vesta_variables::Position3DStamped&>(
         result_bd.graph.getVariable(vslam.positions[i]->uuid()));
-    const auto& pos_clt = dynamic_cast<const vesta_variables::Position3DStamped&>(
-        result_clt.graph.getVariable(vslam.positions[i]->uuid()));
     const auto& pos_nfr = dynamic_cast<const vesta_variables::Position3DStamped&>(
         result_nfr.graph.getVariable(vslam.positions[i]->uuid()));
 
-    // With 700 landmarks, numerical differences between QR and Schur grow due
-    // to different elimination paths — both stay close to ground truth
+    // With 700 landmarks, numerical differences grow due to different
+    // elimination paths — all methods stay close to ground truth
     EXPECT_NEAR(pos_qr.x(), pos_schur.x(), 0.01) << "Camera " << i << " x";
     EXPECT_NEAR(pos_qr.y(), pos_schur.y(), 0.01) << "Camera " << i << " y";
     EXPECT_NEAR(pos_qr.z(), pos_schur.z(), 0.01) << "Camera " << i << " z";
 
-    EXPECT_NEAR(pos_qr.x(), pos_bd.x(), 0.5) << "BD Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_bd.y(), 0.5) << "BD Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_bd.z(), 0.5) << "BD Camera " << i << " z";
+    EXPECT_NEAR(pos_qr.x(), pos_bd.x(), 0.05) << "BD Camera " << i << " x";
+    EXPECT_NEAR(pos_qr.y(), pos_bd.y(), 0.05) << "BD Camera " << i << " y";
+    EXPECT_NEAR(pos_qr.z(), pos_bd.z(), 0.05) << "BD Camera " << i << " z";
 
-    EXPECT_NEAR(pos_qr.x(), pos_clt.x(), 0.5) << "CLT Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_clt.y(), 0.5) << "CLT Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_clt.z(), 0.5) << "CLT Camera " << i << " z";
 
-    EXPECT_NEAR(pos_qr.x(), pos_nfr.x(), 0.5) << "NFR Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_nfr.y(), 0.5) << "NFR Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_nfr.z(), 0.5) << "NFR Camera " << i << " z";
+    EXPECT_NEAR(pos_qr.x(), pos_nfr.x(), 0.05) << "NFR Camera " << i << " x";
+    EXPECT_NEAR(pos_qr.y(), pos_nfr.y(), 0.05) << "NFR Camera " << i << " y";
+    EXPECT_NEAR(pos_qr.z(), pos_nfr.z(), 0.05) << "NFR Camera " << i << " z";
   }
 
   auto density_qr = computeDensityStats(vslam.graph, result_qr.graph);
   auto density_schur = computeDensityStats(vslam.graph, result_schur.graph);
   auto density_bd = computeDensityStats(vslam.graph, result_bd.graph);
-  auto density_clt = computeDensityStats(vslam.graph, result_clt.graph);
   auto density_nfr = computeDensityStats(vslam.graph, result_nfr.graph);
-  printDensityComparison("Runtime ManyLandmarks", density_qr, density_schur, density_bd, density_clt, density_nfr);
 }
 
 // ---------------------------------------------------------------------------
@@ -800,15 +734,12 @@ TEST(MarginalizerComparison, IncrementalFixedLag)
   vslam_schur.graph.optimize();
   VisualSlamGraph vslam_bd(kNumCameras, kNumLandmarks, 99);
   vslam_bd.graph.optimize();
-  VisualSlamGraph vslam_clt(kNumCameras, kNumLandmarks, 99);
-  vslam_clt.graph.optimize();
   VisualSlamGraph vslam_nfr(kNumCameras, kNumLandmarks, 99);
   vslam_nfr.graph.optimize();
 
   double total_qr_us = 0.0;
   double total_schur_us = 0.0;
   double total_bd_us = 0.0;
-  double total_clt_us = 0.0;
   double total_nfr_us = 0.0;
   int num_marginalizations = 0;
 
@@ -817,7 +748,6 @@ TEST(MarginalizerComparison, IncrementalFixedLag)
     std::vector<vesta_core::UUID> to_marg_qr;
     std::vector<vesta_core::UUID> to_marg_schur;
     std::vector<vesta_core::UUID> to_marg_bd;
-    std::vector<vesta_core::UUID> to_marg_clt;
     std::vector<vesta_core::UUID> to_marg_nfr;
     to_marg_qr.push_back(vslam_qr.positions[step]->uuid());
     to_marg_qr.push_back(vslam_qr.orientations[step]->uuid());
@@ -825,8 +755,6 @@ TEST(MarginalizerComparison, IncrementalFixedLag)
     to_marg_schur.push_back(vslam_schur.orientations[step]->uuid());
     to_marg_bd.push_back(vslam_bd.positions[step]->uuid());
     to_marg_bd.push_back(vslam_bd.orientations[step]->uuid());
-    to_marg_clt.push_back(vslam_clt.positions[step]->uuid());
-    to_marg_clt.push_back(vslam_clt.orientations[step]->uuid());
     to_marg_nfr.push_back(vslam_nfr.positions[step]->uuid());
     to_marg_nfr.push_back(vslam_nfr.orientations[step]->uuid());
 
@@ -845,9 +773,7 @@ TEST(MarginalizerComparison, IncrementalFixedLag)
       {
         to_marg_bd.push_back(vslam_bd.landmarks[j]->uuid());
       }
-      if (vslam_clt.graph.variableExists(vslam_clt.landmarks[j]->uuid()))
       {
-        to_marg_clt.push_back(vslam_clt.landmarks[j]->uuid());
       }
       if (vslam_nfr.graph.variableExists(vslam_nfr.landmarks[j]->uuid()))
       {
@@ -873,11 +799,8 @@ TEST(MarginalizerComparison, IncrementalFixedLag)
     auto t5 = std::chrono::high_resolution_clock::now();
     total_bd_us += static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count());
 
-    vesta_constraints::CltMarginalizer clt(vesta_constraints::SparsityMode::Tree);
     auto t6 = std::chrono::high_resolution_clock::now();
-    auto txn_clt = clt.marginalize("test", to_marg_clt, vslam_clt.graph);
     auto t7 = std::chrono::high_resolution_clock::now();
-    total_clt_us += static_cast<double>(std::chrono::duration_cast<std::chrono::microseconds>(t7 - t6).count());
 
     vesta_constraints::NfrMarginalizer nfr(false);
     auto t8 = std::chrono::high_resolution_clock::now();
@@ -888,13 +811,11 @@ TEST(MarginalizerComparison, IncrementalFixedLag)
     vslam_qr.graph.update(txn_qr);
     vslam_schur.graph.update(txn_schur);
     vslam_bd.graph.update(txn_bd);
-    vslam_clt.graph.update(txn_clt);
     vslam_nfr.graph.update(txn_nfr);
 
     vslam_qr.graph.optimize();
     vslam_schur.graph.optimize();
     vslam_bd.graph.optimize();
-    vslam_clt.graph.optimize();
     vslam_nfr.graph.optimize();
 
     ++num_marginalizations;
@@ -909,8 +830,6 @@ TEST(MarginalizerComparison, IncrementalFixedLag)
         vslam_schur.graph.getVariable(vslam_schur.positions[i]->uuid()));
     const auto& pos_bd = dynamic_cast<const vesta_variables::Position3DStamped&>(
         vslam_bd.graph.getVariable(vslam_bd.positions[i]->uuid()));
-    const auto& pos_clt = dynamic_cast<const vesta_variables::Position3DStamped&>(
-        vslam_clt.graph.getVariable(vslam_clt.positions[i]->uuid()));
     const auto& pos_nfr = dynamic_cast<const vesta_variables::Position3DStamped&>(
         vslam_nfr.graph.getVariable(vslam_nfr.positions[i]->uuid()));
 
@@ -918,23 +837,19 @@ TEST(MarginalizerComparison, IncrementalFixedLag)
     EXPECT_NEAR(pos_qr.y(), pos_schur.y(), 0.05) << "Camera " << i << " y";
     EXPECT_NEAR(pos_qr.z(), pos_schur.z(), 0.05) << "Camera " << i << " z";
 
-    EXPECT_NEAR(pos_qr.x(), pos_bd.x(), 0.5) << "BD Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_bd.y(), 0.5) << "BD Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_bd.z(), 0.5) << "BD Camera " << i << " z";
+    EXPECT_NEAR(pos_qr.x(), pos_bd.x(), 0.01) << "BD Camera " << i << " x";
+    EXPECT_NEAR(pos_qr.y(), pos_bd.y(), 0.01) << "BD Camera " << i << " y";
+    EXPECT_NEAR(pos_qr.z(), pos_bd.z(), 0.01) << "BD Camera " << i << " z";
 
-    EXPECT_NEAR(pos_qr.x(), pos_clt.x(), 0.5) << "CLT Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_clt.y(), 0.5) << "CLT Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_clt.z(), 0.5) << "CLT Camera " << i << " z";
 
-    EXPECT_NEAR(pos_qr.x(), pos_nfr.x(), 0.5) << "NFR Camera " << i << " x";
-    EXPECT_NEAR(pos_qr.y(), pos_nfr.y(), 0.5) << "NFR Camera " << i << " y";
-    EXPECT_NEAR(pos_qr.z(), pos_nfr.z(), 0.5) << "NFR Camera " << i << " z";
+    EXPECT_NEAR(pos_qr.x(), pos_nfr.x(), 0.05) << "NFR Camera " << i << " x";
+    EXPECT_NEAR(pos_qr.y(), pos_nfr.y(), 0.05) << "NFR Camera " << i << " y";
+    EXPECT_NEAR(pos_qr.z(), pos_nfr.z(), 0.05) << "NFR Camera " << i << " z";
 
     EXPECT_NEAR(pos_qr.x(), vslam_qr.gt_cam_positions[i].x(), 0.15) << "QR Camera " << i << " x vs gt";
     EXPECT_NEAR(pos_schur.x(), vslam_schur.gt_cam_positions[i].x(), 0.15) << "Schur Camera " << i << " x vs gt";
-    EXPECT_NEAR(pos_bd.x(), vslam_bd.gt_cam_positions[i].x(), 0.5) << "BD Camera " << i << " x vs gt";
-    EXPECT_NEAR(pos_clt.x(), vslam_clt.gt_cam_positions[i].x(), 0.5) << "CLT Camera " << i << " x vs gt";
-    EXPECT_NEAR(pos_nfr.x(), vslam_nfr.gt_cam_positions[i].x(), 0.5) << "NFR Camera " << i << " x vs gt";
+    EXPECT_NEAR(pos_bd.x(), vslam_bd.gt_cam_positions[i].x(), 0.15) << "BD Camera " << i << " x vs gt";
+    EXPECT_NEAR(pos_nfr.x(), vslam_nfr.gt_cam_positions[i].x(), 0.15) << "NFR Camera " << i << " x vs gt";
   }
 
   std::cout << "\n=== Incremental Fixed-Lag (" << num_marginalizations << " steps) ==="
@@ -942,11 +857,9 @@ TEST(MarginalizerComparison, IncrementalFixedLag)
             << "\n  Schur total: " << total_schur_us << " us (avg " << total_schur_us / num_marginalizations
             << " us/step)"
             << "\n  BD    total: " << total_bd_us << " us (avg " << total_bd_us / num_marginalizations << " us/step)"
-            << "\n  CLT   total: " << total_clt_us << " us (avg " << total_clt_us / num_marginalizations << " us/step)"
             << "\n  NFR   total: " << total_nfr_us << " us (avg " << total_nfr_us / num_marginalizations << " us/step)"
             << "\n  Schur speedup vs QR: " << total_qr_us / total_schur_us << "x"
             << "\n  BD    speedup vs QR: " << total_qr_us / total_bd_us << "x"
-            << "\n  CLT   speedup vs QR: " << total_qr_us / total_clt_us << "x"
             << "\n  NFR   speedup vs QR: " << total_qr_us / total_nfr_us << "x\n"
             << std::endl;
 }
