@@ -104,33 +104,47 @@ double computeEigenvalueThreshold(double max_eigenvalue)
 }
 
 /**
- * @brief Compute the mutual information between two variable blocks given the joint covariance.
+ * @brief Compute MI between two variable blocks using Schur complement for the joint determinant.
  *
  * MI(xi, xj) = 0.5 * log(det(Sigma_ii) * det(Sigma_jj) / det(Sigma_ij_block))
- * where Sigma_ij_block is the 2x2 block submatrix [[Sigma_ii, Sigma_ij], [Sigma_ji, Sigma_jj]]
+ *
+ * Uses det(joint) = det(S_ii) * det(S_jj - S_ji * S_ii^{-1} * S_ij) to avoid
+ * allocating the full joint matrix and computing its determinant directly.
  */
 double computeMutualInformation(const vesta_core::MatrixXd& sigma, int off_i, int dim_i, int off_j, int dim_j)
 {
-  vesta_core::MatrixXd sigma_ii = sigma.block(off_i, off_i, dim_i, dim_i);
-  vesta_core::MatrixXd sigma_jj = sigma.block(off_j, off_j, dim_j, dim_j);
-
-  // Build the joint block
-  int joint_dim = dim_i + dim_j;
-  vesta_core::MatrixXd sigma_joint(joint_dim, joint_dim);
-  sigma_joint.block(0, 0, dim_i, dim_i) = sigma_ii;
-  sigma_joint.block(0, dim_i, dim_i, dim_j) = sigma.block(off_i, off_j, dim_i, dim_j);
-  sigma_joint.block(dim_i, 0, dim_j, dim_i) = sigma.block(off_j, off_i, dim_j, dim_i);
-  sigma_joint.block(dim_i, dim_i, dim_j, dim_j) = sigma_jj;
+  auto sigma_ii = sigma.block(off_i, off_i, dim_i, dim_i);
+  auto sigma_jj = sigma.block(off_j, off_j, dim_j, dim_j);
 
   double det_ii = sigma_ii.determinant();
   double det_jj = sigma_jj.determinant();
-  double det_joint = sigma_joint.determinant();
 
-  if (det_joint <= 0.0 || det_ii <= 0.0 || det_jj <= 0.0)
+  if (det_ii <= 0.0 || det_jj <= 0.0)
   {
     return 0.0;
   }
 
+  // Schur complement: det(joint) = det(S_ii) * det(S_jj - S_ji * S_ii^{-1} * S_ij)
+  auto sigma_ij = sigma.block(off_i, off_j, dim_i, dim_j);
+  vesta_core::MatrixXd sigma_ii_copy = sigma_ii;
+  Eigen::LLT<vesta_core::MatrixXd> llt_ii(sigma_ii_copy);
+  if (llt_ii.info() != Eigen::Success)
+  {
+    return 0.0;
+  }
+
+  vesta_core::MatrixXd sigma_ij_copy = sigma_ij;
+  vesta_core::MatrixXd schur = vesta_core::MatrixXd(sigma_jj) -
+                                vesta_core::MatrixXd(sigma.block(off_j, off_i, dim_j, dim_i)) *
+                                    llt_ii.solve(sigma_ij_copy);
+
+  double det_schur = schur.determinant();
+  if (det_schur <= 0.0)
+  {
+    return 0.0;
+  }
+
+  double det_joint = det_ii * det_schur;
   double mi = 0.5 * std::log(det_ii * det_jj / det_joint);
   return std::max(mi, 0.0);
 }
@@ -212,13 +226,21 @@ std::vector<SparsityEdge> selectSubgraph(std::vector<SparsityEdge>& edges, int n
 }
 
 /**
- * @brief Compute the matrix square root L such that L * L^T = X for a PSD matrix X.
- * Uses eigendecomposition: X = V D V^T => L = V sqrt(D).
- * Returns L^T (so that L_transpose * L_transpose^T = ... no, we want L L^T = X).
- * Actually returns L such that L L^T = X, where L = V * sqrt(D).
+ * @brief Compute sqrt-info matrix Lt such that Lt^T * Lt = X (via Cholesky when possible).
+ *
+ * Tries Cholesky first (faster for PSD matrices), falls back to eigendecomposition.
+ * Returns L^T where L * L^T = X.
  */
-vesta_core::MatrixXd matrixSqrt(const vesta_core::MatrixXd& X)
+vesta_core::MatrixXd matrixSqrtTranspose(const vesta_core::MatrixXd& X)
 {
+  // Try Cholesky first — faster for small PSD matrices
+  Eigen::LLT<vesta_core::MatrixXd> llt(X);
+  if (llt.info() == Eigen::Success)
+  {
+    return llt.matrixL().transpose();
+  }
+
+  // Fallback: eigendecomposition
   Eigen::SelfAdjointEigenSolver<vesta_core::MatrixXd> eig(X);
   const auto& vals = eig.eigenvalues();
   const auto& vecs = eig.eigenvectors();
@@ -232,20 +254,27 @@ vesta_core::MatrixXd matrixSqrt(const vesta_core::MatrixXd& X)
     }
   }
 
-  return vecs * sqrt_d;  // L such that L * L^T = X
+  return sqrt_d * vecs.transpose();
 }
 
 /**
- * @brief Project a symmetric matrix onto the PSD cone by clamping negative eigenvalues to zero.
+ * @brief Project a symmetric matrix onto the PSD cone.
+ *
+ * Fast path: Cholesky check — if PSD, return as-is.
+ * Slow path: eigendecomposition and clamp negative eigenvalues to zero.
  */
 vesta_core::MatrixXd projectPSD(const vesta_core::MatrixXd& X)
 {
-  Eigen::SelfAdjointEigenSolver<vesta_core::MatrixXd> eig(X);
-  const auto& vals = eig.eigenvalues();
-  const auto& vecs = eig.eigenvectors();
+  // Fast path: already PSD
+  Eigen::LLT<vesta_core::MatrixXd> llt(X);
+  if (llt.info() == Eigen::Success)
+  {
+    return X;
+  }
 
-  vesta_core::VectorXd clamped_vals = vals.cwiseMax(0.0);
-  return vecs * clamped_vals.asDiagonal() * vecs.transpose();
+  // Slow path
+  Eigen::SelfAdjointEigenSolver<vesta_core::MatrixXd> eig(X);
+  return eig.eigenvectors() * eig.eigenvalues().cwiseMax(0.0).asDiagonal() * eig.eigenvectors().transpose();
 }
 
 /**
@@ -703,27 +732,18 @@ vesta_core::Transaction CltMarginalizer::marginalize(
             }
             else
             {
-              // Full rank: compute covariance with Tikhonov regularization
-              vesta_core::MatrixXd H_reg = H_oo + TIKHONOV_EPS * vesta_core::MatrixXd::Identity(
-                                                                      total_other_dim, total_other_dim);
-              Eigen::LLT<vesta_core::MatrixXd> llt_sigma(H_reg);
-              if (llt_sigma.info() != Eigen::Success)
+              // Full rank: compute covariance directly from eigendecomposition
+              // (reuse the eigendecomposition already computed for rank checking)
+              // Sigma = V * D^{-1} * V^T
+              sigma.resize(total_other_dim, total_other_dim);
+              sigma.setZero();
+              for (int k = 0; k < hoo_eigenvalues.size(); ++k)
               {
-                // Fallback to eigendecomp-based pseudoinverse
-                sigma.resize(total_other_dim, total_other_dim);
-                sigma.setZero();
-                for (int k = 0; k < hoo_eigenvalues.size(); ++k)
+                if (hoo_eigenvalues(k) > hoo_threshold)
                 {
-                  double val = hoo_eigenvalues(k) + TIKHONOV_EPS;
-                  if (val > 0.0)
-                  {
-                    sigma += (1.0 / val) * hoo_eigenvectors.col(k) * hoo_eigenvectors.col(k).transpose();
-                  }
+                  sigma.noalias() +=
+                      (1.0 / hoo_eigenvalues(k)) * (hoo_eigenvectors.col(k) * hoo_eigenvectors.col(k).transpose());
                 }
-              }
-              else
-              {
-                sigma = llt_sigma.solve(vesta_core::MatrixXd::Identity(total_other_dim, total_other_dim));
               }
             }
 
@@ -844,16 +864,58 @@ vesta_core::Transaction CltMarginalizer::marginalize(
               std::vector<vesta_core::MatrixXd> x_blocks(num_selected);
 
               // Closed-form solution: X_e = ({A Sigma A^T}_e)^{-1}
+              // For the full-rank non-projected case, A_e = [-I_a, I_b], so
+              // A_e * Sigma * A_e^T = S_aa - S_ab - S_ba + S_bb (direct block extraction)
               for (int e = 0; e < num_selected; ++e)
               {
-                vesta_core::MatrixXd asa = A_rows[e] * sigma * A_rows[e].transpose();
+                vesta_core::MatrixXd asa;
+                if (rank_deficient)
+                {
+                  // Rank-deficient: A_rows are already in reduced space, use matrix multiply
+                  asa = A_rows[e] * sigma * A_rows[e].transpose();
+                }
+                else
+                {
+                  // Full rank: extract directly from sigma subblocks (avoids dense A * Sigma * A^T)
+                  const auto& edge = selected_edges[e];
+                  int off_a = other_offsets.at(other_indices[edge.var_a]);
+                  int dim_a = var_tangent_sizes.at(other_indices[edge.var_a]);
+                  int off_b = other_offsets.at(other_indices[edge.var_b]);
+                  int dim_b = var_tangent_sizes.at(other_indices[edge.var_b]);
+                  int meas_dim = block_sizes[e];
+
+                  asa.resize(meas_dim, meas_dim);
+                  for (int r = 0; r < meas_dim; ++r)
+                  {
+                    for (int c = 0; c < meas_dim; ++c)
+                    {
+                      double val = 0.0;
+                      if (r < dim_a && c < dim_a)
+                      {
+                        val += sigma(off_a + r, off_a + c);
+                      }
+                      if (r < dim_b && c < dim_b)
+                      {
+                        val += sigma(off_b + r, off_b + c);
+                      }
+                      if (r < dim_a && c < dim_b)
+                      {
+                        val -= sigma(off_a + r, off_b + c);
+                      }
+                      if (r < dim_b && c < dim_a)
+                      {
+                        val -= sigma(off_b + r, off_a + c);
+                      }
+                      asa(r, c) = val;
+                    }
+                  }
+                }
                 asa = (asa + asa.transpose()) * 0.5;  // symmetrize
 
                 Eigen::LLT<vesta_core::MatrixXd> llt_asa(asa);
                 if (llt_asa.info() == Eigen::Success)
                 {
-                  x_blocks[e] = llt_asa.solve(
-                      vesta_core::MatrixXd::Identity(block_sizes[e], block_sizes[e]));
+                  x_blocks[e] = llt_asa.solve(vesta_core::MatrixXd::Identity(block_sizes[e], block_sizes[e]));
                 }
                 else
                 {
@@ -874,7 +936,7 @@ vesta_core::Transaction CltMarginalizer::marginalize(
                   }
                 }
 
-                // Ensure PSD
+                // Ensure PSD (fast path: Cholesky check, slow path: eigendecomposition)
                 x_blocks[e] = projectPSD(x_blocks[e]);
               }
 
@@ -893,8 +955,7 @@ vesta_core::Transaction CltMarginalizer::marginalize(
                 int meas_dim = block_sizes[e];
 
                 // Compute L such that L L^T = X_e, then use L^T as sqrt-info
-                vesta_core::MatrixXd L = matrixSqrt(x_blocks[e]);
-                vesta_core::MatrixXd Lt = L.transpose();  // meas_dim x meas_dim
+                vesta_core::MatrixXd Lt = matrixSqrtTranspose(x_blocks[e]);
 
                 // Build the LinearTerm: cost = ||(-L^T)(x_i - x_i_bar) + L^T(x_j - x_j_bar)||^2
                 //                            = ||L^T((x_j - x_j_bar) - (x_i - x_i_bar))||^2

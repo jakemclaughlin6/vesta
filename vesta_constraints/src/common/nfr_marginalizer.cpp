@@ -23,52 +23,14 @@ namespace vesta_constraints
 namespace
 {
 
-// Tikhonov regularization constant for covariance computation
-constexpr double TIKHONOV_EPS = 1e-6;
-
 // Eigenvalue threshold relative to the maximum eigenvalue
 constexpr double EIGENVALUE_REL_THRESHOLD = 1e-10;
 constexpr double EIGENVALUE_ABS_THRESHOLD = 1e-14;
 
-/**
- * @brief Compute eigenvalue threshold for numerical rank determination
- */
 double computeEigenvalueThreshold(double max_eigenvalue)
 {
   double threshold = max_eigenvalue * EIGENVALUE_REL_THRESHOLD;
-  if (threshold < EIGENVALUE_ABS_THRESHOLD)
-  {
-    threshold = EIGENVALUE_ABS_THRESHOLD;
-  }
-  return threshold;
-}
-
-/**
- * @brief Compute the mutual information between two variable blocks given the joint covariance.
- */
-double computeMutualInformation(const vesta_core::MatrixXd& sigma, int off_i, int dim_i, int off_j, int dim_j)
-{
-  vesta_core::MatrixXd sigma_ii = sigma.block(off_i, off_i, dim_i, dim_i);
-  vesta_core::MatrixXd sigma_jj = sigma.block(off_j, off_j, dim_j, dim_j);
-
-  int joint_dim = dim_i + dim_j;
-  vesta_core::MatrixXd sigma_joint(joint_dim, joint_dim);
-  sigma_joint.block(0, 0, dim_i, dim_i) = sigma_ii;
-  sigma_joint.block(0, dim_i, dim_i, dim_j) = sigma.block(off_i, off_j, dim_i, dim_j);
-  sigma_joint.block(dim_i, 0, dim_j, dim_i) = sigma.block(off_j, off_i, dim_j, dim_i);
-  sigma_joint.block(dim_i, dim_i, dim_j, dim_j) = sigma_jj;
-
-  double det_ii = sigma_ii.determinant();
-  double det_jj = sigma_jj.determinant();
-  double det_joint = sigma_joint.determinant();
-
-  if (det_joint <= 0.0 || det_ii <= 0.0 || det_jj <= 0.0)
-  {
-    return 0.0;
-  }
-
-  double mi = 0.5 * std::log(det_ii * det_jj / det_joint);
-  return std::max(mi, 0.0);
+  return threshold < EIGENVALUE_ABS_THRESHOLD ? EIGENVALUE_ABS_THRESHOLD : threshold;
 }
 
 /// Represents a selected edge in the sparsity pattern
@@ -124,37 +86,133 @@ private:
 };
 
 /**
- * @brief Select edges for the Chow-Liu maximum spanning tree using Kruskal's algorithm.
+ * @brief Compute MI between two variable blocks using only the needed sigma subblocks.
+ *
+ * MI(xi, xj) = 0.5 * log(det(Sigma_ii) * det(Sigma_jj) / det(Sigma_ij_block))
+ * All blocks are extracted as lightweight Eigen::Block views — no copies.
  */
-std::vector<SparsityEdge> selectChowLiuTree(std::vector<SparsityEdge>& edges, int num_vars)
+double computeMutualInformation(const vesta_core::MatrixXd& sigma, int off_i, int dim_i, int off_j, int dim_j)
 {
-  std::sort(edges.begin(), edges.end(),
-            [](const SparsityEdge& a, const SparsityEdge& b) { return a.mutual_information > b.mutual_information; });
+  // Use Eigen::Block views to avoid copies
+  auto sigma_ii = sigma.block(off_i, off_i, dim_i, dim_i);
+  auto sigma_jj = sigma.block(off_j, off_j, dim_j, dim_j);
 
-  UnionFind uf(num_vars);
-  std::vector<SparsityEdge> tree_edges;
-  tree_edges.reserve(static_cast<size_t>(num_vars - 1));
+  double det_ii = sigma_ii.determinant();
+  double det_jj = sigma_jj.determinant();
 
-  for (const auto& edge : edges)
+  if (det_ii <= 0.0 || det_jj <= 0.0)
   {
-    if (static_cast<int>(tree_edges.size()) >= num_vars - 1)
-    {
-      break;
-    }
-    if (uf.unite(edge.var_a, edge.var_b))
-    {
-      tree_edges.push_back(edge);
-    }
+    return 0.0;
   }
 
-  return tree_edges;
+  // Build the joint 2x2 block matrix and compute its determinant
+  // det(joint) = det(S_ii) * det(S_jj - S_ji * S_ii^{-1} * S_ij) [Schur complement]
+  // This avoids allocating the full joint matrix
+  auto sigma_ij = sigma.block(off_i, off_j, dim_i, dim_j);
+
+  // For small blocks (typical dim 3-7), the Schur complement approach with solve is efficient
+  vesta_core::MatrixXd sigma_ii_copy = sigma_ii;
+  Eigen::LLT<vesta_core::MatrixXd> llt_ii(sigma_ii_copy);
+  if (llt_ii.info() != Eigen::Success)
+  {
+    return 0.0;
+  }
+
+  // Schur complement: S_jj - S_ji * S_ii^{-1} * S_ij
+  vesta_core::MatrixXd sigma_ij_copy = sigma_ij;
+  vesta_core::MatrixXd schur = vesta_core::MatrixXd(sigma_jj) -
+                                vesta_core::MatrixXd(sigma.block(off_j, off_i, dim_j, dim_i)) *
+                                    llt_ii.solve(sigma_ij_copy);
+
+  double det_schur = schur.determinant();
+  if (det_schur <= 0.0)
+  {
+    return 0.0;
+  }
+
+  // det(joint) = det(S_ii) * det(schur)
+  double det_joint = det_ii * det_schur;
+
+  double mi = 0.5 * std::log(det_ii * det_jj / det_joint);
+  return std::max(mi, 0.0);
 }
 
 /**
- * @brief Compute the matrix square root L such that L * L^T = X for a PSD matrix X.
+ * @brief Compute X_e = (A_e Sigma A_e^T)^{-1} directly from sigma subblocks.
+ *
+ * For A_e = [-I_a, I_b], the product A_e * Sigma * A_e^T = S_aa - S_ab - S_ba + S_bb.
+ * This avoids constructing the full sparse A_e matrix.
  */
-vesta_core::MatrixXd matrixSqrt(const vesta_core::MatrixXd& X)
+vesta_core::MatrixXd computeEdgeInformation(const vesta_core::MatrixXd& sigma, int off_a, int dim_a, int off_b,
+                                             int dim_b, int meas_dim)
 {
+  // A_e * Sigma * A_e^T = S_aa - S_ab - S_ba + S_bb (for the meas_dim x meas_dim block)
+  vesta_core::MatrixXd asa(meas_dim, meas_dim);
+  for (int r = 0; r < meas_dim; ++r)
+  {
+    for (int c = 0; c < meas_dim; ++c)
+    {
+      double val = 0.0;
+      if (r < dim_a && c < dim_a)
+      {
+        val += sigma(off_a + r, off_a + c);
+      }
+      if (r < dim_b && c < dim_b)
+      {
+        val += sigma(off_b + r, off_b + c);
+      }
+      if (r < dim_a && c < dim_b)
+      {
+        val -= sigma(off_a + r, off_b + c);
+      }
+      if (r < dim_b && c < dim_a)
+      {
+        val -= sigma(off_b + r, off_a + c);
+      }
+      asa(r, c) = val;
+    }
+  }
+  asa = (asa + asa.transpose()) * 0.5;
+
+  // Invert: X_e = asa^{-1}
+  Eigen::LLT<vesta_core::MatrixXd> llt(asa);
+  if (llt.info() == Eigen::Success)
+  {
+    return llt.solve(vesta_core::MatrixXd::Identity(meas_dim, meas_dim));
+  }
+
+  // Fallback: pseudoinverse
+  Eigen::SelfAdjointEigenSolver<vesta_core::MatrixXd> eig(asa);
+  vesta_core::MatrixXd result = vesta_core::MatrixXd::Zero(meas_dim, meas_dim);
+  if (eig.info() == Eigen::Success)
+  {
+    double thresh = computeEigenvalueThreshold(eig.eigenvalues().maxCoeff());
+    for (int k = 0; k < eig.eigenvalues().size(); ++k)
+    {
+      if (eig.eigenvalues()(k) > thresh)
+      {
+        result +=
+            (1.0 / eig.eigenvalues()(k)) * eig.eigenvectors().col(k) * eig.eigenvectors().col(k).transpose();
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * @brief Compute sqrt-info matrix Lt such that Lt^T * Lt = X (via Cholesky when possible).
+ */
+vesta_core::MatrixXd computeSqrtInfo(const vesta_core::MatrixXd& X)
+{
+  // Try Cholesky first — faster than eigendecomposition for small PSD matrices
+  Eigen::LLT<vesta_core::MatrixXd> llt(X);
+  if (llt.info() == Eigen::Success)
+  {
+    // L * L^T = X, return L^T as the sqrt-info
+    return llt.matrixL().transpose();
+  }
+
+  // Fallback: eigendecomposition
   Eigen::SelfAdjointEigenSolver<vesta_core::MatrixXd> eig(X);
   const auto& vals = eig.eigenvalues();
   const auto& vecs = eig.eigenvectors();
@@ -168,20 +226,25 @@ vesta_core::MatrixXd matrixSqrt(const vesta_core::MatrixXd& X)
     }
   }
 
-  return vecs * sqrt_d;
+  // L = V * sqrt(D), Lt = sqrt(D) * V^T
+  return (sqrt_d * vecs.transpose());
 }
 
 /**
- * @brief Project a symmetric matrix onto the PSD cone by clamping negative eigenvalues to zero.
+ * @brief Project a symmetric matrix onto the PSD cone via Cholesky check, falling back to eigendecomposition.
  */
 vesta_core::MatrixXd projectPSD(const vesta_core::MatrixXd& X)
 {
-  Eigen::SelfAdjointEigenSolver<vesta_core::MatrixXd> eig(X);
-  const auto& vals = eig.eigenvalues();
-  const auto& vecs = eig.eigenvectors();
+  // Fast path: if already PSD, Cholesky succeeds and we skip the projection
+  Eigen::LLT<vesta_core::MatrixXd> llt(X);
+  if (llt.info() == Eigen::Success)
+  {
+    return X;
+  }
 
-  vesta_core::VectorXd clamped_vals = vals.cwiseMax(0.0);
-  return vecs * clamped_vals.asDiagonal() * vecs.transpose();
+  // Slow path: eigendecomposition and clamp
+  Eigen::SelfAdjointEigenSolver<vesta_core::MatrixXd> eig(X);
+  return eig.eigenvectors() * eig.eigenvalues().cwiseMax(0.0).asDiagonal() * eig.eigenvectors().transpose();
 }
 
 }  // namespace
@@ -262,7 +325,9 @@ vesta_core::Transaction NfrMarginalizer::marginalize(const std::string& source,
       }
       else
       {
-        // Eigendecomposition of H_oo for rank handling and covariance computation
+        // Compute covariance directly from eigendecomposition of H_oo.
+        // This is needed for MI computation and edge information recovery.
+        // We reuse the eigendecomposition for both rank checking and covariance.
         Eigen::SelfAdjointEigenSolver<vesta_core::MatrixXd> eig_hoo(H_oo);
         if (eig_hoo.info() != Eigen::Success)
         {
@@ -272,14 +337,14 @@ vesta_core::Transaction NfrMarginalizer::marginalize(const std::string& source,
         }
         else
         {
-          const auto& hoo_eigenvalues = eig_hoo.eigenvalues();
-          const auto& hoo_eigenvectors = eig_hoo.eigenvectors();
-          double hoo_threshold = computeEigenvalueThreshold(hoo_eigenvalues.maxCoeff());
+          const auto& eigenvalues = eig_hoo.eigenvalues();
+          const auto& eigenvectors = eig_hoo.eigenvectors();
+          double threshold = computeEigenvalueThreshold(eigenvalues.maxCoeff());
 
           int rank = 0;
-          for (int k = 0; k < hoo_eigenvalues.size(); ++k)
+          for (int k = 0; k < eigenvalues.size(); ++k)
           {
-            if (hoo_eigenvalues(k) > hoo_threshold)
+            if (eigenvalues(k) > threshold)
             {
               ++rank;
             }
@@ -291,52 +356,22 @@ vesta_core::Transaction NfrMarginalizer::marginalize(const std::string& source,
           }
           else
           {
-            bool rank_deficient = (rank < total_other_dim);
-
-            // Compute covariance Sigma_o = H_oo^{-1} (with rank handling)
-            vesta_core::MatrixXd sigma;
-            if (rank_deficient)
+            // Compute covariance from eigendecomposition (no redundant Cholesky):
+            // Sigma = V * D^{-1} * V^T (using only positive eigenvalues)
+            vesta_core::MatrixXd sigma(total_other_dim, total_other_dim);
+            sigma.setZero();
+            for (int k = 0; k < eigenvalues.size(); ++k)
             {
-              sigma = vesta_core::MatrixXd::Zero(total_other_dim, total_other_dim);
-              for (int k = 0; k < hoo_eigenvalues.size(); ++k)
+              if (eigenvalues(k) > threshold)
               {
-                if (hoo_eigenvalues(k) > hoo_threshold)
-                {
-                  sigma += (1.0 / hoo_eigenvalues(k)) * hoo_eigenvectors.col(k) * hoo_eigenvectors.col(k).transpose();
-                }
-              }
-            }
-            else
-            {
-              vesta_core::MatrixXd H_reg =
-                  H_oo + TIKHONOV_EPS * vesta_core::MatrixXd::Identity(total_other_dim, total_other_dim);
-              Eigen::LLT<vesta_core::MatrixXd> llt_sigma(H_reg);
-              if (llt_sigma.info() != Eigen::Success)
-              {
-                sigma = vesta_core::MatrixXd::Zero(total_other_dim, total_other_dim);
-                for (int k = 0; k < hoo_eigenvalues.size(); ++k)
-                {
-                  double val = hoo_eigenvalues(k) + TIKHONOV_EPS;
-                  if (val > 0.0)
-                  {
-                    sigma += (1.0 / val) * hoo_eigenvectors.col(k) * hoo_eigenvectors.col(k).transpose();
-                  }
-                }
-              }
-              else
-              {
-                sigma = llt_sigma.solve(vesta_core::MatrixXd::Identity(total_other_dim, total_other_dim));
+                sigma.noalias() +=
+                    (1.0 / eigenvalues(k)) * (eigenvectors.col(k) * eigenvectors.col(k).transpose());
               }
             }
 
             // ---- NFR Algorithm ----
-            // 1. Select Chow-Liu tree edges (same as CLT)
-            // 2. Recover pairwise relative factor information matrices via closed-form
-            // 3. Compute the reconstructed information from edges: H_edges = sum A_e^T X_e A_e
-            // 4. Compute residual diagonal information for absolute priors: H_res_i = H_oo_ii - H_edges_ii
-            // 5. Emit both pairwise and absolute prior factors
 
-            // Step 1: Compute mutual information for all variable pairs
+            // Step 1: Compute MI for all variable pairs and select Chow-Liu tree
             std::vector<SparsityEdge> all_edges;
             all_edges.reserve(static_cast<size_t>(num_remaining * (num_remaining - 1) / 2));
 
@@ -357,16 +392,52 @@ vesta_core::Transaction NfrMarginalizer::marginalize(const std::string& source,
               }
             }
 
-            // Step 2: Select Chow-Liu tree
-            std::vector<SparsityEdge> selected_edges = selectChowLiuTree(all_edges, num_remaining);
+            // Use partial_sort to only sort the top (num_remaining - 1) edges
+            // needed for the MST, instead of fully sorting all O(n²) edges.
+            int num_tree_needed = num_remaining - 1;
+            if (static_cast<int>(all_edges.size()) > num_tree_needed * 2)
+            {
+              std::partial_sort(all_edges.begin(),
+                                all_edges.begin() + std::min(static_cast<int>(all_edges.size()), num_tree_needed * 3),
+                                all_edges.end(), [](const SparsityEdge& a, const SparsityEdge& b) {
+                                  return a.mutual_information > b.mutual_information;
+                                });
+            }
+            else
+            {
+              std::sort(all_edges.begin(), all_edges.end(), [](const SparsityEdge& a, const SparsityEdge& b) {
+                return a.mutual_information > b.mutual_information;
+              });
+            }
 
-            // Step 3: Recover pairwise edge information matrices (CLT closed-form)
-            // For each edge, the Jacobian A_e = [-I_a, I_b], and X_e = (A_e Sigma A_e^T)^{-1}
+            // Kruskal's MST (inline to avoid re-sorting in selectChowLiuTree)
+            UnionFind uf(num_remaining);
+            std::vector<SparsityEdge> selected_edges;
+            selected_edges.reserve(static_cast<size_t>(num_tree_needed));
+            for (const auto& edge : all_edges)
+            {
+              if (static_cast<int>(selected_edges.size()) >= num_tree_needed)
+              {
+                break;
+              }
+              if (uf.unite(edge.var_a, edge.var_b))
+              {
+                selected_edges.push_back(edge);
+              }
+            }
+
+            // Step 2: Recover pairwise edge information matrices using direct block extraction
             int num_selected = static_cast<int>(selected_edges.size());
             std::vector<vesta_core::MatrixXd> x_blocks(num_selected);
 
-            // Accumulate reconstructed information matrix from edges
-            vesta_core::MatrixXd H_edges = vesta_core::MatrixXd::Zero(total_other_dim, total_other_dim);
+            // Accumulate H_edges diagonal blocks per variable (only diag blocks needed for NFR)
+            // Instead of building full H_edges, track per-variable diagonal contribution
+            std::vector<vesta_core::MatrixXd> h_edges_diag(num_remaining);
+            for (int v = 0; v < num_remaining; ++v)
+            {
+              int dim = var_tangent_sizes.at(other_indices[v]);
+              h_edges_diag[v] = vesta_core::MatrixXd::Zero(dim, dim);
+            }
 
             for (int e = 0; e < num_selected; ++e)
             {
@@ -377,54 +448,29 @@ vesta_core::Transaction NfrMarginalizer::marginalize(const std::string& source,
               int dim_b = var_tangent_sizes.at(other_indices[edge.var_b]);
               int meas_dim = std::min(dim_a, dim_b);
 
-              // Build A_e row: [-I, I] acting on the full state vector
-              vesta_core::MatrixXd A_e = vesta_core::MatrixXd::Zero(meas_dim, total_other_dim);
-              for (int r = 0; r < meas_dim; ++r)
-              {
-                if (r < dim_a)
-                {
-                  A_e(r, off_a + r) = -1.0;
-                }
-                if (r < dim_b)
-                {
-                  A_e(r, off_b + r) = 1.0;
-                }
-              }
+              // Compute X_e directly from sigma subblocks (no full A_e matrix)
+              x_blocks[e] = computeEdgeInformation(sigma, off_a, dim_a, off_b, dim_b, meas_dim);
 
-              // Compute X_e = (A_e Sigma A_e^T)^{-1}
-              vesta_core::MatrixXd asa = A_e * sigma * A_e.transpose();
-              asa = (asa + asa.transpose()) * 0.5;
-
-              Eigen::LLT<vesta_core::MatrixXd> llt_asa(asa);
-              if (llt_asa.info() == Eigen::Success)
+              // Accumulate diagonal blocks: A_e^T X_e A_e has:
+              //   block(a,a) += X_e[0:dim_a, 0:dim_a]
+              //   block(b,b) += X_e[0:dim_b, 0:dim_b]
+              for (int r = 0; r < meas_dim && r < dim_a; ++r)
               {
-                x_blocks[e] = llt_asa.solve(vesta_core::MatrixXd::Identity(meas_dim, meas_dim));
-              }
-              else
-              {
-                Eigen::SelfAdjointEigenSolver<vesta_core::MatrixXd> eig_asa(asa);
-                x_blocks[e] = vesta_core::MatrixXd::Zero(meas_dim, meas_dim);
-                if (eig_asa.info() == Eigen::Success)
+                for (int c = 0; c < meas_dim && c < dim_a; ++c)
                 {
-                  double thresh = computeEigenvalueThreshold(eig_asa.eigenvalues().maxCoeff());
-                  for (int k = 0; k < eig_asa.eigenvalues().size(); ++k)
-                  {
-                    if (eig_asa.eigenvalues()(k) > thresh)
-                    {
-                      x_blocks[e] += (1.0 / eig_asa.eigenvalues()(k)) * eig_asa.eigenvectors().col(k) *
-                                     eig_asa.eigenvectors().col(k).transpose();
-                    }
-                  }
+                  h_edges_diag[edge.var_a](r, c) += x_blocks[e](r, c);
                 }
               }
-
-              x_blocks[e] = projectPSD(x_blocks[e]);
-
-              // Accumulate into H_edges: H_edges += A_e^T X_e A_e
-              H_edges += A_e.transpose() * x_blocks[e] * A_e;
+              for (int r = 0; r < meas_dim && r < dim_b; ++r)
+              {
+                for (int c = 0; c < meas_dim && c < dim_b; ++c)
+                {
+                  h_edges_diag[edge.var_b](r, c) += x_blocks[e](r, c);
+                }
+              }
             }
 
-            // Step 4: Emit pairwise relative factors
+            // Step 3: Emit pairwise relative factors
             for (int e = 0; e < num_selected; ++e)
             {
               const auto& edge = selected_edges[e];
@@ -434,8 +480,7 @@ vesta_core::Transaction NfrMarginalizer::marginalize(const std::string& source,
               int dim_b = var_tangent_sizes.at(idx_b);
               int meas_dim = std::min(dim_a, dim_b);
 
-              vesta_core::MatrixXd L = matrixSqrt(x_blocks[e]);
-              vesta_core::MatrixXd Lt = L.transpose();
+              vesta_core::MatrixXd Lt = computeSqrtInfo(x_blocks[e]);
 
               detail::LinearTerm rel_term;
               rel_term.variables = { idx_a, idx_b };
@@ -461,31 +506,19 @@ vesta_core::Transaction NfrMarginalizer::marginalize(const std::string& source,
               }
             }
 
-            // Step 5: Emit per-variable absolute prior factors from residual information
-            // The residual captures information that the tree edges cannot represent
-            // (diagonal information not fully covered by the off-diagonal edges).
+            // Step 4: Emit per-variable absolute prior factors from residual information
             for (int v = 0; v < num_remaining; ++v)
             {
               unsigned int idx = other_indices[v];
               int off = other_offsets.at(idx);
               int dim = var_tangent_sizes.at(idx);
 
-              // Residual information for this variable: H_oo_ii - H_edges_ii
-              vesta_core::MatrixXd H_res = H_oo.block(off, off, dim, dim) - H_edges.block(off, off, dim, dim);
+              // Residual: H_oo_ii - H_edges_ii (using tracked diagonal, not full H_edges)
+              vesta_core::MatrixXd H_res = H_oo.block(off, off, dim, dim) - h_edges_diag[v];
               H_res = (H_res + H_res.transpose()) * 0.5;
-
-              // Project onto PSD cone (the residual can have negative eigenvalues
-              // if the tree edges over-estimate diagonal information)
               H_res = projectPSD(H_res);
 
-              // Residual information vector: eta_res_i = eta_o_i - (H_edges * x_bar contribution)
-              // At the linearization point, x - x_bar = 0, so the information vector
-              // from edges is zero. Thus eta_res = eta_o for the prior.
               vesta_core::VectorXd eta_res = eta_o.segment(off, dim);
-
-              // But we also need to subtract the portion of eta accounted for by the edges.
-              // Since the edge factors have b=0 (at linearization point), they contribute
-              // nothing to eta. So the full eta goes to the priors.
 
               auto single_term = detail::createSingleVariableTerm(idx, H_res, eta_res);
               if (!single_term.variables.empty())
