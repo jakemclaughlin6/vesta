@@ -118,3 +118,8 @@ rtk gh issue list
 - Commands inside `docker run ... bash -c "..."` (rtk is on the host, not in the container)
 - Heredocs or piped commands — pass those through directly
 - Commands that are already prefixed with `rtk`
+
+## SecondBrain
+
+Project notes: ~/projects/SecondBrain/20_Projects/vesta/
+Task board: ~/projects/SecondBrain/20_Projects/vesta/Tasks.md
